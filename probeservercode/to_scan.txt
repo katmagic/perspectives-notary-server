@@ -1,0 +1,12 @@
+unix.andrew.cmu.edu
+nity.stanford.edu
+manzanares.stanford.edu
+moo.cmcl.cs.cmu.edu
+elaine.stanford.edu
+cvs.freedesktop.org
+ecos.sourceware.org
+shell.sourceforge.net
+ssh.ameslab.gov
+tg-viz-login.uc.teragrid.org
+login.jlab.org
+
