@@ -9,7 +9,7 @@
 
 #include "includes.h"
  
-#include "openbsd-compat/sys-queue.h"
+//#include "openbsd-compat/sys-queue.h"
 #include <sys/resource.h>
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
@@ -49,19 +49,13 @@
 #include "hostfile.h"
 
 #include "probe_server.h"
+#include "../common.h"
 
 /* Flag indicating whether IPv4 or IPv6.  This can be set on the command line.
    Default value is AF_UNSPEC means both IPv4 and IPv6. */
 int IPv4or6 = AF_UNSPEC;
 
 int ssh_port = SSH_DEFAULT_PORT;
-
-#define KT_RSA1	1
-#define KT_DSA	2
-#define KT_RSA	4
-
-// default to all key types
-int get_keytypes = KT_RSA1 | KT_RSA | KT_DSA;
 
 int hash_hosts = 0;		/* Hash hostname on output */
 
@@ -98,11 +92,7 @@ typedef struct Connection {
 	int c_plen;		/* Packet length field for ssh packet */
 	int c_len;		/* Total bytes which must be read. */
 	int c_off;		/* Length of data read so far. */
-	int c_keytype;		/* Only one of KT_RSA1, KT_DSA, or KT_RSA */
-	char *c_namebase;	/* Address to free for c_name and c_namelist */
-	char *c_name;		/* Hostname of connection for errors */
-	char *c_namelist;	/* Pointer to other possible addresses */
-	char *c_output_name;	/* Hostname of connection for output */
+	ssh_key_holder holder; 
 	char *c_data;		/* Data read from this fd */
 	Kex *c_kex;		/* The key-exchange struct for ssh2 */
 	struct timeval c_tv;	/* Time at which connection gets aborted */
@@ -162,29 +152,6 @@ fdlim_set(int lim)
 	return (0);
 }
 
-/*
- * This is an strsep function that returns a null field for adjacent
- * separators.  This is the same as the 4.4BSD strsep, but different from the
- * one in the GNU libc.
- */
-static char *
-xstrsep(char **str, const char *delim)
-{
-	char *s, *e;
-
-	if (!**str)
-		return (NULL);
-
-	s = *str;
-	e = s + strcspn(s, delim);
-
-	if (*e != '\0')
-		*e++ = '\0';
-	*str = e;
-
-	return (s);
-}
-
 
 static Key *
 keygrab_ssh1(con *c)
@@ -199,7 +166,7 @@ keygrab_ssh1(con *c)
 	buffer_append(&msg, c->c_data, c->c_plen);
 	buffer_consume(&msg, 8 - (c->c_plen & 7));	/* padding */
 	if (buffer_get_char(&msg) != (int) SSH_SMSG_PUBLIC_KEY) {
-		error("%s: invalid packet type", c->c_name);
+		error("%s: invalid packet type", c->holder.name);
 		buffer_clear(&msg);
 		return NULL;
 	}
@@ -248,9 +215,10 @@ keygrab_ssh2(con *c)
 {
 	int j;
 
+	//dw: why?
 	packet_set_connection(c->c_fd, c->c_fd);
 	enable_compat20();
-	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = c->c_keytype == KT_DSA?
+	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = c->holder.key_type == SSH_KEYTYPE_DSA?
 	    "ssh-dss": "ssh-rsa";
 	c->c_kex = kex_setup(myproposal);
 	c->c_kex->kex[KEX_DH_GRP1_SHA1] = kexdh_client;
@@ -273,23 +241,8 @@ keygrab_ssh2(con *c)
 	return j < 0? NULL : kexjmp_key;
 }
 
-void
-keyprint(con *c, Key *key)
-{
-	char *host = c->c_output_name ? c->c_output_name : c->c_name;
-
-	if (!key)
-		return;
-	if (hash_hosts && (host = host_hash(host, NULL, 0)) == NULL)
-		fatal("host_hash failed");
-
-	fprintf(stdout, "%s ", host);
-	key_write(key, stdout);
-	fputs("\n", stdout);
-}
-
 static int
-tcpconnect(char *host)
+tcpconnect(char *host, uint32_t *ip_addr)
 {
 	struct addrinfo hints, *ai, *aitop;
 	char strport[NI_MAXSERV];
@@ -317,25 +270,22 @@ tcpconnect(char *host)
 		close(s);
 		s = -1;
 	}
+	*ip_addr = *(uint32_t*)&((struct sockaddr_in *)ai->ai_addr)->sin_addr;
 	freeaddrinfo(aitop);
 	return s;
 }
 
 int
-conalloc(char *iname, char *oname, int keytype)
+conalloc(char *iname, uint16_t service_port, uint16_t key_type,
+		SSL* client_ssl, int client_sock)
 {
-	char *namebase, *name, *namelist;
+//	char *namebase, *name, *namelist;
 	int s;
 
-	namebase = namelist = xstrdup(iname);
+//	namebase = namelist = xstrdup(iname);
 
-	do {
-		name = xstrsep(&namelist, ",");
-		if (!name) {
-			xfree(namebase);
-			return (-1);
-		}
-	} while ((s = tcpconnect(name)) < 0);
+	uint32_t ip_addr;	
+	s = tcpconnect(iname, &ip_addr);
 
 	if (s >= maxfd)
 		fatal("conalloc: fdno %d too high", s);
@@ -344,14 +294,16 @@ conalloc(char *iname, char *oname, int keytype)
 
 	fdcon[s].c_fd = s;
 	fdcon[s].c_status = CS_CON;
-	fdcon[s].c_namebase = namebase;
-	fdcon[s].c_name = name;
-	fdcon[s].c_namelist = namelist;
-	fdcon[s].c_output_name = xstrdup(oname);
 	fdcon[s].c_data = (char *) &fdcon[s].c_plen;
 	fdcon[s].c_len = 4;
 	fdcon[s].c_off = 0;
-	fdcon[s].c_keytype = keytype;
+	fdcon[s].holder.name = iname;
+	fdcon[s].holder.port = service_port;
+	fdcon[s].holder.key_type = key_type;
+	fdcon[s].holder.client_ssl = client_ssl;
+	fdcon[s].holder.client_sock = client_sock;
+	fdcon[s].holder.key = NULL;
+	fdcon[s].holder.ip = ip_addr;
 	gettimeofday(&fdcon[s].c_tv, NULL);
 	fdcon[s].c_tv.tv_sec += timeout;
 	TAILQ_INSERT_TAIL(&tq, &fdcon[s], c_link);
@@ -366,12 +318,10 @@ confree(int s)
 	if (s >= maxfd || fdcon[s].c_status == CS_UNUSED)
 		fatal("confree: attempt to free bad fdno %d", s);
 	close(s);
-	xfree(fdcon[s].c_namebase);
-	xfree(fdcon[s].c_output_name);
 	if (fdcon[s].c_status == CS_KEYS)
 		xfree(fdcon[s].c_data);
 	fdcon[s].c_status = CS_UNUSED;
-	fdcon[s].c_keytype = 0;
+	fdcon[s].holder.key_type = 0;
 	TAILQ_REMOVE(&tq, &fdcon[s], c_link);
 	FD_CLR(s, read_wait);
 	ncon--;
@@ -386,13 +336,17 @@ contouch(int s)
 	TAILQ_INSERT_TAIL(&tq, &fdcon[s], c_link);
 }
 
+// this just reallocates a connection?
 static int
 conrecycle(int s)
 {
 	con *c = &fdcon[s];
 	int ret;
 
-	ret = conalloc(c->c_namelist, c->c_output_name, c->c_keytype);
+	ret = conalloc(c->holder.name,
+		c->holder.port, c->holder.key_type,
+		c->holder.client_ssl, 
+		c->holder.client_sock);
 	confree(s);
 	return (ret);
 }
@@ -422,19 +376,19 @@ congreet(int s)
 	if (n == 0) {
 		switch (errno) {
 		case EPIPE:
-			error("%s: Connection closed by remote host", c->c_name);
+			error("%s: Connection closed by remote host", c->holder.name);
 			break;
 		case ECONNREFUSED:
 			break;
 		default:
-			error("read (%s): %s", c->c_name, strerror(errno));
+			error("read (%s): %s", c->holder.name, strerror(errno));
 			break;
 		}
 		conrecycle(s);
 		return;
 	}
 	if (*cp != '\n' && *cp != '\r') {
-		error("%s: bad greeting", c->c_name);
+		error("%s: bad greeting", c->holder.name);
 		confree(s);
 		return;
 	}
@@ -444,40 +398,46 @@ congreet(int s)
 		compat_datafellows(remote_version);
 	else
 		datafellows = 0;
-	if (c->c_keytype != KT_RSA1) {
+	if (c->holder.key_type != SSH_KEYTYPE_RSA1) {
 		if (!ssh2_capable(remote_major, remote_minor)) {
-			debug("%s doesn't support ssh2", c->c_name);
+			debug("%s doesn't support ssh2", c->holder.name);
 			confree(s);
 			return;
 		}
 	} else if (remote_major != 1) {
-		debug("%s doesn't support ssh1", c->c_name);
+		debug("%s doesn't support ssh1", c->holder.name);
 		confree(s);
 		return;
 	}
 	// prints the version too, which we don't care about
-	fprintf(stderr, "# %s %s\n", c->c_name, chop(buf));
+//	fprintf(stderr, "# %s %s\n", c->c_name, chop(buf));
 	n = snprintf(buf, sizeof buf, "SSH-%d.%d-OpenSSH-keyscan\r\n",
-	    c->c_keytype == KT_RSA1? PROTOCOL_MAJOR_1 : PROTOCOL_MAJOR_2,
-	    c->c_keytype == KT_RSA1? PROTOCOL_MINOR_1 : PROTOCOL_MINOR_2);
+	    c->holder.key_type == SSH_KEYTYPE_RSA1? PROTOCOL_MAJOR_1 : PROTOCOL_MAJOR_2,
+	    c->holder.key_type == SSH_KEYTYPE_RSA1? PROTOCOL_MINOR_1 : PROTOCOL_MINOR_2);
 	if (n < 0 || (size_t)n >= sizeof(buf)) {
 		error("snprintf: buffer too small");
 		confree(s);
 		return;
 	}
 	if (atomicio(vwrite, s, buf, n) != (size_t)n) {
-		error("write (%s): %s", c->c_name, strerror(errno));
+		error("write (%s): %s", c->holder.name, strerror(errno));
 		confree(s);
 		return;
 	}
-	if (c->c_keytype != KT_RSA1) {
-		printf("Whoops, switching to SSH2 !!!\n");
-		keyprint(c, keygrab_ssh2(c));
-		confree(s);
+
+	if (c->holder.key_type != SSH_KEYTYPE_RSA1) {
+		c->holder.key = keygrab_ssh2(c);
 		return;
 	}
+
 	c->c_status = CS_SIZE;
 	contouch(s);
+}
+
+
+void save_key(ssh_key_holder *ssh_keys, int *num_holders_used, con* c){
+	memcpy(&ssh_keys[*num_holders_used], &(c->holder), sizeof(ssh_key_holder));
+	(*num_holders_used)++;
 }
 
 static void
@@ -487,18 +447,25 @@ conread(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 	size_t n;
 
 	if (c->c_status == CS_CON) {
+		// it appears that we get the key here for ssh2
 		congreet(s);
+		if(c->holder.key != NULL) {
+			printf("setting key from congreet \n");
+			save_key(ssh_keys, num_holders_used,c);
+			confree(s); 
+		}else {	
+			printf("returned from confree, but no key \n");
+		}	
 		return;
 	}
 	n = atomicio(read, s, c->c_data + c->c_off, c->c_len - c->c_off);
 	if (n == 0) {
-		error("read (%s): %s", c->c_name, strerror(errno));
+		error("read (%s): %s", c->holder.name, strerror(errno));
 		confree(s);
 		return;
 	}
 	c->c_off += n;
 
-	Key *key;
 	if (c->c_off == c->c_len)
 		switch (c->c_status) {
 		case CS_SIZE:
@@ -509,18 +476,12 @@ conread(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 			c->c_status = CS_KEYS;
 			break;
 		case CS_KEYS:
-			// everything supports SSH1?
-			key = keygrab_ssh1(c);
-			keyprint(c, key);
-			printf("got key on %d, calling confree \n",s);
+			c->holder.key = keygrab_ssh1(c);
+	//		keyprint(c, c->c_key);
+			save_key(ssh_keys, num_holders_used,c);
+			printf("got key in conread, calling confree for %d\n", s);
 			confree(s);
-			ssh_keys[*num_holders_used].name = 
-				xmalloc(strlen(c->c_output_name));
-			strcpy(ssh_keys[*num_holders_used].name, 
-					c->c_output_name);
-			ssh_keys[*num_holders_used].key = key;
-			(*num_holders_used)++;
-			
+			return;	
 		default:
 			fatal("conread: invalid status %d for con = %d", 
 				c->c_status, s);
@@ -566,7 +527,7 @@ int conloop(ssh_key_holder *ssh_keys, int num_holders) {
 
 	for (i = 0; i < maxfd; i++) {
 		if (FD_ISSET(i, e)) {
-			error("%s: exception!", fdcon[i].c_name);
+			error("%s: exception!", fdcon[i].holder.name);
 			confree(i);
 		} else if (FD_ISSET(i, r)){
 			// we will see if a key is returned here
@@ -579,11 +540,12 @@ int conloop(ssh_key_holder *ssh_keys, int num_holders) {
 	xfree(r);
 	xfree(e);
 
+	// loop through everything in order of soonest timeout
 	c = TAILQ_FIRST(&tq);
 	while (c && (c->c_tv.tv_sec < now.tv_sec ||
 	    (c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec < now.tv_usec))) {
+		//timeout
 		int s = c->c_fd;
-
 		c = TAILQ_NEXT(c, c_link);
 		conrecycle(s);
 	}
@@ -592,15 +554,13 @@ int conloop(ssh_key_holder *ssh_keys, int num_holders) {
 }
 
 // returns 1 if we have space to probe this host, else 0
-int do_host(char *host)
+int do_single_probe(char *host, uint16_t service_type, uint16_t service_port,
+		SSL* client_ssl, int client_sock)
 {
-	if(ncon + KT_RSA >= MAXCON) return 0;
-
-	for (int j = KT_RSA1; j <= KT_RSA; j *= 2) {
-		if (get_keytypes & j) {
-			conalloc(host, host, j);
-		}
-	}
+	if(ncon + 2 >= MAXCON) return 0; // don't have space
+	
+	conalloc(host, service_port, service_type, client_ssl, client_sock ); 
+	
 	return 1;
 }
 
