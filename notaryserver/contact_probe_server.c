@@ -219,7 +219,8 @@ ssh_key_info* get_key_info_ssh(uint32_t pserver_ip,
         uint16_t host_port, uint16_t key_type){
 
 	// Send the message
-	char buf[MAX_PACKET_LEN];
+	char *buf = (char*) malloc(MAX_PACKET_LEN);
+	memset(buf, 'B', MAX_PACKET_LEN);
 
 	int client_sock; 
 	SSL* ssl_connection = getSSLClientConnection(pserver_ip, 
@@ -241,10 +242,14 @@ ssh_key_info* get_key_info_ssh(uint32_t pserver_ip,
 	// loop until we have received replies (or time-out?) 
 	while(1) {
 		// Read Reply
-		int num_read = SSL_read(ssl_connection, buf, MAX_PACKET_LEN);
+		int num_read = SSL_read(ssl_connection, buf + offset, 
+				MAX_PACKET_LEN - offset);
 		if (num_read == -1){
 	    		perror("ssl recv");
 	    		return;
+		}else if(num_read == 0) {
+			printf("server closed socket connection \n");
+			break;
 		}
 		printf("received %d bytes \n", num_read);
 		offset += num_read;
@@ -252,6 +257,7 @@ ssh_key_info* get_key_info_ssh(uint32_t pserver_ip,
 		if(offset >= sizeof(notary_header)) {
 			notary_header *hdr = (notary_header*) buf;
                     	uint16_t pkt_len = ntohs(hdr->total_len);
+			printf("hdr says packet-len = %d \n", pkt_len);
                     	if(pkt_len <= offset) {
                                	ssh_key_info* result = 
 					process_reply(hdr,host_name,pkt_len);
@@ -264,6 +270,8 @@ ssh_key_info* get_key_info_ssh(uint32_t pserver_ip,
 		}
 
 	}
+	SSL_shutdown(ssl_connection);
+	close(client_sock);
 	
 }
 

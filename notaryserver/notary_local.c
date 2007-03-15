@@ -58,6 +58,14 @@ void check_ssh_key(SSHNotary *notary, char* name, uint16_t key_type,
         	fputs("\n", stdout);
 		printf("IP address = %s \n", 
 		inet_ntoa(*(struct in_addr*)&tmp->ip_addr));
+		
+		int num_probes = ntohs(tmp->num_probes);
+		printf("extracting %d probe timestamps \n", num_probes);
+		int* probes_start = (int*) (blob_start + blob_size);
+		int i;
+		for(i = 0; i < num_probes; i++) {
+			printf("probe[%d] = %d \n", i, ntohl(probes_start[i]));
+		}
 	}
 
 	// free list

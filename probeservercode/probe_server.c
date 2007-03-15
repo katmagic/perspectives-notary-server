@@ -9,10 +9,11 @@
 #include <openssl/pem.h>
 
 #include "../common.h"
-
+#include <sqlite3.h>
 #include "probe_server.h"
 #include "ssh-keyscan.h"
 #include "xmalloc.h"
+#include "db_storage.h"
 
 BIO *bio_err=0;
 
@@ -191,9 +192,7 @@ void acceptIncomingSSLClient(int server_sock, conn_node *head) {
 // the ssh-keyscan layer.  
 int process_request(conn_node *conn,notary_header *hdr) {
 
-	printf("processing request\n");
 	char* data = (char*)(hdr + 1);
-	printf("data: %s \n", data);
 	int name_len = ntohs(hdr->name_len);
 
 	if(name_len > 1024) {
@@ -203,10 +202,10 @@ int process_request(conn_node *conn,notary_header *hdr) {
 	char *host = (char*) malloc(name_len);
 	
 	memcpy(host, data,name_len);
-	printf("host: %s \n", host);
 	uint16_t service_type = ntohs(hdr->service_type);
 	uint16_t port = ntohs(hdr->service_port);
-	printf("Handing %s to do_host with service type %d \n", host, service_type);
+	printf("Handing %s to do_host with service type %d \n", 
+			host, service_type);
 	return do_single_probe(host, service_type, port, conn->ssl, conn->sock);
 }
 
@@ -229,8 +228,6 @@ void process_socket_data(conn_node *conn) {
 
 		int ret_val = SSL_get_error(conn->ssl, bytes_read);
 		
-		printf("SSL get-error: %d \n", ret_val); 
-
 		if(ret_val == SSL_ERROR_ZERO_RETURN) {
 			printf("Connection has been closed remotely\n");
 			exit(-1);
@@ -267,57 +264,60 @@ void process_socket_data(conn_node *conn) {
 }
 
 
-void send_probe_reply(ssh_key_holder* key_info, int time) {
+void send_reply(sqlite3* db, ssh_key_holder* key_holder, int time) {
 
-	if(key_info->key == NULL) {
+	if(key_holder->key == NULL) {
 		fprintf(stderr, "Key is null, sending no reply \n");
 		return;
 	}
 
-	key_write(key_info->key, stdout);
+	printf("putting key in DB \n");
+	key_write(key_holder->key, stdout);
 	fputs("\n", stdout);
+
+	store_ssh_probe_result(db, key_holder->name, 
+			key_holder->ip, key_holder->key, time);
 	
-	u_char* blob;
-	int blob_size = 0;
-	key_to_blob(key_info->key, &blob, &blob_size);
-	printf("Got blob of size %d \n", blob_size);
+	ssh_key_info_list* reply_list = lookupName(db, key_holder->name);
+
+	struct list_head *pos;
+	ssh_key_info_list* cur;
+	list_for_each(pos, &reply_list->list) {
+		cur = list_entry(pos, ssh_key_info_list, list);
 	
-	int key_data_len = sizeof(ssh_key_info) + blob_size;
-	int name_len = strlen(key_info->name) + 1;
-	int total_len = key_data_len + name_len + sizeof(notary_header);
-	notary_header* hdr = (notary_header*) calloc(total_len,1);
+		int key_info_size = KEY_INFO_SIZE(cur->info);
+
+		int name_len = strlen(key_holder->name) + 1;
+		int total_len = name_len + sizeof(notary_header) + 
+			key_info_size;
+		notary_header* hdr = (notary_header*) calloc(total_len,1);
 	
-        hdr->version = 1;
-        hdr->msg_type = TYPE_FETCH_REPLY_FINAL;
-        hdr->total_len = htons(total_len);
-	hdr->name_len = htons(name_len);
-        hdr->service_type = htons(key_info->key_type);
-        hdr->service_port = htons(key_info->port);
-        char* data = (char*) (hdr + 1);
-        memcpy(data, key_info->name , name_len);
-	data += name_len;
-	ssh_key_info* ssh_info = (ssh_key_info*)data;
-//	ssh_info->key_type = htons(key_info->key_type);
-	ssh_info->key_len_bytes = htons(blob_size);
-	ssh_info->ip_addr = key_info->ip;
-//	ssh_info->time_observed = htonl(time);
-//	printf("key type = %d key_size = %d \n", 
-//		ntohs(ssh_info->key_type), ntohs(ssh_info->key_len_bytes));
+        	hdr->version = 1;
+        	hdr->msg_type = TYPE_FETCH_REPLY_FINAL;
+        	hdr->total_len = htons(total_len);
+		hdr->name_len = htons(name_len);
+        	hdr->service_type = htons(key_holder->key_type);
+        	hdr->service_port = htons(key_holder->port);
+        	char* data = (char*) (hdr + 1);
+        	memcpy(data, key_holder->name , name_len);
+		data += name_len;
+		memcpy(data, cur->info, key_info_size);
 
-	data = (char*) (ssh_info + 1);  
-	// copy key data over
-	memcpy(data, blob, blob_size);	
-	xfree(blob);
-
-	printf("Replying on sock = %d with %d bytes\n", key_info->client_sock, total_len);
-        int offset = SSL_write(key_info->client_ssl, hdr, total_len);
-        if (offset == -1){
-            perror("ssl write");
-            return;
-        }
-
-        printf("Wrote %d bytes on the SSL socket\n", offset);
-
+        	int offset = SSL_write(key_holder->client_ssl, hdr, total_len);
+        	if (offset == -1){
+            		perror("ssl write");
+            		return;
+        	}
+		printf("Replied on sock = %d with %d bytes (%d sent)\n", 
+			key_holder->client_sock, total_len, offset);
+		
+		free(hdr);
+		
+//		list_del(pos); 
+//		free(cur->info);
+//		free(cur);
+	}
+	printf("done with all replies for %s \n", key_holder->name);
 }
 
 // returns maxfd + 1
@@ -330,7 +330,6 @@ int setup_readfds(fd_set *readfds, conn_node *head, int server_sock) {
 
 	list_for_each(pos, &(head->list)) {
 		tmp = list_entry(pos, conn_node, list);
-		printf("setting readfd set for %d \n", tmp->sock);
 		if(tmp->sock > max_fd) max_fd = tmp->sock;
 		FD_SET(tmp->sock , readfds);
 	}
@@ -339,12 +338,13 @@ int setup_readfds(fd_set *readfds, conn_node *head, int server_sock) {
 
 int main(int argc, char** argv) {
 	conn_node conn_list, *tmp;
-	if(argc != 2) {
-		fprintf(stderr, "usage: probe_server <port>\n");
+	if(argc != 3) {
+		fprintf(stderr, "usage: probe_server <port> <db-filename>\n");
 		exit(1);
 	}
 
 	uint16_t port = atoi(argv[1]);	
+
 	INIT_LIST_HEAD(&conn_list.list);	
 	
 	int server_sock;
@@ -353,7 +353,7 @@ int main(int argc, char** argv) {
 	struct timeval select_timeout;
 
 	init_scankeys();
-
+	sqlite3* db = db_init(argv[2]);
 	init_serversock(port, &server_sock);
 
 	// loop to keep reading requests sent by notary server,
@@ -370,41 +370,35 @@ int main(int argc, char** argv) {
 					&select_timeout);
 		if(num_fds > 0) {
 			if(FD_ISSET(server_sock, &readfds)) {
-				printf("new client connection \n");
 				acceptIncomingSSLClient(server_sock, &conn_list);
 			}
 			
 			struct list_head *pos, *q;
 			list_for_each_safe(pos, q, &(conn_list.list)) {
 				tmp = list_entry(pos, conn_node, list);
-				printf("testing readfd set for %d \n", tmp->sock);
 				if(FD_ISSET(tmp->sock , &readfds)) {
-					printf("reading from client %d \n", 
-							tmp->sock);
 					process_socket_data(tmp);
 
 				}
 			}
-		}else {
-			printf("Select returned, no fds set...\n");
 		}
 
 		int num_holders_used = conloop(ssh_keys, NUM_HOLDERS);
 	
 		if(num_holders_used > 0) {	
-			printf("***** main server loop got %d holders back! ****** \n", num_holders_used);
 		
 			struct timeval cur_time;
 			gettimeofday(&cur_time, NULL);
 			int time = (uint32_t) cur_time.tv_sec;
 			for(int i = 0; i < num_holders_used; i++) {
-				send_probe_reply(&ssh_keys[i], time);
+				send_reply(db,&ssh_keys[i], time);
 			}
 		}
 
 	
   	} // end while
 
+	db_close(db);
 	close(server_sock);
 }
 

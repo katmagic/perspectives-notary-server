@@ -57,7 +57,7 @@ void create_probes_table(sqlite3* db) {
 int get_binding_id(sqlite3* db, char* dns_name, uint32_t ip_addr,
 			char* blob, int blob_len) {
 	int rc;
-	char *select_stmt1 = "SELECT id FROM ssh_probes WHERE "
+	char *select_stmt1 = "SELECT id FROM ssh_key_bindings WHERE "
 			"dns_name = ? AND ip_addr = ? AND key = ?";
 	sqlite3_stmt *stmt1; 	
 	const char* tail;
@@ -86,6 +86,7 @@ void store_ssh_probe_result(sqlite3* db, char *dns_name, uint32_t ip_addr,
 	u_char* blob;
 	int blob_size = 0;
 	key_to_blob(key, &blob, &blob_size);
+	printf("converted to to a blob of size = %d \n", blob_size);
 	int id = get_binding_id(db, dns_name, ip_addr, (char*)blob, blob_size);
 	if(id == NO_BINDING) {
 		// we've never seen this binding
@@ -100,13 +101,14 @@ void store_ssh_probe_result(sqlite3* db, char *dns_name, uint32_t ip_addr,
 		
 	}
 	add_ssh_probe(db, id, timestamp);
-	xfree(blob);
+	//xfree(blob);
 }
 
 
 // add an entry to the 'ssh_probes' table
 void add_ssh_probe(sqlite3* db, int id, int timestamp) {
 
+	printf("adding SSH probe for id = %d \n", id);
 	char* add_stmt2 = "INSERT into ssh_probes values (?, ?)";
 	sqlite3_stmt *stmt2; 	
 	const char *tail;
@@ -157,12 +159,11 @@ void add_ssh_key_binding(sqlite3* db, char *dns_name, uint32_t ip_addr, char*
 // free.  The function returns the number of entries in results. 
 int get_probes_for_binding(sqlite3* db, int binding_id, int** results) {
 
-	char *zErrMsg = NULL;
 	int rc;
-	char *select_stmt1 = "SELECT count(*), time FROM ssh_probes "
-			"where id = ?";
 	sqlite3_stmt *stmt1; 	
 	const char* tail;
+	char *select_stmt1 = "SELECT count(*) FROM ssh_probes "
+			"where id = ?";
 
   	rc = sqlite3_prepare_v2(db, select_stmt1, 
 			strlen(select_stmt1), &stmt1, &tail);
@@ -170,25 +171,37 @@ int get_probes_for_binding(sqlite3* db, int binding_id, int** results) {
 
 	rc = sqlite3_step(stmt1);
 	if(rc != SQLITE_ROW) {
-		*results = NULL; // nothing with this id
-		return 0;
+		fprintf(stderr, "Error, DB failed to return count(*) value\n");
+		exit(1);
 	}
-	
-	int i = 0;
 	int total_count = sqlite3_column_int(stmt1,0);
 	printf("we have %d total timestamps \n", total_count);
 	*results = (int*) malloc(sizeof(int) * total_count);
-	do {
-		(*results)[i] = sqlite3_column_int(stmt1,1);
-		i++;
-	} while((rc = sqlite3_step(stmt1) == SQLITE_ROW));
+	
+	char *select_stmt2 = "SELECT time FROM ssh_probes "
+			"where id = ?";
+	sqlite3_stmt *stmt2; 	
 
-	if( rc != SQLITE_OK && rc != SQLITE_DONE ){
-    		fprintf(stderr, "SQL error (step): %s\n", zErrMsg);
-    		sqlite3_free(zErrMsg);
-  	}
+  	rc = sqlite3_prepare_v2(db, select_stmt2, 
+			strlen(select_stmt2), &stmt2, &tail);
+	rc = sqlite3_bind_int(stmt2, 1, binding_id);
+
+	int i;
+	for(i = 0; i < total_count; i++) {
+		int rc = sqlite3_step(stmt2);
+		if(rc != SQLITE_ROW){
+			fprintf(stderr,"Couldn't access expect row in"
+				" 'ssh_probes'. quiting early. \n");
+			return i; // only valid through i
+		}
+		int t = sqlite3_column_int(stmt2,0);
+//		printf("adding t = %d \n", t);
+		(*results)[i] = htonl(t);
+	
+	} 
 
 	sqlite3_finalize(stmt1);
+	sqlite3_finalize(stmt2);
 	return total_count;
 }
 
@@ -197,13 +210,16 @@ int get_probes_for_binding(sqlite3* db, int binding_id, int** results) {
 // all memory must be freed by the caller. 
 ssh_key_info_list* lookupName(sqlite3* db, char* dns_name) {
 
-	ssh_key_info_list* head = NULL;
 	char *zErrMsg = NULL;
 	int rc;
 	char *select_stmt1 = "SELECT id,ip_addr,key FROM ssh_key_bindings "
 				"where dns_name = ?";
 	sqlite3_stmt *stmt1; 	
 	const char* tail;
+
+	ssh_key_info_list* head = (ssh_key_info_list*)
+			malloc(sizeof(ssh_key_info_list));
+	INIT_LIST_HEAD(&(head->list));
 
   	rc = sqlite3_prepare_v2(db, select_stmt1, 
 			strlen(select_stmt1), &stmt1, &tail);
@@ -224,20 +240,27 @@ ssh_key_info_list* lookupName(sqlite3* db, char* dns_name) {
 		int id = sqlite3_column_int(stmt1,0);
 		uint32_t ip_addr = (uint32_t)sqlite3_column_int(stmt1,1);
 
-		printf("Found key result for ip = %s \n", 
+		printf("Found id = %d for ip = %s \n", id,
 			inet_ntoa(*(struct in_addr*)&ip_addr));
 		int* results; 
 		int blob_size = sqlite3_column_bytes(stmt1,2);
 		const char *blob = sqlite3_column_blob(stmt1,2);
+
 		int num_probes = get_probes_for_binding(db, id, &results);
 
 		int probes_size = sizeof(int) * num_probes;
 		int total_size = sizeof(ssh_key_info) + blob_size + 
 					probes_size;
 		ssh_key_info* info = (ssh_key_info*)malloc(total_size);
-		info->key_len_bytes = blob_size;
-		info->num_probes = num_probes;
+		info->key_len_bytes = htons((uint16_t)blob_size);
+		info->num_probes = htons((uint16_t)num_probes);
 		info->ip_addr = ip_addr;
+
+		printf("key from database \n");
+		Key* key = key_from_blob(blob, blob_size);
+		key_write(key, stdout);
+		fputs("\n", stdout);
+
 		char *key_start = (char*)(info + 1);
 		memcpy(key_start, blob, blob_size);
 		char *probe_start = key_start + blob_size;
@@ -247,12 +270,8 @@ ssh_key_info_list* lookupName(sqlite3* db, char* dns_name) {
 				malloc(sizeof(ssh_key_info_list));
 		elem->info = info;
 
-		if(head == NULL) {
-			head = elem;
-			INIT_LIST_HEAD(&(head->list));
-		} else {
-			list_add(&(elem->list),&(head->list));
-		}
+		list_add(&(elem->list),&(head->list));
+		
 	} // end ROW for-loop
 
 	if( rc != SQLITE_OK && rc != SQLITE_DONE ){
@@ -263,9 +282,6 @@ ssh_key_info_list* lookupName(sqlite3* db, char* dns_name) {
 	sqlite3_finalize(stmt1);
 	return head;
 }
-
-
-
 
 
 // initialize a sqlite database with filename 'fname'
@@ -292,7 +308,7 @@ void db_close(sqlite3* db) {
   sqlite3_close(db);
 }
 
-
+/*
 int main(int argc, char** argv) {
 
 	if(argc != 2) {
@@ -306,5 +322,5 @@ int main(int argc, char** argv) {
 
   	return 0;
 }
-
+*/
 

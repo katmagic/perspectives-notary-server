@@ -51,8 +51,8 @@ typedef struct {
 } __attribute__ ((packed)) ssh_key_info;
 
 #define KEY_INFO_SIZE(info)  \
-	sizeof(ssh_key_info) + info->key_len_bytes \
-	+ (sizeof(int) * info->num_probes)
+	sizeof(ssh_key_info) + ntohs(info->key_len_bytes) \
+	+ (sizeof(int) * ntohs(info->num_probes))
 
 typedef struct {
 	struct list_head list;
