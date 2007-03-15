@@ -192,7 +192,7 @@ notary_header* pkt_create(char* name, uint16_t service_type,
 }
 
 
-ssh_key_list* process_reply(notary_header* hdr, char* host_name, int total_len) {
+ssh_key_info* process_reply(notary_header* hdr, char* host_name, int total_len) {
 
 	if(hdr->version != 1) {
 		fprintf(stderr, "Invalid version #%d \n", hdr->version);
@@ -210,25 +210,11 @@ ssh_key_list* process_reply(notary_header* hdr, char* host_name, int total_len) 
 */
 	printf("name = %s with len = %d \n", data, name_len);
 	ssh_key_info* key_info = (ssh_key_info*) (data + name_len);
-	printf("keytype = %d \n", ntohs(key_info->key_type));
-	uint32_t blob_size = (uint32_t) ntohs(key_info->key_len_bytes);
 
-	printf("blob_size = %d \n", blob_size);
-	if(blob_size + sizeof(notary_header) + sizeof(ssh_key_info) 
-		> total_len) {
-		fprintf(stderr, "Blob size is larger than packet can fit \n");
-		return NULL;
-	}
-
-	char* blob = (char*) (key_info + 1);
-	ssh_key_list* result = (ssh_key_list*)malloc(sizeof(ssh_key_list));
-	result->key = key_from_blob(blob, blob_size);
-	result->ip_addr = key_info->ip_addr;
-	result->time_observed = key_info->time_observed;
-	return result;
+	return key_info;
 }
 
-ssh_key_list* get_key_info_ssh(uint32_t pserver_ip,
+ssh_key_info* get_key_info_ssh(uint32_t pserver_ip,
         uint16_t pserver_port, char *host_name,
         uint16_t host_port, uint16_t key_type){
 
@@ -267,7 +253,7 @@ ssh_key_list* get_key_info_ssh(uint32_t pserver_ip,
 			notary_header *hdr = (notary_header*) buf;
                     	uint16_t pkt_len = ntohs(hdr->total_len);
                     	if(pkt_len <= offset) {
-                               	ssh_key_list* result = 
+                               	ssh_key_info* result = 
 					process_reply(hdr,host_name,pkt_len);
 				// test if this is the last record,
 				// for now, it must be

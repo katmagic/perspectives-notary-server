@@ -45,11 +45,16 @@ void check_ssh_key(SSHNotary *notary, char* name, uint16_t key_type,
 	struct list_head *pos;
 	list_for_each(pos,&notary->probe_servers.list){
 		server = list_entry(pos, server_list, list);
-		ssh_key_list *tmp = get_key_info_ssh(server->ip_addr, 
+		ssh_key_info *tmp = get_key_info_ssh(server->ip_addr, 
 			server->port,name, service_port, key_type);
 
+		int blob_size = ntohs(tmp->key_len_bytes);
+		char* blob_start = (char*)(tmp + 1);
+        	printf("blob_size = %d \n", blob_size);
+		Key* key = key_from_blob(blob_start, blob_size);
+
        		printf("Got key: \n");
-       		key_write(tmp->key, stdout);
+       		key_write(key, stdout);
         	fputs("\n", stdout);
 		printf("IP address = %s \n", 
 		inet_ntoa(*(struct in_addr*)&tmp->ip_addr));

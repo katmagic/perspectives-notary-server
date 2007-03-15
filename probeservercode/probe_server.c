@@ -1,15 +1,5 @@
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+
 #include <openssl/ssl.h> 
 #include <openssl/rand.h>
 #include <openssl/x509.h>
@@ -19,6 +9,7 @@
 #include <openssl/pem.h>
 
 #include "../common.h"
+
 #include "probe_server.h"
 #include "ssh-keyscan.h"
 #include "xmalloc.h"
@@ -306,12 +297,12 @@ void send_probe_reply(ssh_key_holder* key_info, int time) {
         memcpy(data, key_info->name , name_len);
 	data += name_len;
 	ssh_key_info* ssh_info = (ssh_key_info*)data;
-	ssh_info->key_type = htons(key_info->key_type);
+//	ssh_info->key_type = htons(key_info->key_type);
 	ssh_info->key_len_bytes = htons(blob_size);
 	ssh_info->ip_addr = key_info->ip;
-	ssh_info->time_observed = htonl(time);
-	printf("key type = %d key_size = %d \n", 
-		ntohs(ssh_info->key_type), ntohs(ssh_info->key_len_bytes));
+//	ssh_info->time_observed = htonl(time);
+//	printf("key type = %d key_size = %d \n", 
+//		ntohs(ssh_info->key_type), ntohs(ssh_info->key_len_bytes));
 
 	data = (char*) (ssh_info + 1);  
 	// copy key data over

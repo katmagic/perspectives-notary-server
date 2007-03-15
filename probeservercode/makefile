@@ -11,8 +11,11 @@ CPPFLAGS=-I$(SSH_SRC_DIR) -I/usr/local/ssl/include -DHAVE_CONFIG_H
 server: $(OBJECTS)
 	gcc -g $(OBJECTS) $(LDFLAGS) -lssh -lopenbsd-compat -lssh $(LIBS) -o probe_server
 
+db_storage: db_storage.o
+	gcc -g db_storage.o libsqlite3.a -o db_storage
+
 .c.o:
 	gcc $(CFLAGS) $(CPPFLAGS) -c $<
 
 clean:
-	rm -rf *.o probe_server
+	rm -rf *.o probe_server db_util
