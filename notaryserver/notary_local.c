@@ -78,8 +78,6 @@ void contact_probe_servers(SSHNotary *notary, int time_out_msecs /*ignored*/,
 	DPRINTF(DEBUG_INFO, "entering get-key loop\n");
 	list_for_each(pos,&notary->probe_servers.list){
 		server = list_entry(pos, server_list, list);
-		DPRINTF(DEBUG_INFO, "list head = %x next = %x prev = %x\n", 
-				pos, pos->next, pos->prev);
 		get_key_info_ssh(&server->current_info, server->ip_addr, 
 			server->port,name, service_port, key_type);
 	}
@@ -106,7 +104,7 @@ void print_probe_info(SSHNotary *notary) {
 			char* blob_start = (char*)(key_info + 1);
         	
 			DPRINTF(DEBUG_MESSAGE, "blob_size = %d \n", blob_size);
-			Key* key = key_from_blob(blob_start, blob_size);
+			Key* key = key_from_blob((uint8_t*)blob_start, blob_size);
 
 			IF_DEBUG(DEBUG_MESSAGE) {
        				printf("Got key: \n");
@@ -134,16 +132,16 @@ void print_probe_info(SSHNotary *notary) {
 // <server ip> <server port> 
 // (no per-probe server public keys yet) 
 void load_probe_servers(SSHNotary *notary, char* fname){
-	char *buf = NULL;
+	char buf[1024];
 	size_t n = 0;
 	FILE *f;
-	int size = 0; 
 	assert(fname);
 
 	f = fopen(fname, "r");
-	while((size = getline(&buf, &n, f)) >= 0) {
-		if(size <= 1) continue;
+	while(fgets(buf, 1023,f) != NULL) {
+		if(*buf == '\n') continue;
 		if(*buf == '#') continue;
+		int size = strlen(buf);
 		buf[size - 1] = 0x0; // replace '\n' with NULL
 		char *delim = strchr(buf,' ');
 		if(delim == NULL) {

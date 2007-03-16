@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
 
 	if(argc < 4) {
 		fprintf(stderr, "usage: notary_client <probe-server file>"
-				" <host> <port> <key-type>");
+				" <host> <port> <key-type>\n");
 		exit(1);
 	}
 
@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
 
 	// initialize library with server info
 	SSHNotary *notary = init_ssh_notary();
-	
+
 	load_probe_servers(notary, argv[1]);
 
 	// set key acceptance policy
