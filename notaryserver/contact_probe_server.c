@@ -238,7 +238,7 @@ ssh_key_info* get_key_info_ssh(ssh_msg_list *head , uint32_t pserver_ip,
 			process_single_message(head, hdr, 
 					ssl_connection,host_name);
 		}
-
+		offset = 0;
 	}
 	SSL_shutdown(ssl_connection);
 	close(client_sock);

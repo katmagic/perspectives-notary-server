@@ -15,6 +15,7 @@ unsigned int notary_debug = DEBUG_ALL;
 void add_probe_server(SSHNotary *notary, uint32_t ip_address, uint16_t port){
 	server_list *tmp = (server_list*)malloc(sizeof(server_list));
 	tmp->ip_addr = ip_address;
+	INIT_LIST_HEAD(&(tmp->current_info.list));
 	tmp->port = port;
 	list_add(&tmp->list,&(notary->probe_servers.list));
 }
@@ -33,23 +34,25 @@ SSHNotary* init_ssh_notary(){
 void free_key_info(SSHNotary* notary) {
 
 	server_list *server;
-	struct list_head *outer_pos, *inner_pos;
+	struct list_head *outer_pos, *inner_pos, *q;
 	list_for_each(outer_pos,&notary->probe_servers.list){
 		server = list_entry(outer_pos, server_list, list);
 			
 		ssh_msg_list *list_elem;
-		list_for_each(inner_pos,&(server->current_info.list)) {
+		list_for_each_safe(inner_pos,q, &(server->current_info.list)) {
 			list_elem = list_entry(inner_pos, 	
 				ssh_msg_list, list);
-			ssh_key_info* key_info = 
-			   (ssh_key_info*)HDR2DATA(list_elem->hdr);
-	
+			free(list_elem->hdr);
+			list_del(&(list_elem->list));
+			free(list_elem);
 		}
 
 	}
 }
  
 void free_ssh_notary(SSHNotary* notary){
+	free_key_info(notary); // call before freeing server info
+
 	server_list *server;
 	struct list_head *pos, *q;
 	list_for_each_safe(pos, q, &notary->probe_servers.list){
@@ -68,6 +71,8 @@ void contact_probe_servers(SSHNotary *notary, int time_out_msecs /*ignored*/,
 		char* name, uint16_t key_type, 
 		uint16_t service_port) {
 
+	free_key_info(notary); // free any old data we had
+
 	server_list *server;
 	struct list_head *pos;
 	DPRINTF(DEBUG_INFO, "entering get-key loop\n");
@@ -75,7 +80,6 @@ void contact_probe_servers(SSHNotary *notary, int time_out_msecs /*ignored*/,
 		server = list_entry(pos, server_list, list);
 		DPRINTF(DEBUG_INFO, "list head = %x next = %x prev = %x\n", 
 				pos, pos->next, pos->prev);
-		INIT_LIST_HEAD(&(server->current_info.list));
 		get_key_info_ssh(&server->current_info, server->ip_addr, 
 			server->port,name, service_port, key_type);
 	}
@@ -151,6 +155,7 @@ void load_probe_servers(SSHNotary *notary, char* fname){
 		
 		server_list *tmp = (server_list*)malloc(sizeof(server_list));
 		tmp->port = (uint16_t) atoi(delim + 1);
+		INIT_LIST_HEAD(&(tmp->current_info.list));
 		inet_aton(buf, (struct in_addr *)&(tmp->ip_addr));
 		list_add(&(tmp->list), &(notary->probe_servers.list));
 		DPRINTF(DEBUG_INFO, "Probe server: %s : %d \n",

@@ -264,7 +264,7 @@ void send_reply(sqlite3* db, ssh_key_holder* key_holder, int time) {
 //		list_del(pos); 
 //		free(cur);
 	}
-	printf("done with all replies for %s \n", key_holder->name);
+	printf("done with all replies for %s, closing connection \n", key_holder->name);
 	SSL_shutdown(key_holder->conn->ssl);
 	close(key_holder->conn->sock);
 	list_del(&(key_holder->conn->list));
