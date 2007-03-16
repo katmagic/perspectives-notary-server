@@ -15,6 +15,9 @@
 #include "xmalloc.h"
 #include "db_storage.h"
 
+
+unsigned int notary_debug = DEBUG_ALL;
+
 BIO *bio_err=0;
 
 /* A simple error and exit routine*/
@@ -40,53 +43,6 @@ void destroy_ctx(ctx)
   {
     SSL_CTX_free(ctx);
   }
-
-/*
-void check_cert_chain(ssl,host)
-  SSL *ssl;
-  char *host;
-  {
-    X509 *peer;
-    char peer_CN[256];
-    
-    if(SSL_get_verify_result(ssl)!=X509_V_OK)
-      berr_exit("Certificate doesn't verify");
-
-    // Check the cert chain. The chain length
-    //  is automatically checked by OpenSSL when we
-    //  set the verify depth in the ctx
-
-    // Check the common name
-    peer=SSL_get_peer_certificate(ssl);
-    X509_NAME_get_text_by_NID(X509_get_subject_name(peer),
-      NID_commonName, peer_CN, 256);
-    if(strcasecmp(peer_CN,host))
-    err_exit("Common name doesn't match host name");
-  }
-*/
-
-/*
-int verify_callback (int ok, X509_STORE_CTX *store)
-{
-    char data[256];
-
-    if (!ok)
-    {
-        X509 *cert = X509_STORE_CTX_get_current_cert(store);
-        int  depth = X509_STORE_CTX_get_error_depth(store);
-        int  err = X509_STORE_CTX_get_error(store);
-
-        fprintf(stderr, "-Error with certificate at depth: %i\n", depth);
-        X509_NAME_oneline(X509_get_issuer_name(cert), data, 256);
-        fprintf(stderr, "  issuer   = %s\n", data);
-        X509_NAME_oneline(X509_get_subject_name(cert), data, 256);
-        fprintf(stderr, "  subject  = %s\n", data);
-        fprintf(stderr, "  err %i:%s\n", err, X509_verify_cert_error_string(err) );
-    }
-
-    return ok;
-}
-*/
 
 
 #define LISTEN_PORT 2221
@@ -120,7 +76,7 @@ SSL_CTX *initialize_ctx(char *keyfile, char*cert_file) {
     if(!SSL_CTX_check_private_key(ctx)) 
       berr_exit("Private key check failed");
 
-    printf("Successfully loaded private key and certificate\n");
+    DPRINTF(DEBUG_SSL,"Successfully loaded private key and certificate\n");
     return ctx;
   }
       
@@ -146,7 +102,7 @@ void init_serversock(uint16_t port, int* server_sock) {
  
 	listen(*server_sock,5);
  
-	printf("waiting for incoming connections on %s : %d \n",
+	DPRINTF(DEBUG_INFO,"waiting for incoming connections on %s : %d \n",
 		inet_ntoa(server_addr.sin_addr), port);
 }
 
@@ -162,7 +118,7 @@ void acceptIncomingSSLClient(int server_sock, conn_node *head) {
              	perror("ERROR on accept");
 		exit(-1);
 	}
-	printf("Received connection from %s : %d \n", 
+	DPRINTF(DEBUG_INFO,"Received connection from %s : %d \n", 
 		inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));	
 
 	// Build the SSL context
@@ -183,7 +139,7 @@ void acceptIncomingSSLClient(int server_sock, conn_node *head) {
 	tmp->ssl = ssl;
 	tmp->offset = 0;
 	
-	printf("adding socket = %d to list \n", tmp->sock);
+	DPRINTF(DEBUG_SOCKET, "adding socket = %d to list \n", tmp->sock);
 	list_add(&(tmp->list), &(head->list));
 }
 
@@ -196,7 +152,8 @@ int process_request(conn_node *conn,notary_header *hdr) {
 	int name_len = ntohs(hdr->name_len);
 
 	if(name_len > 1024) {
-		printf("Ignoring request because domain name > 1024 bytes\n");
+		DPRINTF(DEBUG_ERROR,
+		"Ignoring request because domain name > 1024 bytes\n");
 		return 1; 
 	}
 	char *host = (char*) malloc(name_len);
@@ -204,9 +161,9 @@ int process_request(conn_node *conn,notary_header *hdr) {
 	memcpy(host, data,name_len);
 	uint16_t service_type = ntohs(hdr->service_type);
 	uint16_t port = ntohs(hdr->service_port);
-	printf("Handing %s to do_host with service type %d \n", 
+	DPRINTF(DEBUG_INFO, "Handing %s to do_host with service type %d \n", 
 			host, service_type);
-	return do_single_probe(host, service_type, port, conn->ssl, conn->sock);
+	return do_single_probe(host, service_type, port, conn);
 }
 
 
@@ -215,10 +172,11 @@ void process_socket_data(conn_node *conn) {
 	do {
 		int bytes_read = SSL_read(conn->ssl, conn->buf + conn->offset, 
 			MAX_PACKET_LEN - conn->offset);
-		printf("read %d bytes \n", bytes_read);
+		DPRINTF(DEBUG_SOCKET, "read %d bytes \n", bytes_read);
 
 		if(bytes_read == 0) {
-			printf("connection closed on socket %d \n", conn->sock);
+			DPRINTF(DEBUG_ERROR, 
+				"connection closed on socket %d \n", conn->sock);
 			SSL_shutdown(conn->ssl);
 			close(conn->sock);
 			list_del(&(conn->list));
@@ -229,15 +187,15 @@ void process_socket_data(conn_node *conn) {
 		int ret_val = SSL_get_error(conn->ssl, bytes_read);
 		
 		if(ret_val == SSL_ERROR_ZERO_RETURN) {
-			printf("Connection has been closed remotely\n");
-			exit(-1);
+			DPRINTF(DEBUG_ERROR, "Connection has been closed remotely\n");
+			return;
 		} else if(ret_val == SSL_ERROR_SYSCALL) {
 			perror("Socket Syscall error");
-			exit(-1);
+			return;
 		}else if(ret_val != SSL_ERROR_NONE) {
-    			printf("SSL_read returned error. \n");
+    			DPRINTF(DEBUG_ERROR | DEBUG_SSL, "SSL_read returned error. \n");
     			ERR_print_errors(bio_err);
-			exit(-1);
+			return;
 		}
 
 		int hdr_len = sizeof(notary_header);
@@ -254,11 +212,13 @@ void process_socket_data(conn_node *conn) {
 				 MAX_PACKET_LEN - pkt_len);
 				conn->offset -= pkt_len;
 			}else {
-				printf("%d bytes has header but not all %d bytes \n", 
+				DPRINTF(DEBUG_SOCKET,
+					"%d bytes has header but not all %d bytes \n", 
 					conn->offset, pkt_len);
 			}
 		}else {
-			printf("%d bytes is not enough for header \n", conn->offset);
+			DPRINTF(DEBUG_SOCKET,
+			"%d bytes is not enough for header \n", conn->offset);
 		}
 	} while(SSL_pending(conn->ssl));
 }
@@ -267,63 +227,55 @@ void process_socket_data(conn_node *conn) {
 void send_reply(sqlite3* db, ssh_key_holder* key_holder, int time) {
 
 	if(key_holder->key == NULL) {
-		fprintf(stderr, "Key is null, sending no reply \n");
+		DPRINTF(DEBUG_ERROR, "Key is null, sending no reply \n");
 		return;
 	}
 
-	printf("putting key in DB \n");
-	key_write(key_holder->key, stdout);
-	fputs("\n", stdout);
+	IF_DEBUG(DEBUG_MESSAGE) {
+		printf("putting key in DB \n");
+		key_write(key_holder->key, stdout);
+		fputs("\n", stdout);
+	}
 
 	store_ssh_probe_result(db, key_holder->name, 
 			key_holder->ip, key_holder->key, time);
 	
-	ssh_key_info_list* reply_list = lookupName(db, key_holder->name);
+	ssh_msg_list* reply_list = lookupName(db, key_holder);
 
 	struct list_head *pos;
-	ssh_key_info_list* cur;
+	ssh_msg_list* cur;
 	list_for_each(pos, &reply_list->list) {
-		cur = list_entry(pos, ssh_key_info_list, list);
+		cur = list_entry(pos, ssh_msg_list, list);
 	
-		int key_info_size = KEY_INFO_SIZE(cur->info);
+		
+		notary_header* hdr = cur->hdr;
+		int total_len = ntohs(hdr->total_len);	
 
-		int name_len = strlen(key_holder->name) + 1;
-		int total_len = name_len + sizeof(notary_header) + 
-			key_info_size;
-		notary_header* hdr = (notary_header*) calloc(total_len,1);
-	
-        	hdr->version = 1;
-        	hdr->msg_type = TYPE_FETCH_REPLY_FINAL;
-        	hdr->total_len = htons(total_len);
-		hdr->name_len = htons(name_len);
-        	hdr->service_type = htons(key_holder->key_type);
-        	hdr->service_port = htons(key_holder->port);
-        	char* data = (char*) (hdr + 1);
-        	memcpy(data, key_holder->name , name_len);
-		data += name_len;
-		memcpy(data, cur->info, key_info_size);
-
-        	int offset = SSL_write(key_holder->client_ssl, hdr, total_len);
+        	int offset = SSL_write(key_holder->conn->ssl, hdr, total_len);
         	if (offset == -1){
             		perror("ssl write");
             		return;
         	}
-		printf("Replied on sock = %d with %d bytes (%d sent)\n", 
-			key_holder->client_sock, total_len, offset);
+		DPRINTF(DEBUG_INFO, "Replied on sock = %d with %d bytes (%d sent)\n", 
+			key_holder->conn->sock, total_len, offset);
 		
 		free(hdr);
 		
 //		list_del(pos); 
-//		free(cur->info);
 //		free(cur);
 	}
 	printf("done with all replies for %s \n", key_holder->name);
+	SSL_shutdown(key_holder->conn->ssl);
+	close(key_holder->conn->sock);
+	list_del(&(key_holder->conn->list));
+	free(key_holder->conn);
 }
 
 // returns maxfd + 1
 int setup_readfds(fd_set *readfds, conn_node *head, int server_sock) {
 	int max_fd = server_sock;
 	FD_ZERO(readfds);	
+        DPRINTF(DEBUG_ALL, "set readfs for server sock = %d \n", server_sock);
 	FD_SET(server_sock, readfds);	
 	struct list_head* pos;
 	conn_node* tmp;
@@ -332,6 +284,9 @@ int setup_readfds(fd_set *readfds, conn_node *head, int server_sock) {
 		tmp = list_entry(pos, conn_node, list);
 		if(tmp->sock > max_fd) max_fd = tmp->sock;
 		FD_SET(tmp->sock , readfds);
+                DPRINTF(DEBUG_ALL,
+                        "set readfs for client sock = %d \n", tmp->sock);
+
 	}
 	return max_fd + 1;
 }
@@ -370,6 +325,7 @@ int main(int argc, char** argv) {
 					&select_timeout);
 		if(num_fds > 0) {
 			if(FD_ISSET(server_sock, &readfds)) {
+                                DPRINTF(DEBUG_SOCKET,"new client! \n");
 				acceptIncomingSSLClient(server_sock, &conn_list);
 			}
 			
@@ -381,7 +337,10 @@ int main(int argc, char** argv) {
 
 				}
 			}
-		}
+		}else {
+                        DPRINTF(DEBUG_ALL, "select returned nothing \n");
+                }
+
 
 		int num_holders_used = conloop(ssh_keys, NUM_HOLDERS);
 	

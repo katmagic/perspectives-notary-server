@@ -1,6 +1,6 @@
 SSH_SRC_DIR=/afs/cs.cmu.edu/user/dwendlan/multissh/openssh-4.4p1
 OBJECTS= notary_local.o contact_probe_server.o notary_client.o 
-LIBS=-lresolv -lstdc++ -lcrypto -lutil -lz -lnsl  -ldl -lcrypt -lssl -lcrypto
+LIBS= -lefence -lresolv -lstdc++ -lcrypto -lutil -lz -lnsl  -ldl -lcrypt -lssl -lcrypto
 CC=gcc -g
 
 LDFLAGS=-L. -L/usr/local/ssl/lib

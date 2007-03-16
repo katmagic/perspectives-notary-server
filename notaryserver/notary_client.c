@@ -33,6 +33,11 @@ int main(int argc, char** argv) {
 
 	// set key acceptance policy
 
-	check_ssh_key(notary, argv[2], key_type, atoi(argv[3]), NULL); 
+	contact_probe_servers(notary, 5000,argv[2], 
+		key_type, atoi(argv[3])); 
+
+	print_probe_info(notary);
+
+	free_ssh_notary(notary);
 
 }

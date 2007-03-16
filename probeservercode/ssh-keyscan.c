@@ -276,13 +276,10 @@ tcpconnect(char *host, uint32_t *ip_addr)
 }
 
 int
-conalloc(char *iname, uint16_t service_port, uint16_t key_type,
-		SSL* client_ssl, int client_sock)
+conalloc(char *iname, uint16_t service_port, uint16_t key_type,conn_node *conn)
 {
-//	char *namebase, *name, *namelist;
 	int s;
 
-//	namebase = namelist = xstrdup(iname);
 
 	uint32_t ip_addr;	
 	s = tcpconnect(iname, &ip_addr);
@@ -300,8 +297,7 @@ conalloc(char *iname, uint16_t service_port, uint16_t key_type,
 	fdcon[s].holder.name = iname;
 	fdcon[s].holder.port = service_port;
 	fdcon[s].holder.key_type = key_type;
-	fdcon[s].holder.client_ssl = client_ssl;
-	fdcon[s].holder.client_sock = client_sock;
+	fdcon[s].holder.conn = conn;
 	fdcon[s].holder.key = NULL;
 	fdcon[s].holder.ip = ip_addr;
 	gettimeofday(&fdcon[s].c_tv, NULL);
@@ -345,8 +341,7 @@ conrecycle(int s)
 
 	ret = conalloc(c->holder.name,
 		c->holder.port, c->holder.key_type,
-		c->holder.client_ssl, 
-		c->holder.client_sock);
+		c->holder.conn);
 	confree(s);
 	return (ret);
 }
@@ -409,8 +404,6 @@ congreet(int s)
 		confree(s);
 		return;
 	}
-	// prints the version too, which we don't care about
-//	fprintf(stderr, "# %s %s\n", c->c_name, chop(buf));
 	n = snprintf(buf, sizeof buf, "SSH-%d.%d-OpenSSH-keyscan\r\n",
 	    c->holder.key_type == SSH_KEYTYPE_RSA1? PROTOCOL_MAJOR_1 : PROTOCOL_MAJOR_2,
 	    c->holder.key_type == SSH_KEYTYPE_RSA1? PROTOCOL_MINOR_1 : PROTOCOL_MINOR_2);
@@ -450,12 +443,9 @@ conread(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 		// it appears that we get the key here for ssh2
 		congreet(s);
 		if(c->holder.key != NULL) {
-			printf("setting key from congreet \n");
 			save_key(ssh_keys, num_holders_used,c);
 			confree(s); 
-		}else {	
-			printf("returned from confree, but no key \n");
-		}	
+		}
 		return;
 	}
 	n = atomicio(read, s, c->c_data + c->c_off, c->c_len - c->c_off);
@@ -477,9 +467,7 @@ conread(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 			break;
 		case CS_KEYS:
 			c->holder.key = keygrab_ssh1(c);
-	//		keyprint(c, c->c_key);
 			save_key(ssh_keys, num_holders_used,c);
-			printf("got key in conread, calling confree for %d\n", s);
 			confree(s);
 			return;	
 		default:
@@ -555,11 +543,11 @@ int conloop(ssh_key_holder *ssh_keys, int num_holders) {
 
 // returns 1 if we have space to probe this host, else 0
 int do_single_probe(char *host, uint16_t service_type, uint16_t service_port,
-		SSL* client_ssl, int client_sock)
+	conn_node *conn)
 {
 	if(ncon + 2 >= MAXCON) return 0; // don't have space
 	
-	conalloc(host, service_port, service_type, client_ssl, client_sock ); 
+	conalloc(host, service_port, service_type, conn ); 
 	
 	return 1;
 }
@@ -602,5 +590,5 @@ void init_scankeys() {
 
 	read_wait_nfdset = howmany(maxfd, NFDBITS);
 	read_wait = xcalloc(read_wait_nfdset, sizeof(fd_mask));
-
 }
+

@@ -17,6 +17,7 @@
 
 #include "util/list.h" // modified linked-list from linux
 #include "key.h" // SSH key data-structure
+#include "debug.h"
 
 #define MAX_PACKET_LEN 1400
 
@@ -56,9 +57,12 @@ typedef struct {
 
 typedef struct {
 	struct list_head list;
-	ssh_key_info *info;	
-} ssh_key_info_list;
+	notary_header* hdr;	
+} ssh_msg_list;
 
+#define HDR2DATA(hdr) \
+	(((char*)hdr) + sizeof(notary_header) \
+	+ ntohs(hdr->name_len)) 
 
 #define min(X, Y)  ((X) < (Y) ? (X) : (Y))
 

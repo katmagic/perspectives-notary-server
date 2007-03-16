@@ -9,7 +9,7 @@
 #include "probe_server.h"
 
 int do_single_probe(char *host, uint16_t service_type, uint16_t service_port,
-		SSL* client_ssl, int client_sock);
+		conn_node *conn);
 void init_scankeys(); 
 int conloop(ssh_key_holder *ssh_keys, int num_holders);
 
