@@ -46,7 +46,6 @@ void destroy_ctx(SSL_CTX *ctx)
   }
 
 
-#define SELF_SIGNED_CERT "../keys/probe_server.cert"
 
 SSL_CTX *initialize_ctx(char *ca_file) {
     SSL_METHOD *meth;
@@ -78,14 +77,14 @@ SSL_CTX *initialize_ctx(char *ca_file) {
   }
 
 SSL * getSSLClientConnection(uint32_t remote_ip, uint16_t remote_port,
-			int *client_sock) {
+			int *client_sock, char* cert_file) {
 	SSL_CTX *ctx;
 	SSL *ssl;
 	BIO *sbio;
 	struct sockaddr_in host_addr;
 
 	// Build the SSL context
-	ctx=initialize_ctx(SELF_SIGNED_CERT);
+	ctx=initialize_ctx(cert_file);
 
 	if ((*client_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1){
 	    perror("socket");
@@ -147,9 +146,52 @@ notary_header* pkt_create(char* name, uint16_t service_type,
 }
 
 
+void add_result_for_message(ssh_result_list *head, notary_header* hdr,
+		char* hostname) {
+
+	if(hdr->version != 1) {
+		DPRINTF(DEBUG_ERROR, "Invalid version #%d \n", 
+			hdr->version);
+		return;		
+	}		
+/*
+	dw: whoops,server currently forgets to put DNS name back in 
+
+	char *dns_name = (char*) (hdr +1);
+	if(strncmp(hostname, dns_name, strlen(hostname)) != 0) {
+		DPRINTF(DEBUG_ERROR, "Requsted hostname (%s) does not match"
+			" hostname in packet (%s),", hostname, dns_name); 
+		return;
+	}
+*/
+	ssh_result_list* results = (ssh_result_list*)
+				malloc(sizeof(ssh_result_list));
+
+	ssh_key_info* key_info = (ssh_key_info*)HDR2DATA(hdr);
+	int blob_size = ntohs(key_info->key_len_bytes);
+	char* blob_start = (char*)(key_info + 1);	
+	results->key = key_from_blob((uint8_t*)blob_start, blob_size);
+	results->ip_addr = key_info->ip_addr;
+
+	int num_probes = ntohs(key_info->num_probes);
+	int* sorted_array = (int*) malloc(sizeof(int) * num_probes);
+	int* probes_start = (int*) (blob_start + blob_size);
+	int i;
+	for(i = 0; i < num_probes; i++) {
+		sorted_array[i] = ntohl(probes_start[i]);
+	}
+	qsort(sorted_array, num_probes, sizeof(int), int_compare);
+	
+	results->probes = sorted_array;
+	results->num_probes = num_probes;
+	list_add(&results->list, &head->list);
+
+	free(hdr);
+}
+
 // once the main loop has read in the full notary-header, which tells
 // us how long the whole message is, we 
-void process_single_message(ssh_msg_list *head, 
+void process_single_message(ssh_result_list *head, 
 		notary_header* hdr,
 		SSL* ssl_connection,char *host_name) {
 
@@ -173,33 +215,23 @@ void process_single_message(ssh_msg_list *head,
 			"received %d bytes of message \n", num_read);
 		offset += num_read;
         	if(pkt_len <= offset) {
-			if(hdr->version != 1) {
-				DPRINTF(DEBUG_ERROR, 
-				"Invalid version #%d \n", 
-				hdr->version);
-				return;		
-			}		
-
-			ssh_msg_list* tmp = (ssh_msg_list*)
-				malloc(sizeof(ssh_msg_list));
-			tmp->hdr = (notary_header*)buf;
-	
-			list_add(&tmp->list, &head->list);
-			break;
+			add_result_for_message(head, (notary_header*)buf,
+				host_name);
+			return;
 		}
 	}
 
 }
 
-ssh_key_info* get_key_info_ssh(ssh_msg_list *head , uint32_t pserver_ip,
+void get_key_info_ssh(ssh_result_list *head , uint32_t pserver_ip,
         uint16_t pserver_port, char *host_name,
-        uint16_t host_port, uint16_t key_type){
+        uint16_t host_port, uint16_t key_type, char* cert_file){
 
 	char small_buf[sizeof(notary_header)];
 
 	int client_sock; 
 	SSL* ssl_connection = getSSLClientConnection(pserver_ip, 
-			pserver_port, &client_sock);
+			pserver_port, &client_sock, cert_file);
 	notary_header* hdr = pkt_create(host_name, key_type, host_port);
 
 	int msg_len = ntohs(hdr->name_len) + sizeof(notary_header);

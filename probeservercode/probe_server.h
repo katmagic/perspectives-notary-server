@@ -19,7 +19,7 @@ typedef struct {
 	char *name;
 	uint16_t port;
 	uint16_t key_type;
-	uint32_t ip;	
+	uint32_t ip_addr;	
 	Key * key;
 	conn_node* conn;
 } ssh_key_holder;

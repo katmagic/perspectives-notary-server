@@ -218,7 +218,8 @@ keygrab_ssh2(con *c)
 	//dw: why?
 	packet_set_connection(c->c_fd, c->c_fd);
 	enable_compat20();
-	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = c->holder.key_type == SSH_KEYTYPE_DSA?
+	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = 
+		c->holder.key_type == KEY_DSA?
 	    "ssh-dss": "ssh-rsa";
 	c->c_kex = kex_setup(myproposal);
 	c->c_kex->kex[KEX_DH_GRP1_SHA1] = kexdh_client;
@@ -393,7 +394,7 @@ congreet(int s)
 		compat_datafellows(remote_version);
 	else
 		datafellows = 0;
-	if (c->holder.key_type != SSH_KEYTYPE_RSA1) {
+	if (c->holder.key_type != KEY_RSA1) {
 		if (!ssh2_capable(remote_major, remote_minor)) {
 			debug("%s doesn't support ssh2", c->holder.name);
 			confree(s);
@@ -405,8 +406,8 @@ congreet(int s)
 		return;
 	}
 	n = snprintf(buf, sizeof buf, "SSH-%d.%d-OpenSSH-keyscan\r\n",
-	    c->holder.key_type == SSH_KEYTYPE_RSA1? PROTOCOL_MAJOR_1 : PROTOCOL_MAJOR_2,
-	    c->holder.key_type == SSH_KEYTYPE_RSA1? PROTOCOL_MINOR_1 : PROTOCOL_MINOR_2);
+	    c->holder.key_type == KEY_RSA1? PROTOCOL_MAJOR_1 : PROTOCOL_MAJOR_2,
+	    c->holder.key_type == KEY_RSA1? PROTOCOL_MINOR_1 : PROTOCOL_MINOR_2);
 	if (n < 0 || (size_t)n >= sizeof(buf)) {
 		error("snprintf: buffer too small");
 		confree(s);
@@ -418,7 +419,7 @@ congreet(int s)
 		return;
 	}
 
-	if (c->holder.key_type != SSH_KEYTYPE_RSA1) {
+	if (c->holder.key_type != KEY_RSA1) {
 		c->holder.key = keygrab_ssh2(c);
 		return;
 	}

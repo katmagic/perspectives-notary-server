@@ -1,5 +1,5 @@
 
-SSH_SRC_DIR=../../openssh-4.4p1
+SSH_SRC_DIR=../openssh-4.4p1
 OBJECTS=probe_server.o ssh-keyscan.o db_storage.o libsqlite3.a
 LIBS=  -lstdc++ -ldl -lz  -lssl -lcrypto
 LDFLAGS=-L. -L/usr/local/ssl/lib

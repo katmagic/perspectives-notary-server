@@ -10,20 +10,21 @@
 #include "contact_probe_server.h"
 #include "notary_local.h"
 
-unsigned int notary_debug = DEBUG_ALL;
+unsigned int notary_debug = DEBUG_NONE;
 
 void add_probe_server(SSHNotary *notary, uint32_t ip_address, uint16_t port){
 	server_list *tmp = (server_list*)malloc(sizeof(server_list));
 	tmp->ip_addr = ip_address;
-	INIT_LIST_HEAD(&(tmp->current_info.list));
+	INIT_LIST_HEAD(&(tmp->probe_results.list));
 	tmp->port = port;
 	list_add(&tmp->list,&(notary->probe_servers.list));
 }
 
-SSHNotary* init_ssh_notary(){
+SSHNotary* init_ssh_notary(char* cert_file){
 	// TODO: give access to local key cache? 
 	SSHNotary *n = (SSHNotary*)malloc(sizeof(SSHNotary));
 	INIT_LIST_HEAD(&n->probe_servers.list);
+	n->cert_file = cert_file;
 	return n;
 }
 
@@ -38,11 +39,12 @@ void free_key_info(SSHNotary* notary) {
 	list_for_each(outer_pos,&notary->probe_servers.list){
 		server = list_entry(outer_pos, server_list, list);
 			
-		ssh_msg_list *list_elem;
-		list_for_each_safe(inner_pos,q, &(server->current_info.list)) {
+		ssh_result_list *list_elem;
+		list_for_each_safe(inner_pos,q, &(server->probe_results.list)) {
 			list_elem = list_entry(inner_pos, 	
-				ssh_msg_list, list);
-			free(list_elem->hdr);
+				ssh_result_list, list);
+			key_free(list_elem->key);
+			free(list_elem->probes);
 			list_del(&(list_elem->list));
 			free(list_elem);
 		}
@@ -78,9 +80,91 @@ void contact_probe_servers(SSHNotary *notary, int time_out_msecs /*ignored*/,
 	DPRINTF(DEBUG_INFO, "entering get-key loop\n");
 	list_for_each(pos,&notary->probe_servers.list){
 		server = list_entry(pos, server_list, list);
-		get_key_info_ssh(&server->current_info, server->ip_addr, 
-			server->port,name, service_port, key_type);
+		get_key_info_ssh(&server->probe_results, server->ip_addr, 
+			server->port,name, service_port, key_type,
+			notary->cert_file);
 	}
+}
+
+void set_consistent_length(server_list *server, Key* host_key) {
+
+	ssh_result_list *match = NULL;
+	ssh_result_list *list_elem;
+	struct list_head *inner_pos;
+	list_for_each(inner_pos,&(server->probe_results.list)) {
+		list_elem = list_entry(inner_pos, 	
+			ssh_result_list, list);
+		Key* probe_key = list_elem->key;
+
+       		if(!key_equal(probe_key,host_key))
+			continue;
+				
+		if(match != NULL) {
+			DPRINTF(DEBUG_ERROR, 
+			"Error, more than one message received"
+			" for a single dns-name, key pair \n");
+			continue; // ok, for now
+		}
+		match = list_elem;
+	}
+		
+	if(match == NULL) {
+		server->consistent_length = 0;
+		return; 
+	}
+	int oldest_no_conflict = server->probe_results.probes[0];
+		 
+	list_for_each(inner_pos,&(server->probe_results.list)) {
+		list_elem = list_entry(inner_pos, 	
+			ssh_result_list, list);
+		if(list_elem == match) continue;
+		
+		int index = list_elem->num_probes - 1;
+		int most_recent = list_elem->probes[index];
+				
+		// test if a conflicting key has been seen
+		// by this server since it first saw the good
+		// key.  If so, find if there's a observation
+		// of the same key more recently
+		if(most_recent >= oldest_no_conflict) { 
+			int i;
+			// goes from oldest to newest
+			oldest_no_conflict = 0;
+			for(i = 0; i < match->num_probes; i++) {
+				if(match->probes[i] < most_recent){
+					oldest_no_conflict = match->probes[i];
+					break;
+				}
+			}
+		}
+	}
+	
+	server->consistent_length = oldest_no_conflict;	
+
+}
+
+// TODO: send IP address too?  
+
+int check_key_consistency(SSHNotary *notary, Key* host_key) {
+
+	server_list *server;
+
+	struct list_head *outer_pos;
+	list_for_each(outer_pos,&notary->probe_servers.list){
+		server = list_entry(outer_pos, server_list, list);
+		set_consistent_length(server, host_key);
+	}
+	int min_consistent_len = -1;
+	list_for_each(outer_pos,&notary->probe_servers.list){
+		server = list_entry(outer_pos, server_list, list);
+		if(min_consistent_len == -1){
+			min_consistent_len = server->consistent_length;
+		} else {
+			min_consistent_len = min(min_consistent_len,
+						server->consistent_length);
+		}
+	}
+	return min_consistent_len;
 }
 
 // print all information received from probe servers
@@ -91,37 +175,24 @@ void print_probe_info(SSHNotary *notary) {
 	list_for_each(outer_pos,&notary->probe_servers.list){
 		server = list_entry(outer_pos, server_list, list);
 
-		DPRINTF(DEBUG_INFO, "Probes from server %s \n", 
+		printf("***********  Probes from server %s ********** \n", 
 			inet_ntoa(*(struct in_addr*)&server->ip_addr));
 			
-		ssh_msg_list *list_elem;
-		list_for_each(inner_pos,&(server->current_info.list)) {
+		ssh_result_list *list_elem;
+		list_for_each(inner_pos,&(server->probe_results.list)) {
 			list_elem = list_entry(inner_pos, 	
-				ssh_msg_list, list);
-			ssh_key_info* key_info = (ssh_key_info*)
-				HDR2DATA(list_elem->hdr);
-			int blob_size = ntohs(key_info->key_len_bytes);
-			char* blob_start = (char*)(key_info + 1);
-        	
-			DPRINTF(DEBUG_MESSAGE, "blob_size = %d \n", blob_size);
-			Key* key = key_from_blob((uint8_t*)blob_start, blob_size);
-
-			IF_DEBUG(DEBUG_MESSAGE) {
-       				printf("Got key: \n");
-       				key_write(key, stdout);
-        			fputs("\n", stdout);
-				printf("IP address = %s \n", 
-				inet_ntoa(*(struct in_addr*)&key_info->ip_addr));
-			}
-			int num_probes = ntohs(key_info->num_probes);
+				ssh_result_list, list);
+	
+       			printf("Got key: \n");
+       			key_write(list_elem->key, stdout);
+        		fputs("\n", stdout);
+			printf("IP address = %s \n", 
+			inet_ntoa(*(struct in_addr*)&list_elem->ip_addr));
 		
-			DPRINTF(DEBUG_MESSAGE,"extracting %d probe timestamps \n", 
-				num_probes);
-			int* probes_start = (int*) (blob_start + blob_size);
 			int i;
-			for(i = 0; i < num_probes; i++) {
-				DPRINTF(DEBUG_MESSAGE, "probe[%d] = %d \n", 
-					i, ntohl(probes_start[i]));
+			for(i = 0; i < list_elem->num_probes; i++) {
+				printf("probe[%d] = %d \n", i, 
+					list_elem->probes[i]);
 			}
 		}
 	
@@ -153,7 +224,7 @@ void load_probe_servers(SSHNotary *notary, char* fname){
 		
 		server_list *tmp = (server_list*)malloc(sizeof(server_list));
 		tmp->port = (uint16_t) atoi(delim + 1);
-		INIT_LIST_HEAD(&(tmp->current_info.list));
+		INIT_LIST_HEAD(&(tmp->probe_results.list));
 		inet_aton(buf, (struct in_addr *)&(tmp->ip_addr));
 		list_add(&(tmp->list), &(notary->probe_servers.list));
 		DPRINTF(DEBUG_INFO, "Probe server: %s : %d \n",
