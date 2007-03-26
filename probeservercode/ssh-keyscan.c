@@ -300,7 +300,7 @@ conalloc(char *iname, uint16_t service_port, uint16_t key_type,conn_node *conn)
 	fdcon[s].holder.key_type = key_type;
 	fdcon[s].holder.conn = conn;
 	fdcon[s].holder.key = NULL;
-	fdcon[s].holder.ip = ip_addr;
+	fdcon[s].holder.ip_addr = ip_addr;
 	gettimeofday(&fdcon[s].c_tv, NULL);
 	fdcon[s].c_tv.tv_sec += timeout;
 	TAILQ_INSERT_TAIL(&tq, &fdcon[s], c_link);
