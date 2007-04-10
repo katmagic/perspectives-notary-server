@@ -226,8 +226,6 @@ void process_packet_data(server_list *server, char *hostname) {
 		printf("no key in probe-server reply \n");
 		return;
 	}
-	printf("total_len = %d data_so_far = %d \n", total_size,
-		data_so_far);
 
 	ssh_result_list* results = (ssh_result_list*)
 				malloc(sizeof(ssh_result_list));
