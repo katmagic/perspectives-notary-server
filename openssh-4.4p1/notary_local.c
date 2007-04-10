@@ -10,7 +10,7 @@
 #include "contact_probe_server.h"
 #include "notary_local.h"
 
-unsigned int notary_debug = DEBUG_ALL;
+unsigned int notary_debug = DEBUG_NONE;
 
 void add_probe_server(SSHNotary *notary, uint32_t ip_address, uint16_t port){
 	server_list *tmp = (server_list*)malloc(sizeof(server_list));
