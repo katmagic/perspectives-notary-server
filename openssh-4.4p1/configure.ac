@@ -3096,6 +3096,8 @@ AC_ARG_WITH(opensc,
 	]
 )
 
+AC_CHECK_LIB(resolv, gethostbyname)
+
 # Check libraries needed by DNS fingerprint support
 AC_SEARCH_LIBS(getrrsetbyname, resolv,
 	[AC_DEFINE(HAVE_GETRRSETBYNAME, 1,

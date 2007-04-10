@@ -9,11 +9,11 @@ top_srcdir=../..
 CC=gcc
 LD=gcc
 CFLAGS=-g -O2 -Wall -Wpointer-arith -Wuninitialized -Wsign-compare -std=gnu99 
-CPPFLAGS=-I. -I.. -I$(srcdir) -I$(srcdir)/.. -I/usr/local/ssl/include  -DHAVE_CONFIG_H
+CPPFLAGS=-I. -I.. -I$(srcdir) -I$(srcdir)/..  -DHAVE_CONFIG_H
 EXEEXT=
 LIBCOMPAT=../libopenbsd-compat.a
-LIBS=-lresolv -lcrypto -lutil -lz -lnsl  -ldl -lcrypt
-LDFLAGS=-L/usr/local/ssl/lib  $(LIBCOMPAT)
+LIBS=-lresolv -lcrypto -lutil -lz -lnsl  -lcrypt
+LDFLAGS= $(LIBCOMPAT)
 
 TESTPROGS=closefromtest$(EXEEXT) snprintftest$(EXEEXT) strduptest$(EXEEXT) \
 	strtonumtest$(EXEEXT)

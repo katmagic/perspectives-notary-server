@@ -19,9 +19,9 @@ AWK="gawk"
 CC="gcc"
 CPP="gcc -E"
 CFLAGS="-g -O2 -Wall -Wpointer-arith -Wuninitialized -Wsign-compare -std=gnu99 "
-CPPFLAGS="-I/usr/local/ssl/include "
-LDFLAGS="-L/usr/local/ssl/lib "
-LIBS="-lresolv -lcrypto -lutil -lz -lnsl  -ldl -lcrypt"
+CPPFLAGS=""
+LDFLAGS=""
+LIBS="-lresolv -lcrypto -lutil -lz -lnsl  -lcrypt"
 
 # Note format:
 # identifier: [data] CRCR

@@ -1,6 +1,7 @@
 #ifndef _NOTARY_LOCAL_H_
 #define _NOTARY_LOCAL_H_
 
+#include <openssl/ssl.h>
 #include "../common.h"
 
 
@@ -8,12 +9,22 @@
 
 typedef struct {
 	struct list_head list;
+	
+	// network data
 	uint32_t ip_addr;
 	uint16_t port;
+	int sock;
+	char hdr_buf[sizeof(notary_header)]; //just needs to hold header
+	char *data;
+	SSL * ssl;
+	int offset;
+
+	// result data
 	ssh_result_list probe_results;
 	int consistent_length;
 	uint8_t contains_inconsistency;
 	uint8_t contact_succeeded;
+	
 } server_list;
 
 typedef struct {
@@ -21,7 +32,7 @@ typedef struct {
 	char* cert_file;
 } SSHNotary;
 
-void contact_probe_servers(SSHNotary *notary, int time_out_msecs,
+void probe_for_key(SSHNotary *notary, int time_out_msecs,
 		char *name, uint16_t service_type, 
 		uint16_t service_port);
 void add_probe_server(SSHNotary *notary, uint32_t ip_address, uint16_t port);

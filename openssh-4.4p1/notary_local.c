@@ -10,7 +10,7 @@
 #include "contact_probe_server.h"
 #include "notary_local.h"
 
-unsigned int notary_debug = DEBUG_NONE;
+unsigned int notary_debug = DEBUG_ALL;
 
 void add_probe_server(SSHNotary *notary, uint32_t ip_address, uint16_t port){
 	server_list *tmp = (server_list*)malloc(sizeof(server_list));
@@ -75,12 +75,11 @@ void free_ssh_notary(SSHNotary* notary){
 	// or more ssh_key_info* responses from each and
 	// storing those responses in the server's list. 
 // TODO: implement timeout functionality
-void contact_probe_servers(SSHNotary *notary, int time_out_msecs /*ignored*/,
+void probe_for_key(SSHNotary *notary, int time_out_msecs /*ignored*/,
 		char* name, uint16_t key_type, 
 		uint16_t service_port) {
 
 	free_key_info(notary); // free any old data we had
-
 
 	FILE* f = fopen(notary->cert_file, "r");
 	if(f == NULL) {
@@ -90,15 +89,9 @@ void contact_probe_servers(SSHNotary *notary, int time_out_msecs /*ignored*/,
 		return;
 	}
 
-	server_list *server;
-	struct list_head *pos;
-	DPRINTF(DEBUG_INFO, "entering get-key loop\n");
-	list_for_each(pos,&notary->probe_servers.list){
-		server = list_entry(pos, server_list, list);
-		get_key_info_ssh(&server->probe_results, server->ip_addr, 
-			server->port,name, service_port, key_type,
-			notary->cert_file);
-	}
+	contact_probe_servers(&notary->probe_servers, name, 
+			key_type,service_port, notary->cert_file);
+	
 }
 /*
 void set_consistent_length(server_list *server, Key* host_key) {

@@ -7,7 +7,7 @@
 
 #define MIN_TIME_BETWEEN_PROBES (60 * 5)
 
-typedef struct sqlite3_stmt sqlite3_stmt;
+//typedef struct sqlite3_stmt sqlite3_stmt;
 
 // create the 'ssh_key_bindings' table if it does not already exist
 void create_key_bindings_table(sqlite3 *db) {
@@ -123,6 +123,11 @@ void store_ssh_probe_result(sqlite3* db, char *dns_name, uint32_t ip_addr,
 				Key *key, int timestamp) {
 	u_char* blob;
 	int blob_size = 0;
+	if(key == NULL){
+		printf("no key to store \n");
+		return;
+	}
+	printf("trying to convert key to blob \n");
 	key_to_blob(key, &blob, &blob_size);
 	int id = get_binding_id(db, dns_name, (char*)blob, blob_size);
 	if(id == NO_BINDING) {

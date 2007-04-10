@@ -68,8 +68,9 @@ void do_probe_check(char* hostname, int port,
 		 original_real_uid);
 	SSHNotary *notary = init_ssh_notary(cert_file);
 	load_probe_servers(notary, server_file);
+	DPRINTF(DEBUG_INFO, "checking key of type %d \n", host_key->type);
 	printf("contacting probing servers.... ");
-	contact_probe_servers(notary, 0, hostname, host_key->type, port);
+	probe_for_key(notary, 0, hostname, host_key->type, port);
 	printf("Probe Results: \n");
 
 	int last_conflict = getMostRecentConflict(notary, host_key);
@@ -99,7 +100,7 @@ void do_probe_check(char* hostname, int port,
 
 	if(last_conflict == -1) {
 		int first_diff = cur_secs - oldest_correct;
-		printf("No inconsistent keys seen (oldest probe from %.1f days ago)\n"
+		printf("All current and past keys are consistent (oldest probe from %.1f days ago)\n"
 			, SEC2DAY(first_diff));
 	}else {
 		int conflict_diff = cur_secs - last_conflict;
@@ -109,7 +110,7 @@ void do_probe_check(char* hostname, int port,
 				SEC2MIN(conflict_diff));	
 			warn = TRUE;
 		} else {
-			printf("The key is consistent across all servers\n");
+			printf("The key is consistent across all current probes\n");
 			printf("Last inconsistent keys seen %0.1f days ago\n", SEC2DAY(conflict_diff));
 		}
 	}

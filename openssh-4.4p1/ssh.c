@@ -524,7 +524,6 @@ main(int ac, char **av)
 			config = optarg;
 			break;
 		case 'd':
-			printf("got -d options \n");
 			if(strcmp(optarg,"always-probe") == 0){
 				options.notary_always_probe = 1;
 			}else if(strcmp(optarg,"always-prompt") == 0){

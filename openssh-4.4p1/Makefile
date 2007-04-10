@@ -41,8 +41,8 @@ PATHS= -DSSHDIR=\"$(sysconfdir)\" \
 CC=gcc
 LD=gcc
 CFLAGS=-g -O2 -Wall -Wpointer-arith -Wuninitialized -Wsign-compare -std=gnu99 
-CPPFLAGS=-I. -I$(srcdir) -I/usr/local/ssl/include  $(PATHS) -DHAVE_CONFIG_H
-LIBS=-lresolv -lcrypto -lcrypt -lssl -lcrypto -lutil -lz -lnsl  -ldl -lcrypt
+CPPFLAGS=-I. -I$(srcdir)  $(PATHS) -DHAVE_CONFIG_H
+LIBS=-lresolv -lcrypto -lutil -lz -lnsl  -lcrypt
 LIBSELINUX=
 SSHDLIBS=
 LIBEDIT=
@@ -56,7 +56,7 @@ PERL=/usr/local/bin/perl5
 SED=/bin/sed
 ENT=
 XAUTH_PATH=/usr/X11R6/bin/xauth
-LDFLAGS=-L. -Lopenbsd-compat/ -L/usr/local/ssl/lib 
+LDFLAGS=-L. -Lopenbsd-compat/ 
 EXEEXT=
 
 INSTALL_SSH_PRNG_CMDS=
@@ -75,10 +75,11 @@ LIBSSH_OBJS=acss.o authfd.o authfile.o bufaux.o bufbn.o buffer.o \
 	kexgex.o kexdhc.o kexgexc.o scard.o msg.o progressmeter.o dns.o \
 	entropy.o scard-opensc.o gss-genr.o
 
-SSHOBJS= ssh.o readconf.o clientloop.o sshtty.o \
-	sshconnect.o sshconnect1.o sshconnect2.o
 
 NOTARYOBJS = contact_probe_server.o notary_local.o ssh_notary.o
+
+SSHOBJS= ssh.o readconf.o clientloop.o sshtty.o \
+	sshconnect.o sshconnect1.o sshconnect2.o
 
 SSHDOBJS=sshd.o auth-rhosts.o auth-passwd.o auth-rsa.o auth-rh-rsa.o \
 	sshpty.o sshlogin.o servconf.o serverloop.o \
@@ -123,6 +124,7 @@ all: $(CONFIGFILES) ssh_prng_cmds.out $(MANPAGES) $(TARGETS)
 $(LIBSSH_OBJS): Makefile.in config.h
 $(SSHOBJS): Makefile.in config.h
 $(SSHDOBJS): Makefile.in config.h
+$(NOTARYOBJS): Makefile.in config.h
 
 .c.o:
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
@@ -136,13 +138,10 @@ libssh.a: $(LIBSSH_OBJS)
 	$(AR) rv $@ $(LIBSSH_OBJS)
 	$(RANLIB) $@
 
-NOTARYLIBS= -lcrypto -lssl -lssh -lresolv -lstdc++ -lcrypt -lcrypto -lz -ldl -lssl -lcrypto 
+NOTARYLIBS= -lcrypto -lssl -lssh -lstdc++ -lcrypto -lz -lssl -lcrypto 
 
 ssh$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHOBJS) $(NOTARYOBJS)
 	$(LD) -o $@ $(SSHOBJS) $(NOTARYOBJS) $(LDFLAGS) $(NOTARYLIBS) -lssh -lopenbsd-compat $(LIBS)
-
-notary: $(NOTARYOBJS) notary_client.o
-	$(LD) $(NOTARYOBJS) notary_client.o $(LDFLAGS) $(NOTARYLIBS) -lssh -lopenbsd-compat -o notary_client
 
 sshd$(EXEEXT): libssh.a	$(LIBCOMPAT) $(SSHDOBJS)
 	$(LD) -o $@ $(SSHDOBJS) $(LDFLAGS) -lssh -lopenbsd-compat $(LIBWRAP) $(LIBPAM) $(LIBSELINUX) $(SSHDLIBS) $(LIBS)

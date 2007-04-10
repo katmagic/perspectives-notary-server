@@ -76,56 +76,71 @@ SSL_CTX *initialize_ctx(char *ca_file) {
     return ctx;
   }
 
-SSL * getSSLClientConnection(uint32_t remote_ip, uint16_t remote_port,
-			int *client_sock, char* cert_file) {
+void getSSLClientConnection(server_list* server, char* cert_file) {
 	SSL_CTX *ctx;
-	SSL *ssl;
 	BIO *sbio;
 	struct sockaddr_in host_addr;
 
-	// Build the SSL context
-	ctx=initialize_ctx(cert_file);
-
-	if ((*client_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1){
+	server->ssl = NULL;        
+	server->contact_succeeded = 0; // defaults to failure
+        
+	if ((server->sock = socket(AF_INET, SOCK_STREAM, 0)) == -1){
 	    perror("socket");
-	    return NULL;
+	    return;
 	}
 
 	bzero(&host_addr, sizeof(struct sockaddr_in));
 	host_addr.sin_family = AF_INET;
-	host_addr.sin_port = htons(remote_port);
-	memcpy(&host_addr.sin_addr, &remote_ip, sizeof(uint32_t));
+	host_addr.sin_port = htons(server->port);
+	memcpy(&host_addr.sin_addr, &(server->ip_addr), sizeof(uint32_t));
 	DPRINTF(DEBUG_INFO, "connecting to probe server %s : %d \n",
-		inet_ntoa(host_addr.sin_addr), remote_port);
-	if (connect(*client_sock, (struct sockaddr *)&host_addr, 
+		inet_ntoa(host_addr.sin_addr), ntohs(host_addr.sin_port));
+	if (connect(server->sock, (struct sockaddr *)&host_addr, 
 		sizeof(struct sockaddr)) == -1){
-	    fprintf(stderr, "Failed to connect to probe server %s : %d :",
-		inet_ntoa(host_addr.sin_addr), remote_port);
+	    DPRINTF(DEBUG_ERROR,
+		 "Failed to connect to probe server %s : %d :",
+		inet_ntoa(host_addr.sin_addr), ntohs(host_addr.sin_port));
 	    perror("");
-	    printf("\n");
-	    return NULL;
+	    DPRINTF(DEBUG_ERROR, "\n");
+	    return;
 	}
 	DPRINTF(DEBUG_INFO, "connected to probe server \n");
 
-	// Connect the SSL socket
-	ssl=SSL_new(ctx);
-	sbio=BIO_new_socket(*client_sock, BIO_NOCLOSE);
-	SSL_set_bio(ssl,sbio,sbio);
-	if (SSL_connect(ssl)<=0){
+	// TODO: we will set the socket as non-blocking
+
+	// Connect over SSL
+	ctx = initialize_ctx(cert_file);
+	server->ssl = SSL_new(ctx);
+	sbio = BIO_new_socket(server->sock, BIO_NOCLOSE);
+	SSL_set_bio(server->ssl, sbio, sbio);
+	if (SSL_connect(server->ssl)<=0){
 	     berr_exit("Error in the SSL connection");
-	     return NULL;
+	     return;
   	}
 
+	DPRINTF(DEBUG_INFO, "server (0x%x) has SSL pointer (0x%x) \n",
+		(uint32_t)server, (uint32_t)server->ssl);
 	X509* peerCertificate;
-
-	if(SSL_get_verify_result(ssl) == X509_V_OK){
-		peerCertificate = SSL_get_peer_certificate(ssl);
+	if(SSL_get_verify_result(server->ssl) == X509_V_OK){
+		peerCertificate = SSL_get_peer_certificate(server->ssl);
 	} else {
-		DPRINTF(DEBUG_SSL, "probe server cert. failed verifications \n");
+		DPRINTF(DEBUG_SSL, "probe server cert. "
+		"failed verifications \n");
 		ERR_print_errors(bio_err);
 	}
+}
 
-	return ssl;
+void initiate_server_connections(server_list *all_servers, 
+	char* cert_file) {
+
+	server_list *server; 
+        struct list_head *pos;
+        DPRINTF(255, "Starting Initiate Server Loop \n");
+        list_for_each(pos, &all_servers->list){
+                server = list_entry(pos, server_list, list);
+		getSSLClientConnection(server, cert_file);
+	}
+        DPRINTF(255, "Done with Initiate Server Loop \n");
 }
 
 // allocates and fills a packet buf.  caller must free the
@@ -149,22 +164,55 @@ notary_header* pkt_create(char* name, uint16_t service_type,
 }
 
 
-void add_result_for_message(ssh_result_list *head, notary_header* hdr,
-		char* hostname) {
+void write_to_server(server_list *server, char* host_name, 
+	uint16_t key_type, uint16_t service_port) {
+
+	notary_header* hdr = pkt_create(host_name, 
+				key_type, service_port);
+
+	int msg_len = ntohs(hdr->name_len) + sizeof(notary_header);
+	// TODO: switch this to non-blocking so we can time-out
+	int offset = SSL_write(server->ssl, hdr, msg_len);
+	if (offset == -1){
+	    perror("ssl write");
+	    return;
+	}
+
+	free(hdr);
+	DPRINTF(DEBUG_SOCKET, "Wrote %d bytes on SSL socket to %s \n",
+		offset, inet_ntoa(*(struct in_addr*)&server->ip_addr));
+
+}
+
+void send_server_requests(server_list *all_servers, char* host_name,
+	uint16_t key_type, uint16_t service_port) {
+
+	server_list *server;
+        struct list_head *pos;
+        DPRINTF(DEBUG_INFO, "Starting Server Request Loop \n");
+        list_for_each(pos,&all_servers->list){
+                server = list_entry(pos, server_list, list);
+		if(server->ssl){ 
+			write_to_server(server,host_name, 
+				key_type, service_port);
+		}
+	}
+        DPRINTF(DEBUG_INFO, "Done with Server Request Loop \n");
+}
+
+// takes a full packet and converts it into a ssh_result_list *
+// element that can be stored by the server.
+void process_packet_data(server_list *server, char *hostname) {
+
+	ssh_result_list *head = &(server->probe_results);
+	notary_header* hdr = (notary_header*) server->data;
+	uint16_t total_size = ntohs(hdr->total_len);
 
 	if(hdr->version != 1) {
 		DPRINTF(DEBUG_ERROR, "Invalid version #%d \n", 
 			hdr->version);
 		return;		
 	}
-/*
-	uint16_t total_len = ntohs(hdr->total_len);
-                char* data = (char*)hdr;
-                for(int i = 0; i < total_len; i = i + 4) {
-                        printf("%d %d %d %d \n", data[i],
-                                data[i+1], data[i+2], data[i+3]);
-                }		
-*/
 
 	char *dns_name = (char*) (hdr +1);
 	if(strncmp(hostname, dns_name, strlen(hostname)) != 0) {
@@ -173,6 +221,13 @@ void add_result_for_message(ssh_result_list *head, notary_header* hdr,
 			hostname, dns_name); 
 		return;
 	}
+	int data_so_far = strlen(dns_name) + 1 + sizeof(notary_header);
+	if(total_size == data_so_far){
+		printf("no key in probe-server reply \n");
+		return;
+	}
+	printf("total_len = %d data_so_far = %d \n", total_size,
+		data_so_far);
 
 	ssh_result_list* results = (ssh_result_list*)
 				malloc(sizeof(ssh_result_list));
@@ -195,31 +250,31 @@ void add_result_for_message(ssh_result_list *head, notary_header* hdr,
 	for(i = 0; i < num_probes; i++) {
 		addresses[i] = probes_start[i];
 	}
-// 	server now returns them sorted
-//	qsort(sorted_array, num_probes, sizeof(int), int_compare);
 	
 	results->timestamps = timestamps;
 	results->addresses = addresses;
 	results->num_probes = num_probes;
 	list_add(&results->list, &head->list);
 
-	free(hdr);
 }
 
-// once the main loop has read in the full notary-header, which tells
-// us how long the whole message is, we 
-void process_single_message(ssh_result_list *head, 
-		notary_header* hdr,
-		SSL* ssl_connection,char *host_name) {
 
+// once the main loop has read in the full notary-header, which tells
+// us how long the whole message is, we use this to read the rest
+// of the packet
+void finish_reading_packet(server_list *server) {
+
+	notary_header* hdr = (notary_header*)server->hdr_buf;
 	uint16_t pkt_len = ntohs(hdr->total_len);
 	DPRINTF(DEBUG_MESSAGE, "hdr says packet-len = %d \n", pkt_len);
-	char *buf = (char*) malloc(pkt_len);
-	memcpy(buf, hdr, sizeof(notary_header));
-	int offset = sizeof(notary_header);
+	server->data  = (char*) malloc(pkt_len);
+	memcpy(server->data, hdr, sizeof(notary_header));
+	
 	while(1) {
-		int num_read = SSL_read(ssl_connection, buf + offset, 
-				pkt_len - offset);
+		// only read up to end of packet
+		int num_read = SSL_read(server->ssl, 
+				server->data + server->offset, 
+				pkt_len - server->offset);
 		if (num_read == -1){
 	    		perror("ssl recv");
 	    		return;
@@ -230,48 +285,26 @@ void process_single_message(ssh_result_list *head,
 		}
 		DPRINTF(DEBUG_SOCKET, 
 			"received %d bytes of message \n", num_read);
-		offset += num_read;
-        	if(pkt_len <= offset) {
-			add_result_for_message(head, (notary_header*)buf,
-				host_name);
+		server->offset += num_read;
+        	if(pkt_len <= server->offset) {
 			return;
 		}
 	}
 
 }
 
-void get_key_info_ssh(ssh_result_list *head , uint32_t pserver_ip,
-        uint16_t pserver_port, char *host_name,
-        uint16_t host_port, uint16_t key_type, char* cert_file){
+// reads back replies form the server and processes them
+// into ssh_result_list* entries
+void read_from_server(server_list *server, char* hostname) {
 
-	char small_buf[sizeof(notary_header)];
-
-	int client_sock; 
-	SSL* ssl_connection = getSSLClientConnection(pserver_ip, 
-			pserver_port, &client_sock, cert_file);
-	if(ssl_connection == NULL) return;
-
-	notary_header* hdr = pkt_create(host_name, key_type, host_port);
-
-	int msg_len = ntohs(hdr->name_len) + sizeof(notary_header);
-	int offset = SSL_write(ssl_connection, hdr, msg_len);
-	if (offset == -1){
-	    perror("ssl write");
-	    return;
-	}
-
-	free(hdr);
-	DPRINTF(DEBUG_SOCKET, 
-		"Wrote %d bytes on the SSL socket, waiting for response \n", 
-		offset);
-
-	offset = 0; 
-	// loop until we have received replies (or time-out?) 
+	server->offset = 0; 
+	// loop until we have received and process all replies 
 	while(1) {
 		// Read Reply
 		DPRINTF(DEBUG_SOCKET, "waiting for header \n");
-		int num_read = SSL_read(ssl_connection, small_buf + offset, 
-				sizeof(notary_header) - offset);
+		int num_read = SSL_read(server->ssl, 
+				server->hdr_buf + server->offset, 
+				sizeof(notary_header) - server->offset);
 		if (num_read == -1){
 	    		perror("ssl recv");
 	    		return;
@@ -282,17 +315,53 @@ void get_key_info_ssh(ssh_result_list *head , uint32_t pserver_ip,
 		}
 		DPRINTF(DEBUG_SOCKET, 
 			"received %d bytes of header\n", num_read);
-		offset += num_read;
+		server->offset += num_read;
 
-		if(offset >= sizeof(notary_header)) {
-			notary_header *hdr = (notary_header*) small_buf;
-			process_single_message(head, hdr, 
-					ssl_connection,host_name);
+		if(server->offset >= sizeof(notary_header)) {
+			finish_reading_packet(server);
+			// process data now, b/c a new reply
+			// may come in and overwrite data
+			process_packet_data(server, hostname);
+			free(server->data);
 		}
-		offset = 0;
+		server->offset = 0;
 	}
-	SSL_shutdown(ssl_connection);
-	close(client_sock);
+	SSL_shutdown(server->ssl);
+	close(server->sock);
 	
 }
 
+void read_server_replies(server_list *all_servers, char* host_name) {
+
+	server_list* server;
+        struct list_head *pos;
+        DPRINTF(255, "Starting Server Reply Loop \n");
+        list_for_each(pos,&(all_servers->list)){
+                server = list_entry(pos, server_list, list);
+		if(server->ssl) 
+			read_from_server(server, host_name);
+	}
+        DPRINTF(255, "Done with Server Reply Loop \n");
+}
+
+
+void contact_probe_servers(server_list* servers, char* host_name,
+	uint16_t key_type, uint16_t service_port, char* cert_file) {
+
+	initiate_server_connections(servers, cert_file);
+	
+	send_server_requests(servers, host_name, key_type, service_port);
+
+	read_server_replies(servers, host_name);
+}
+
+
+
+/*
+	uint16_t total_len = ntohs(hdr->total_len);
+                char* data = (char*)hdr;
+                for(int i = 0; i < total_len; i = i + 4) {
+                        printf("%d %d %d %d \n", data[i],
+                                data[i+1], data[i+2], data[i+3]);
+                }		
+*/
