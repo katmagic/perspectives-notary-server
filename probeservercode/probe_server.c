@@ -16,7 +16,7 @@
 #include "db_storage.h"
 
 
-unsigned int notary_debug = DEBUG_NONE;
+unsigned int notary_debug = DEBUG_ALL;
 
 BIO *bio_err=0;
 
@@ -85,7 +85,7 @@ notary_header* build_reply_message(char* dns_name,
 		uint16_t port, ssh_result_list* result) {
 
 	u_char* blob;
-	int blob_size;
+	u_int blob_size;
 	key_to_blob(result->key, &blob, &blob_size);
 
 	int name_len = strlen(dns_name) + 1;
@@ -146,7 +146,7 @@ void init_serversock(uint16_t port, int* server_sock) {
 
 void acceptIncomingSSLClient(int server_sock, conn_node *head) {
 	struct sockaddr_in client_addr;
-	int addrlen = sizeof(struct sockaddr_in);
+	u_int addrlen = sizeof(struct sockaddr_in);
 	SSL *ssl;
 	BIO *sbio;
 	conn_node* tmp;
@@ -275,6 +275,7 @@ void process_socket_data(sqlite3* db, conn_node *conn) {
 	} while(SSL_pending(conn->ssl));
 }
 
+/*  dw: not currently used
 void store_probe_result(sqlite3* db, ssh_key_holder *key_holder,
 			int time) {
 
@@ -293,6 +294,8 @@ void store_probe_result(sqlite3* db, ssh_key_holder *key_holder,
 			key_holder->ip_addr, key_holder->key, time);
 	
 }
+*/
+
 
 void send_reply(sqlite3* db, char *hostname, uint16_t port, 
 		uint16_t key_type, SSL* ssl , int sock) {
@@ -304,23 +307,26 @@ void send_reply(sqlite3* db, char *hostname, uint16_t port,
 	ssh_result_list* cur;
 	list_for_each(pos, &result_list->list) {
 		cur = list_entry(pos, ssh_result_list, list);
-	/*
-		notary_header* hdr = cur->hdr;
+		
+		notary_header *hdr = build_reply_message(hostname, port, cur);
 		int total_len = ntohs(hdr->total_len);
       
 	  	int offset = SSL_write(ssl, hdr, total_len);
         	if (offset == -1){
             		perror("ssl write");
-            		return;
-        	}
-		DPRINTF(DEBUG_INFO, "Replied on sock = %d with %d bytes (%d sent)\n", 
-			sock, total_len, offset);
+        	}else {
+			DPRINTF(DEBUG_INFO, "Replied on sock = %d with %d bytes (%d sent)\n", 
+				sock, total_len, offset);
+		}
 		
 		free(hdr);
-		
-//		list_del(pos); 
-//		free(cur);
-	*/
+		free(cur->key);
+		free(cur->timestamps);
+		free(cur->addresses);
+		free(cur);
+
+//TODO: add this back:		list_del(pos); 
+	
 	}
 	DPRINTF(DEBUG_INFO,
 		"done with all replies for %s, closing connection \n", 

@@ -141,8 +141,12 @@ Key *get_key(sqlite3 *db, int kid) {
 		return NULL; 
 	}
 
-	int blob_size = sqlite3_column_bytes(stmt1,1);
-	char* blob = (char*)sqlite3_column_blob(stmt1,1);
+	int blob_size = sqlite3_column_bytes(stmt1,0);
+	if(blob_size <= 0) {
+		DPRINTF(DEBUG_ERROR, "Error reading key from key_id table \n");
+		return NULL;
+	}
+	u_char* blob = (u_char*)sqlite3_column_blob(stmt1,0);
 	Key *key = key_from_blob(blob, blob_size);
 
 	sqlite3_finalize(stmt1);
@@ -158,6 +162,7 @@ void add_new_service(sqlite3* db, char *dns_name, uint16_t port) {
 	int rc;
 	char *zErrMsg = NULL;
 
+	printf("inserting new service %s : %d \n", dns_name, port);
   	rc = sqlite3_prepare_v2(db, add_stmt1, strlen(add_stmt1), 
 			&stmt1, &tail);
 	rc = sqlite3_bind_text(stmt1, 2, dns_name, 
@@ -173,7 +178,7 @@ void add_new_service(sqlite3* db, char *dns_name, uint16_t port) {
 }
 
 void add_new_key(sqlite3* db, char*blob, int blob_size, int key_type) {
-	char* add_stmt1 = "INSERT into service_id values (?, ?, ?)";
+	char* add_stmt1 = "INSERT into key_id values (?, ?, ?)";
 	sqlite3_stmt *stmt1; 	
 	const char* tail;
 	int rc;
@@ -200,9 +205,17 @@ void store_ssh_probe_result(sqlite3* db, char *dns_name, uint16_t port,
 		printf("no key to store \n");
 		return;
 	}
+
 	u_char* blob;
-	int blob_size = 0;
-	key_to_blob(key, &blob, &blob_size);
+	u_int blob_size = 0;
+	if(key-type == KEY_RSA1) {
+		// TODO: handle RSA1 keys
+		// TODO: fix join code so only correct key type is returned
+		// TODO: add periodic probing
+
+	}else {
+		key_to_blob(key, &blob, &blob_size);
+	}
 	int kid = get_key_id(db, (char*)blob, blob_size);
 	if(kid == NO_KEY) {
 		// we've never seen this key before
@@ -217,7 +230,7 @@ void store_ssh_probe_result(sqlite3* db, char *dns_name, uint16_t port,
 	}
 
 	int sid = get_service_id(db, dns_name, port);
-	if(kid == NO_KEY) {
+	if(sid == NO_SERVICE) {
 		// we've never seen this service before
 		DPRINTF(DEBUG_DATABASE, "New service id for %s: %d\n", 
 				dns_name, port);
@@ -339,8 +352,7 @@ ssh_result_list* get_all_observations(sqlite3* db,
 	char *zErrMsg = NULL;
 	int rc;
 	char *select_stmt1 = "SELECT DISTINCT kid FROM "
-		"observations, key_id where key_id.kid = observations.kid"
-		" and sid = ? and type = ?";
+		"observations where sid = ? ";
 	sqlite3_stmt *stmt1; 	
 	const char* tail;
 	
@@ -364,9 +376,10 @@ ssh_result_list* get_all_observations(sqlite3* db,
 	rc = sqlite3_bind_int(stmt1, 2, key_type);
 
 	// loop once for each unique key that we have seen for this
-	// service identifier, 
+	// service identifier
+	int num_keys = 0; 
 	while((rc = sqlite3_step(stmt1) == SQLITE_ROW)) {
-
+		num_keys++;
 		int kid = sqlite3_column_int(stmt1,0);
 		DPRINTF(DEBUG_DATABASE, "Found kid = %d \n", kid);
 
@@ -376,6 +389,7 @@ ssh_result_list* get_all_observations(sqlite3* db,
 		list_add(&(result->list),&(head->list));
 		
 	} // end ROW for-loop
+	DPRINTF(DEBUG_INFO, "Found total of %d keys \n", num_keys);
 
 	if( rc != SQLITE_OK && rc != SQLITE_DONE ){
     		fprintf(stderr, "SQL error (step): %s\n", zErrMsg);
