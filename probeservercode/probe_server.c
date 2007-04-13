@@ -81,6 +81,44 @@ SSL_CTX *initialize_ctx(char *keyfile, char*cert_file) {
   }
       
 
+notary_header* build_reply_message(char* dns_name, 
+		uint16_t port, ssh_result_list* result) {
+
+	u_char* blob;
+	int blob_size;
+	key_to_blob(result->key, &blob, &blob_size);
+
+	int name_len = strlen(dns_name) + 1;
+	int probes_len = sizeof(int) * result->num_probes;
+	int headroom = sizeof(notary_header) + name_len;
+	int total_len = headroom + sizeof(ssh_key_info) + 
+			blob_size + (2 * probes_len);
+	notary_header* hdr = (notary_header*) malloc(total_len);
+        hdr->version = 1;
+        hdr->msg_type = TYPE_FETCH_REPLY_FINAL;
+        hdr->total_len = htons(total_len);
+        hdr->name_len = htons(name_len);
+        hdr->service_type = htons(result->key->type);
+        hdr->service_port = htons(port);
+	char* name_start = (char*)(hdr+1);
+	memcpy(name_start, dns_name, name_len);
+
+	ssh_key_info* info = (ssh_key_info*)(((char*)hdr) + headroom);
+	info->key_len_bytes = htons((uint16_t)blob_size);
+	info->num_probes = htons((uint16_t)result->num_probes);
+
+	char *key_start = (char*)(info + 1);
+	memcpy(key_start, blob, blob_size);
+	char *probe_start = key_start + blob_size;
+	memcpy(probe_start, result->timestamps, probes_len);
+	probe_start += probes_len;
+	memcpy(probe_start, result->addresses, probes_len);
+	xfree(blob);
+
+	return hdr;
+}
+
+
 
 void init_serversock(uint16_t port, int* server_sock) {
 	struct sockaddr_in server_addr;
@@ -145,10 +183,13 @@ void acceptIncomingSSLClient(int server_sock, conn_node *head) {
 
 
 // returns 1 if this header was able to be processed by 
-// the ssh-keyscan layer.  
+// the ssh-keyscan layer.  Otherwise, the upper layer will
+// keep calling this function until 1 is returned.
 int process_request(sqlite3* db, conn_node *conn,notary_header *hdr) {
 
 	char* data = (char*)(hdr + 1);
+	uint16_t port = ntohs(hdr->service_port);
+	uint16_t type = ntohs(hdr->service_type);
 	int name_len = ntohs(hdr->name_len);
 
 	if(name_len > 1024) {
@@ -163,18 +204,18 @@ int process_request(sqlite3* db, conn_node *conn,notary_header *hdr) {
         struct timeval t;
         gettimeofday(&t,NULL);
         int cur_secs = t.tv_sec;
-	// TODO: need to take key-type into consideration
-	int last_probe_time = get_last_probe_time(db, host);
-	int diff = cur_secs - last_probe_time;
 
-	printf("last probe was %.1f minutes ago \n",SEC2MIN(diff)); 	
+	int last_obs = get_last_obs_time(db,host,port,type);
+	if(last_obs != NO_SERVICE && last_obs != NO_KEY) {
+		int diff = cur_secs - last_obs;
+		printf("Last observation "
+			"was %.1f minutes ago \n", SEC2MIN(diff)); 
+	}	
 
 
-	uint16_t service_type = ntohs(hdr->service_type);
-	uint16_t port = ntohs(hdr->service_port);
-	DPRINTF(DEBUG_INFO, "Handing %s to do_host with service type %d \n", 
-			host, service_type);
-	return do_single_probe(host, service_type, port, conn);
+	DPRINTF(DEBUG_INFO, "Handing %s to ssh-keyscan with service type %d \n", 
+			host, type);
+	return do_single_probe(host, type, port, conn);
 }
 
 
@@ -248,7 +289,7 @@ void store_probe_result(sqlite3* db, ssh_key_holder *key_holder,
 		fputs("\n", stdout);
 	}
 
-	store_ssh_probe_result(db, key_holder->name, 
+	store_ssh_probe_result(db, key_holder->name, key_holder->port, 
 			key_holder->ip_addr, key_holder->key, time);
 	
 }
@@ -256,23 +297,18 @@ void store_probe_result(sqlite3* db, ssh_key_holder *key_holder,
 void send_reply(sqlite3* db, char *hostname, uint16_t port, 
 		uint16_t key_type, SSL* ssl , int sock) {
 
-	ssh_msg_list* reply_list = lookupName(db, hostname,
-						port, key_type);
+	ssh_result_list* result_list = 
+		get_all_observations(db, hostname, port, key_type);
 
 	struct list_head *pos;
-	ssh_msg_list* cur;
-	list_for_each(pos, &reply_list->list) {
-		cur = list_entry(pos, ssh_msg_list, list);
-	
+	ssh_result_list* cur;
+	list_for_each(pos, &result_list->list) {
+		cur = list_entry(pos, ssh_result_list, list);
+	/*
 		notary_header* hdr = cur->hdr;
 		int total_len = ntohs(hdr->total_len);
-/*		char* data = (char*)hdr;
-		for(int i = 0; i < total_len; i = i + 4) {
-			printf("%d %d %d %d \n", data[i],
-				data[i+1], data[i+2], data[i+3]);
-		}
-*/
-        	int offset = SSL_write(ssl, hdr, total_len);
+      
+	  	int offset = SSL_write(ssl, hdr, total_len);
         	if (offset == -1){
             		perror("ssl write");
             		return;
@@ -284,6 +320,7 @@ void send_reply(sqlite3* db, char *hostname, uint16_t port,
 		
 //		list_del(pos); 
 //		free(cur);
+	*/
 	}
 	DPRINTF(DEBUG_INFO,
 		"done with all replies for %s, closing connection \n", 
@@ -370,7 +407,7 @@ int main(int argc, char** argv) {
 			for(int i = 0; i < num_holders_used; i++) {
 				ssh_key_holder *h = (&ssh_keys[i]);
 				store_ssh_probe_result(db, h->name, 
-					h->ip_addr, h->key, time) ;
+					h->port, h->ip_addr, h->key, time) ;
 	
 				send_reply(db,h->name, h->port, h->key_type,
 						h->conn->ssl, h->conn->sock);

@@ -4,8 +4,9 @@
 #include "../common.h"
 #include "../util/list.h" // modified from linux kernel 
 #include "key.h" // from ssh code
-#include <openssl/ssl.h>
 
+// stupid hack needed to get SSH and SSL to play along
+#define SSL void
 
 typedef struct {
 	struct list_head list;

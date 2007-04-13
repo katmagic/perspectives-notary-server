@@ -30,6 +30,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "probe_server.h"
+#include "../common.h"
+
 #include "xmalloc.h"
 #include "ssh.h"
 #include "ssh1.h"
@@ -48,8 +51,6 @@
 #include "misc.h"
 #include "hostfile.h"
 
-#include "probe_server.h"
-#include "../common.h"
 
 /* Flag indicating whether IPv4 or IPv6.  This can be set on the command line.
    Default value is AF_UNSPEC means both IPv4 and IPv6. */
