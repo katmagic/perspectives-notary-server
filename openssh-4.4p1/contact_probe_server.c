@@ -19,7 +19,7 @@
 
 #include "contact_probe_server.h"
 #include "key.h"
-
+#include "../util/key_util.h"
 
 BIO *bio_err=0;
 
@@ -97,11 +97,10 @@ void getSSLClientConnection(server_list* server, char* cert_file) {
 		inet_ntoa(host_addr.sin_addr), ntohs(host_addr.sin_port));
 	if (connect(server->sock, (struct sockaddr *)&host_addr, 
 		sizeof(struct sockaddr)) == -1){
-	    DPRINTF(DEBUG_ERROR,
-		 "Failed to connect to probe server %s : %d :",
+	    printf("Failed to connect to probe server %s : %d :",
 		inet_ntoa(host_addr.sin_addr), ntohs(host_addr.sin_port));
 	    perror("");
-	    DPRINTF(DEBUG_ERROR, "\n");
+	    printf("\n");
 	    return;
 	}
 	DPRINTF(DEBUG_INFO, "connected to probe server \n");
@@ -114,6 +113,7 @@ void getSSLClientConnection(server_list* server, char* cert_file) {
 	sbio = BIO_new_socket(server->sock, BIO_NOCLOSE);
 	SSL_set_bio(server->ssl, sbio, sbio);
 	if (SSL_connect(server->ssl)<=0){
+	     server->ssl = NULL;
 	     berr_exit("Error in the SSL connection");
 	     return;
   	}
@@ -127,6 +127,7 @@ void getSSLClientConnection(server_list* server, char* cert_file) {
 		DPRINTF(DEBUG_SSL, "probe server cert. "
 		"failed verifications \n");
 		ERR_print_errors(bio_err);
+		server->ssl = NULL;
 	}
 }
 
@@ -201,7 +202,7 @@ void send_server_requests(server_list *all_servers, char* host_name,
 }
 
 // takes a full packet and converts it into a ssh_result_list *
-// element that can be stored by the server.
+// element that can be stored by the client library.
 void process_packet_data(server_list *server, char *hostname) {
 
 	ssh_result_list *head = &(server->probe_results);
@@ -231,15 +232,16 @@ void process_packet_data(server_list *server, char *hostname) {
 				malloc(sizeof(ssh_result_list));
 
 	ssh_key_info* key_info = (ssh_key_info*)HDR2DATA(hdr);
-	int blob_size = ntohs(key_info->key_len_bytes);
-	char* blob_start = (char*)(key_info + 1);	
-	results->key = key_from_blob((uint8_t*)blob_start, blob_size);
+	int buf_size = ntohs(key_info->key_len_bytes);
+	char* buf_start = (char*)(key_info + 1);	
+	results->key = buf_to_key((uint8_t*)buf_start, buf_size,
+			ntohs(hdr->service_type));
 
 	int num_probes = ntohs(key_info->num_probes);
 	int probes_len = sizeof(int) * num_probes;
 	int* timestamps = (int*) malloc(probes_len);
 	int* addresses = (int*) malloc(probes_len);
-	int* probes_start = (int*) (blob_start + blob_size);
+	int* probes_start = (int*) (buf_start + buf_size);
 	int i;
 	for(i = 0; i < num_probes; i++) {
 		timestamps[i] = ntohl(probes_start[i]);

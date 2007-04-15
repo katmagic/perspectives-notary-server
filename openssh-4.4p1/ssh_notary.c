@@ -70,6 +70,7 @@ void do_probe_check(char* hostname, int port,
 	load_probe_servers(notary, server_file);
 	DPRINTF(DEBUG_INFO, "checking key of type %d \n", host_key->type);
 	printf("contacting probing servers.... ");
+	fflush(stdout);
 	probe_for_key(notary, 0, hostname, host_key->type, port);
 	printf("Probe Results: \n");
 
