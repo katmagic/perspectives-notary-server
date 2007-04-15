@@ -14,9 +14,9 @@
 #include "ssh-keyscan.h"
 #include "xmalloc.h"
 #include "db_storage.h"
+#include "../util/key_util.h"
 
-
-unsigned int notary_debug = DEBUG_ALL;
+unsigned int notary_debug = (DEBUG_ALL & ~DEBUG_SOCKET);
 
 BIO *bio_err=0;
 
@@ -84,9 +84,9 @@ SSL_CTX *initialize_ctx(char *keyfile, char*cert_file) {
 notary_header* build_reply_message(char* dns_name, 
 		uint16_t port, ssh_result_list* result) {
 
-	u_char* blob;
-	u_int blob_size;
-	key_to_blob(result->key, &blob, &blob_size);
+	char* blob;
+	int blob_size;
+	key_to_buf(result->key, &blob, &blob_size);
 
 	int name_len = strlen(dns_name) + 1;
 	int probes_len = sizeof(int) * result->num_probes;
@@ -140,7 +140,7 @@ void init_serversock(uint16_t port, int* server_sock) {
  
 	listen(*server_sock,5);
  
-	DPRINTF(DEBUG_INFO,"waiting for incoming connections on %s : %d \n",
+	DPRINTF(DEBUG_SOCKET,"waiting for incoming connections on %s : %d \n",
 		inet_ntoa(server_addr.sin_addr), port);
 }
 
@@ -303,11 +303,13 @@ void send_reply(sqlite3* db, char *hostname, uint16_t port,
 	ssh_result_list* result_list = 
 		get_all_observations(db, hostname, port, key_type);
 
-	struct list_head *pos;
+	struct list_head *pos,*tmp;
 	ssh_result_list* cur;
-	list_for_each(pos, &result_list->list) {
+	int num_results = 0;
+	list_for_each_safe(pos, tmp, &result_list->list) {
 		cur = list_entry(pos, ssh_result_list, list);
-		
+	
+		num_results++;
 		notary_header *hdr = build_reply_message(hostname, port, cur);
 		int total_len = ntohs(hdr->total_len);
       
@@ -323,9 +325,10 @@ void send_reply(sqlite3* db, char *hostname, uint16_t port,
 		free(cur->key);
 		free(cur->timestamps);
 		free(cur->addresses);
-		free(cur);
 
-//TODO: add this back:		list_del(pos); 
+		// we can do this inside foreach_safe
+		list_del(pos);
+		free(cur);	
 	
 	}
 	DPRINTF(DEBUG_INFO,
@@ -337,7 +340,7 @@ void send_reply(sqlite3* db, char *hostname, uint16_t port,
 int setup_readfds(fd_set *readfds, conn_node *head, int server_sock) {
 	int max_fd = server_sock;
 	FD_ZERO(readfds);	
-        DPRINTF(DEBUG_ALL, "set readfs for server sock = %d \n", server_sock);
+        DPRINTF(DEBUG_SOCKET, "set readfs for server sock = %d \n", server_sock);
 	FD_SET(server_sock, readfds);	
 	struct list_head* pos;
 	conn_node* tmp;
@@ -346,7 +349,7 @@ int setup_readfds(fd_set *readfds, conn_node *head, int server_sock) {
 		tmp = list_entry(pos, conn_node, list);
 		if(tmp->sock > max_fd) max_fd = tmp->sock;
 		FD_SET(tmp->sock , readfds);
-                DPRINTF(DEBUG_ALL,
+                DPRINTF(DEBUG_SOCKET,
                         "set readfs for client sock = %d \n", tmp->sock);
 
 	}
@@ -399,7 +402,7 @@ int main(int argc, char** argv) {
 				}
 			}
 		}else {
-                        DPRINTF(DEBUG_ALL, "select returned nothing \n");
+                        DPRINTF(DEBUG_SOCKET, "select returned nothing \n");
                 }
 
 

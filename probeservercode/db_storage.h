@@ -28,7 +28,7 @@ sqlite3* db_init(char *fname) ;
 void db_close(sqlite3* db);
 
 int get_service_id(sqlite3* db, char* dns_name, uint16_t port);
-int get_key_id(sqlite3* db, char* blob, int blob_len);
+int get_key_id(sqlite3* db, char* blob, int blob_len, int key_type);
 
 
 #endif

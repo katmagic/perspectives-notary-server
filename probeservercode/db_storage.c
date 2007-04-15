@@ -4,7 +4,7 @@
 
 #include "xmalloc.h"
 #include "db_storage.h"
-
+#include "../util/key_util.h"
 
 // create the 'ssh_key_bindings' table if it does not already exist
 void create_table(char* create_stmt, sqlite3 *db) {
@@ -104,9 +104,10 @@ int get_service_id(sqlite3* db, char* dns_name, uint16_t port) {
 	return sid;
 }
 
-int get_key_id(sqlite3* db, char* blob, int blob_len) {
+int get_key_id(sqlite3* db, char* blob, int blob_len, int key_type) {
 	int rc;
-	char *select_stmt1 = "SELECT kid FROM key_id WHERE key = ?";
+	char *select_stmt1 = "SELECT kid FROM key_id WHERE key = ? "
+			" and type = ?";
 	sqlite3_stmt *stmt1; 	
 	const char* tail;
 
@@ -114,6 +115,8 @@ int get_key_id(sqlite3* db, char* blob, int blob_len) {
 			strlen(select_stmt1), &stmt1, &tail);
 	rc = sqlite3_bind_blob(stmt1, 1, blob, 
 			blob_len, SQLITE_TRANSIENT);
+	rc = sqlite3_bind_int(stmt1,2, key_type);
+
 	rc = sqlite3_step(stmt1);
 	if(rc != SQLITE_ROW) {
 		sqlite3_finalize(stmt1);
@@ -128,7 +131,7 @@ int get_key_id(sqlite3* db, char* blob, int blob_len) {
 Key *get_key(sqlite3 *db, int kid) {
 
 	int rc;
-	char *select_stmt1 = "SELECT key FROM key_id WHERE kid = ?";
+	char *select_stmt1 = "SELECT key, type FROM key_id WHERE kid = ?";
 	sqlite3_stmt *stmt1; 	
 	const char* tail;
 
@@ -141,13 +144,14 @@ Key *get_key(sqlite3 *db, int kid) {
 		return NULL; 
 	}
 
-	int blob_size = sqlite3_column_bytes(stmt1,0);
-	if(blob_size <= 0) {
+	int buf_size = sqlite3_column_bytes(stmt1,0);
+	if(buf_size <= 0) {
 		DPRINTF(DEBUG_ERROR, "Error reading key from key_id table \n");
 		return NULL;
 	}
-	u_char* blob = (u_char*)sqlite3_column_blob(stmt1,0);
-	Key *key = key_from_blob(blob, blob_size);
+	char* buf = (char*) sqlite3_column_blob(stmt1,0);
+	int key_type = sqlite3_column_int(stmt1, 1);
+	Key *key = buf_to_key(buf, buf_size, key_type);
 
 	sqlite3_finalize(stmt1);
 	return key;
@@ -198,6 +202,8 @@ void add_new_key(sqlite3* db, char*blob, int blob_size, int key_type) {
 	sqlite3_finalize(stmt1);
 }
 
+		// TODO: fix join code so only correct key type is returned
+		// TODO: add periodic probing
 void store_ssh_probe_result(sqlite3* db, char *dns_name, uint16_t port,
 				uint32_t ip_addr, 
 				Key *key, int timestamp) {
@@ -206,22 +212,16 @@ void store_ssh_probe_result(sqlite3* db, char *dns_name, uint16_t port,
 		return;
 	}
 
-	u_char* blob;
-	u_int blob_size = 0;
-	if(key-type == KEY_RSA1) {
-		// TODO: handle RSA1 keys
-		// TODO: fix join code so only correct key type is returned
-		// TODO: add periodic probing
+	char* buf;
+	int buf_size = 0;
+	key_to_buf(key, &buf, &buf_size);
 
-	}else {
-		key_to_blob(key, &blob, &blob_size);
-	}
-	int kid = get_key_id(db, (char*)blob, blob_size);
+	int kid = get_key_id(db, buf, buf_size, key->type);
 	if(kid == NO_KEY) {
 		// we've never seen this key before
 		DPRINTF(DEBUG_DATABASE, "New key id for %s\n", dns_name);
-		add_new_key(db, (char*)blob,blob_size, key->type);
-		kid = get_key_id(db, (char*)blob, blob_size);
+		add_new_key(db, buf, buf_size, key->type);
+		kid = get_key_id(db, buf, buf_size, key->type);
 		if(kid == NO_KEY) {
 			DPRINTF(DEBUG_ERROR, "Error adding key ID \n");
 			return;
@@ -244,7 +244,7 @@ void store_ssh_probe_result(sqlite3* db, char *dns_name, uint16_t port,
 	}
 
 	insert_observation(db, sid, kid, timestamp, ip_addr);
-	xfree(blob);
+	xfree(buf);
 }
 
 
@@ -357,9 +357,9 @@ ssh_result_list* get_all_observations(sqlite3* db,
 	const char* tail;
 	
 	ssh_result_list* head = (ssh_result_list*)
-			malloc(sizeof(ssh_result_list));
+		malloc(sizeof(ssh_result_list));
+			
 	INIT_LIST_HEAD(&(head->list));
-
 
 	DPRINTF(DEBUG_DATABASE, "DB look-up for dns-name = %s  "
 		" with key-type = %d \n", dns_name, key_type);
@@ -367,7 +367,7 @@ ssh_result_list* get_all_observations(sqlite3* db,
 	if(sid == NO_SERVICE){
 		DPRINTF(DEBUG_ERROR, "Found no service for %s : %d \n", 
 			dns_name, port);
-		return head; // empty list
+		return NULL;
 	}
 
   	rc = sqlite3_prepare_v2(db, select_stmt1, 
@@ -381,7 +381,6 @@ ssh_result_list* get_all_observations(sqlite3* db,
 	while((rc = sqlite3_step(stmt1) == SQLITE_ROW)) {
 		num_keys++;
 		int kid = sqlite3_column_int(stmt1,0);
-		DPRINTF(DEBUG_DATABASE, "Found kid = %d \n", kid);
 
 		ssh_result_list *result = 
 			get_observations_for_key(db, kid);
