@@ -19,8 +19,11 @@
 #include "key.h" // SSH key data-structure
 #include "debug.h"
 
-#define TRUE 1
-#define FALSE 0
+#ifndef TRUE 
+ #define TRUE 1
+ #define FALSE 0
+#endif
+
 #define BOOL uint8_t
 
 #define MAX_PACKET_LEN 1400
