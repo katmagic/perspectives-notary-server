@@ -15,6 +15,7 @@
 #include "xmalloc.h"
 #include "db_storage.h"
 #include "../util/key_util.h"
+#include "background_probing.h"
 
 unsigned int notary_debug = (DEBUG_ALL & ~DEBUG_SOCKET);
 
@@ -218,6 +219,13 @@ int process_request(sqlite3* db, conn_node *conn,notary_header *hdr) {
 	return do_single_probe(host, type, port, conn);
 }
 
+void close_and_free_conn(conn_node *conn) {
+	SSL_shutdown(conn->ssl);
+	SSL_free(conn->ssl);
+	close(conn->sock);
+	list_del(&(conn->list));
+	free(conn);
+}
 
 void process_socket_data(sqlite3* db, conn_node *conn) { 
 
@@ -229,10 +237,7 @@ void process_socket_data(sqlite3* db, conn_node *conn) {
 		if(bytes_read == 0) {
 			DPRINTF(DEBUG_ERROR, 
 				"connection closed on socket %d \n", conn->sock);
-			SSL_shutdown(conn->ssl);
-			close(conn->sock);
-			list_del(&(conn->list));
-			free(conn);
+			close_and_free_conn(conn);
 			return;
 		}
 
@@ -240,12 +245,15 @@ void process_socket_data(sqlite3* db, conn_node *conn) {
 		
 		if(ret_val == SSL_ERROR_ZERO_RETURN) {
 			DPRINTF(DEBUG_ERROR, "Connection has been closed remotely\n");
+			close_and_free_conn(conn);
 			return;
 		} else if(ret_val == SSL_ERROR_SYSCALL) {
 			perror("Socket Syscall error");
+			close_and_free_conn(conn);
 			return;
 		}else if(ret_val != SSL_ERROR_NONE) {
     			DPRINTF(DEBUG_ERROR | DEBUG_SSL, "SSL_read returned error. \n");
+			close_and_free_conn(conn);
     			ERR_print_errors(bio_err);
 			return;
 		}
@@ -256,9 +264,16 @@ void process_socket_data(sqlite3* db, conn_node *conn) {
 			notary_header *hdr = (notary_header*) conn->buf;
 			uint16_t pkt_len = ntohs(hdr->total_len);
 			if(pkt_len <= conn->offset) {
-				// loop until the lower layer accepts
-				// another connection
-				while(!process_request(db, conn, hdr)) {}
+				int ret = process_request(db,conn,hdr);
+				if(ret == 0) {
+					DPRINTF(DEBUG_ERROR, 
+					"Insufficient resources to probe at this time\n");
+					close_and_free_conn(conn);
+					return;
+				}else if (ret == -1) {
+					close_and_free_conn(conn);
+					return;
+				}
 				// pkt_len bytes consumed
 				memmove(conn->buf, conn->buf + pkt_len,
 				 MAX_PACKET_LEN - pkt_len);
@@ -275,26 +290,6 @@ void process_socket_data(sqlite3* db, conn_node *conn) {
 	} while(SSL_pending(conn->ssl));
 }
 
-/*  dw: not currently used
-void store_probe_result(sqlite3* db, ssh_key_holder *key_holder,
-			int time) {
-
-	if(key_holder->key == NULL) {
-		DPRINTF(DEBUG_ERROR, "Key is null. No probe stored. \n");
-		return;
-	}
-
-	IF_DEBUG(DEBUG_MESSAGE) {
-		printf("putting key in DB \n");
-		key_write(key_holder->key, stdout);
-		fputs("\n", stdout);
-	}
-
-	store_ssh_probe_result(db, key_holder->name, key_holder->port, 
-			key_holder->ip_addr, key_holder->key, time);
-	
-}
-*/
 
 
 void send_reply(sqlite3* db, char *hostname, uint16_t port, 
@@ -415,15 +410,28 @@ int main(int argc, char** argv) {
 			int time = (uint32_t) cur_time.tv_sec;
 			for(int i = 0; i < num_holders_used; i++) {
 				ssh_key_holder *h = (&ssh_keys[i]);
-				store_ssh_probe_result(db, h->name, 
-					h->port, h->ip_addr, h->key, time) ;
-	
-				send_reply(db,h->name, h->port, h->key_type,
+
+				if(h->key != NULL) {
+					store_ssh_probe_result(db, h->name, 
+						h->port, h->ip_addr, h->key, time) ;
+
+					// try to add to the background-probing table
+					// this is ineffecient
+					int sid = get_service_id(db,h->name,h->port);
+							
+					if(sid != NO_SERVICE && !bg_already_in_table(db,sid))
+						bg_add_new_service(db,sid);
+				}
+
+				// if conn exists, this was a live probe, otherwise
+				// it was a background probe
+				if(h->conn != NULL) {	
+					send_reply(db,h->name, h->port, h->key_type,
 						h->conn->ssl, h->conn->sock);
-				SSL_shutdown(h->conn->ssl);
-				close(h->conn->sock);
-				list_del(&(h->conn->list));
-				free(h->conn);
+					close_and_free_conn(h->conn);
+				} else {
+					bg_probe_result(db, h->name, h->port, TRUE);
+				}
 			}
 		}
 

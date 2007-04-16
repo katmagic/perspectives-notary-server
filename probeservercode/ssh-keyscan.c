@@ -32,7 +32,7 @@
 
 #include "probe_server.h"
 #include "../common.h"
-
+#include "db_storage.h" // for NO_KEY
 #include "xmalloc.h"
 #include "ssh.h"
 #include "ssh1.h"
@@ -65,6 +65,8 @@ int hash_hosts = 0;		/* Hash hostname on output */
 /* The number of seconds after which to give up on a TCP connection */
 int timeout = 5;
 
+#define MAX_TIMEOUTS 3
+
 int maxfd;
 #define MAXCON (maxfd - 10)
 
@@ -75,7 +77,6 @@ int ncon;
 int nonfatal_fatal = 0;
 jmp_buf kexjmp;
 Key *kexjmp_key;
-
 
 
 
@@ -93,7 +94,8 @@ typedef struct Connection {
 	int c_plen;		/* Packet length field for ssh packet */
 	int c_len;		/* Total bytes which must be read. */
 	int c_off;		/* Length of data read so far. */
-	ssh_key_holder holder; 
+	ssh_key_holder holder;  /* holds info about the requester for a 'on-demand' probe */
+	int timeout_count;      /* how many timeouts has this attempt experienced */
 	char *c_data;		/* Data read from this fd */
 	Kex *c_kex;		/* The key-exchange struct for ssh2 */
 	struct timeval c_tv;	/* Time at which connection gets aborted */
@@ -254,8 +256,10 @@ tcpconnect(char *host, uint32_t *ip_addr)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = IPv4or6;
 	hints.ai_socktype = SOCK_STREAM;
-	if ((gaierr = getaddrinfo(host, strport, &hints, &aitop)) != 0)
-		fatal("getaddrinfo %s: %s", host, gai_strerror(gaierr));
+	if ((gaierr = getaddrinfo(host, strport, &hints, &aitop)) != 0) {
+		printf("getaddrinfo %s: %s \n", host, gai_strerror(gaierr));
+		return -1;
+	}
 	for (ai = aitop; ai; ai = ai->ai_next) {
 		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (s < 0) {
@@ -278,24 +282,33 @@ tcpconnect(char *host, uint32_t *ip_addr)
 }
 
 int
-conalloc(char *iname, uint16_t service_port, uint16_t key_type,conn_node *conn)
+conalloc(char *iname, uint16_t service_port, uint16_t key_type,
+		conn_node *conn, int timeout_count)
 {
 	int s;
 
 
-	uint32_t ip_addr;	
+	uint32_t ip_addr = 0;	
 	s = tcpconnect(iname, &ip_addr);
+	
+	if(s == -1) {
+		DPRINTF(DEBUG_ERROR, "Error connecting socket to %s : %d\n",
+			iname, service_port);
+		return -1;
+	}
 
 	if (s >= maxfd)
 		fatal("conalloc: fdno %d too high", s);
 	if (fdcon[s].c_status)
 		fatal("conalloc: attempt to reuse fdno %d", s);
+	
 
 	fdcon[s].c_fd = s;
 	fdcon[s].c_status = CS_CON;
 	fdcon[s].c_data = (char *) &fdcon[s].c_plen;
 	fdcon[s].c_len = 4;
 	fdcon[s].c_off = 0;
+	fdcon[s].timeout_count = timeout_count;
 	fdcon[s].holder.name = iname;
 	fdcon[s].holder.port = service_port;
 	fdcon[s].holder.key_type = key_type;
@@ -319,7 +332,7 @@ confree(int s)
 	if (fdcon[s].c_status == CS_KEYS)
 		xfree(fdcon[s].c_data);
 	fdcon[s].c_status = CS_UNUSED;
-	fdcon[s].holder.key_type = 0;
+	fdcon[s].holder.key_type = NO_KEY;
 	TAILQ_REMOVE(&tq, &fdcon[s], c_link);
 	FD_CLR(s, read_wait);
 	ncon--;
@@ -334,17 +347,20 @@ contouch(int s)
 	TAILQ_INSERT_TAIL(&tq, &fdcon[s], c_link);
 }
 
-// this just reallocates a connection?
+// after a connection times out, this allocates a new
+// connection to try again
 static int
 conrecycle(int s)
 {
 	con *c = &fdcon[s];
 	int ret;
 
+	DPRINTF(DEBUG_INFO, "connection timeout: recycled \n");
 	ret = conalloc(c->holder.name,
 		c->holder.port, c->holder.key_type,
-		c->holder.conn);
-	confree(s);
+		c->holder.conn,c->timeout_count);
+	if(ret != -1) 
+		confree(s);
 	return (ret);
 }
 
@@ -397,12 +413,12 @@ congreet(int s)
 		datafellows = 0;
 	if (c->holder.key_type != KEY_RSA1) {
 		if (!ssh2_capable(remote_major, remote_minor)) {
-			debug("%s doesn't support ssh2", c->holder.name);
+			DPRINTF(DEBUG_ERROR, "%s doesn't support ssh2 \n", c->holder.name);
 			confree(s);
 			return;
 		}
 	} else if (remote_major != 1) {
-		debug("%s doesn't support ssh1", c->holder.name);
+		DPRINTF(DEBUG_ERROR, "%s doesn't support ssh1", c->holder.name);
 		confree(s);
 		return;
 	}
@@ -441,12 +457,16 @@ conread(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 	con *c = &fdcon[s];
 	size_t n;
 
+	int key_type = c->holder.key_type; // save before 'confree' can change it
 	if (c->c_status == CS_CON) {
-		// it appears that we get the key here for ssh2
 		congreet(s);
-		if(c->holder.key != NULL) {
+		// we get the key here for ssh2
+		// but get ssh1 keys later, so don't call save_key yet. 
+		if(key_type != KEY_RSA1){
 			save_key(ssh_keys, num_holders_used,c);
-			confree(s); 
+			// if the key is NULL, we've already freed the conn
+			if(c->holder.key != NULL) 
+				confree(s); 
 		}
 		return;
 	}
@@ -536,8 +556,18 @@ int conloop(ssh_key_holder *ssh_keys, int num_holders) {
 	    (c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec < now.tv_usec))) {
 		//timeout
 		int s = c->c_fd;
+		if(c->timeout_count < MAX_TIMEOUTS) {
+			c->timeout_count++;
+			conrecycle(s);
+		} else {
+			// save with a NULL key, and give up
+			DPRINTF(DEBUG_ERROR, "Failed to get a response from %s : %d "
+				" after %d timeouts \n", c->holder.name, 
+				c->holder.port, MAX_TIMEOUTS);	
+			save_key(ssh_keys, &num_holders_used,c);
+			confree(s); 
+		}
 		c = TAILQ_NEXT(c, c_link);
-		conrecycle(s);
 	}
 
 	return num_holders_used;
@@ -549,7 +579,8 @@ int do_single_probe(char *host, uint16_t service_type, uint16_t service_port,
 {
 	if(ncon + 2 >= MAXCON) return 0; // don't have space
 	
-	conalloc(host, service_port, service_type, conn ); 
+	if(conalloc(host, service_port, service_type, conn,0) == -1)
+		return -1;
 	
 	return 1;
 }

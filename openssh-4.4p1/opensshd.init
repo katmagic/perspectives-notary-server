@@ -6,7 +6,7 @@
 umask 022
 
 CAT=/bin/cat
-KILL=/usr/bin/kill
+KILL=/bin/kill
 
 prefix=/usr/local
 sysconfdir=${prefix}/etc

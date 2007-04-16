@@ -9,6 +9,9 @@
 #define NO_SERVICE -1
 #define NO_KEY -2
 
+Key *get_key(sqlite3 *db, int kid);
+int get_service_info(sqlite3 *db, int sid, char** dns_name, uint16_t* port);
+
 void store_ssh_probe_result(sqlite3* db, char *dns_name, uint16_t port,
 	uint32_t ip_addr, Key *key, int timestamp) ;
 
@@ -30,5 +33,6 @@ void db_close(sqlite3* db);
 int get_service_id(sqlite3* db, char* dns_name, uint16_t port);
 int get_key_id(sqlite3* db, char* blob, int blob_len, int key_type);
 
+void add_new_service(sqlite3* db, char *dns_name, uint16_t port);
 
 #endif

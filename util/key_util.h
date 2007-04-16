@@ -22,7 +22,7 @@ static void key_to_buf(Key *key, char** buf, int* buf_len) {
 		buffer_free(&msg);
 		
         }else {
-                key_to_blob(key, (u_char**)buf, buf_len);
+                key_to_blob(key, (u_char**)buf, (u_int*) buf_len);
         }
 }
 
@@ -41,7 +41,7 @@ static Key *buf_to_key(char* buf, int buf_len, int key_type) {
 		return key;
 		
 	} else {
-		return key_from_blob(buf, buf_len);
+		return key_from_blob((u_char*)buf, buf_len);
 	}
 
 }

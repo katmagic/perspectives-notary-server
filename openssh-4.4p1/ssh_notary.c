@@ -61,7 +61,7 @@ int view_prompt()
 
 void do_probe_check(char* hostname, int port, 
 		Key* host_key, int original_real_uid, int needsPrompt) {
-
+	struct timeval start, end;
 	char *cert_file = tilde_expand_filename(_PATH_NOTARY_PROBE_SERVER_CERT,
 		 original_real_uid);
 	char* server_file = tilde_expand_filename(_PATH_NOTARY_PROBE_SERVERS,
@@ -69,9 +69,12 @@ void do_probe_check(char* hostname, int port,
 	SSHNotary *notary = init_ssh_notary(cert_file);
 	load_probe_servers(notary, server_file);
 	DPRINTF(DEBUG_INFO, "checking key of type %d \n", host_key->type);
+
 	printf("contacting probing servers.... ");
+	gettimeofday(&start, NULL);
 	fflush(stdout);
 	probe_for_key(notary, 0, hostname, host_key->type, port);
+	gettimeofday(&end, NULL);
 	printf("Probe Results: \n");
 
 	int last_conflict = getMostRecentConflict(notary, host_key);

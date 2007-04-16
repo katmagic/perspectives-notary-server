@@ -45,7 +45,7 @@ void create_all_tables(sqlite3* db) {
 	char *create_background_probes = "CREATE TABLE IF NOT EXISTS" 
 			" background_probes (sid INTEGER, "
 			" next_probe INTEGER, wait INTEGER, " 
-			" failures INTEGER)";
+			" last_success INTEGER)";
 	create_table(create_background_probes, db);
 }	
 
@@ -70,10 +70,10 @@ int get_last_obs_time(sqlite3* db, char* dns_name, uint16_t port,
 	rc = sqlite3_bind_int(stmt, 2, type);
 
 	rc = sqlite3_step(stmt);
-	if(rc != SQLITE_ROW) {
-		return NO_KEY;
-	}
+	
 	int time = sqlite3_column_int(stmt, 0);
+	if(time == 0) return NO_KEY;
+
 	sqlite3_finalize(stmt);
 	return time;
 }
@@ -155,6 +155,31 @@ Key *get_key(sqlite3 *db, int kid) {
 
 	sqlite3_finalize(stmt1);
 	return key;
+}
+
+int get_service_info(sqlite3 *db, int sid, char** dns_name, uint16_t* port) {
+
+	int rc;
+	char *select_stmt1 = "SELECT dns_name, port FROM service_id WHERE sid = ?";
+	sqlite3_stmt *stmt1; 	
+	const char* tail;
+
+  	rc = sqlite3_prepare_v2(db, select_stmt1, 
+			strlen(select_stmt1), &stmt1, &tail);
+	rc = sqlite3_bind_int(stmt1, 1, sid);
+	rc = sqlite3_step(stmt1);
+	if(rc != SQLITE_ROW) {
+		sqlite3_finalize(stmt1);
+		return NO_SERVICE;		
+	}
+
+	const unsigned char *name = sqlite3_column_text(stmt1,0);
+	*dns_name = (char*) malloc(strlen((char*)name) + 1);
+	strcpy(*dns_name, (char*)name);
+	*port = (uint16_t) sqlite3_column_int(stmt1, 1);
+
+	sqlite3_finalize(stmt1);
+	return 1;
 }
 
 // add a new entry to the service_id table 
