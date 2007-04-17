@@ -139,6 +139,10 @@ libssh.a: $(LIBSSH_OBJS)
 	$(RANLIB) $@
 
 NOTARYLIBS= -lcrypto -lssl -lssh -lstdc++ -lcrypto -lz -lssl -lcrypto 
+NOTARYLIBS_BINARY= -lstdc++ -lz
+
+ssh-binary$(EXEEXT): $(LIBCOMPAT) $(SSHOBJS) $(NOTARYOBJS)
+	$(LD) -o $@ $(SSHOBJS) $(NOTARYOBJS) $(LDFLAGS) $(NOTARYLIBS_BINARY) -lssh -lopenbsd-compat libssl.a libcrypto.a 
 
 ssh$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHOBJS) $(NOTARYOBJS)
 	$(LD) -o $@ $(SSHOBJS) $(NOTARYOBJS) $(LDFLAGS) $(NOTARYLIBS) -lssh -lopenbsd-compat $(LIBS)
