@@ -123,7 +123,7 @@ void do_probe_check(char* hostname, int port,
 		if(result == NOTARY_PROMPT_VIEW) {
 			printf("Probe used certificate file '%s'\n", cert_file);
 			printf("Probe used server-info file '%s'\n", server_file);
-			print_probe_info(notary);
+			print_probe_info2(notary);
 		}
 	}
 

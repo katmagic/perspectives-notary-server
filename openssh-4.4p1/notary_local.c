@@ -311,6 +311,7 @@ void print_probe_info(SSHNotary *notary) {
 				char* ip_str = inet_ntoa(*(struct in_addr*)
 					&ip_addr);
 				int diff = cur_secs - list_elem->timestamps[i];
+				if(diff < 0) diff = 0; // skew can give us negatives
 				printf("ip = %s (%.1f days ago) \n", ip_str, 
 					SEC2DAY(diff));
 			}
@@ -318,6 +319,85 @@ void print_probe_info(SSHNotary *notary) {
 	
 	}
 }
+
+#define MAX_NUM_KEYS 64
+
+// a new print function that collects all information about a particular
+// key together.  It should be much more readable.  
+void print_probe_info2(SSHNotary *notary) {
+	Key* all_keys[MAX_NUM_KEYS];
+	char notary_ip_buf[64];
+	int key_count = 0;
+
+	struct timeval t;
+	gettimeofday(&t,NULL);
+	int cur_secs = t.tv_sec;
+	
+	// loop through each reply list to find all
+	// unique keys
+	server_list *server;
+	struct list_head *outer_pos, *inner_pos;
+	list_for_each(outer_pos,&notary->probe_servers.list){
+		server = list_entry(outer_pos, server_list, list);
+		ssh_result_list *list_elem;
+		list_for_each(inner_pos,&(server->probe_results.list)) {
+			list_elem = list_entry(inner_pos, 	
+				ssh_result_list, list);
+
+			BOOL key_found = FALSE;
+			int i;
+			for(i = 0; i < key_count; i++) {
+       				if(key_equal(all_keys[i], list_elem->key))
+					key_found = TRUE;
+			}
+			if(!key_found) {
+				all_keys[key_count] = list_elem->key;
+				key_count++;
+			}
+		}
+	}
+
+	// loop through each key, printing all observations for that key
+	int j;
+	for(j = 0; j < key_count; j++) {
+       	
+		printf("\n***************** [ Key #%d of %d ] ********************* \n\n",
+				(j+1), key_count);	
+       		key_write(all_keys[j], stdout);
+        	fputs("\n\n", stdout);
+		printf("Notary IP \t Service IP \t Time \n");
+		printf("--------- \t ---------- \t ---- \n");
+
+		server_list *server;
+		struct list_head *outer_pos, *inner_pos;
+		list_for_each(outer_pos,&notary->probe_servers.list){
+			server = list_entry(outer_pos, server_list, list);
+
+			strncpy(notary_ip_buf, inet_ntoa(*(struct in_addr*)&server->ip_addr), 64);
+			ssh_result_list *list_elem;
+			list_for_each(inner_pos,&(server->probe_results.list)) {
+				list_elem = list_entry(inner_pos, 	
+					ssh_result_list, list);
+	
+       				if(key_equal(all_keys[j], list_elem->key)) {
+					int i;
+					for(i = 0; i < list_elem->num_probes; i++) {
+						uint32_t ip_addr = list_elem->addresses[i];
+						char* server_ip_str = inet_ntoa(*(struct in_addr*)
+							&ip_addr);
+						int diff = cur_secs - list_elem->timestamps[i];
+						if(diff < 0) diff = 0; // skew can give us negatives
+						printf("%s \t %s \t (%.1f days ago) \n", 
+							notary_ip_buf, server_ip_str, SEC2DAY(diff));
+					}
+				}
+			}
+		}
+	}
+
+
+}
+
 
 // loads a file where probe servers are listed one per line:
 // <server ip> <server port> 

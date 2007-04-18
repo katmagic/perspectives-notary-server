@@ -50,7 +50,10 @@ void destroy_ctx(SSL_CTX *ctx)
 SSL_CTX *initialize_ctx(char *ca_file) {
     SSL_METHOD *meth;
     SSL_CTX *ctx;
+	struct timeval t1,t2,t3;
     
+	gettimeofday(&t1, NULL);
+
       /* Global system initialization*/
       SSL_library_init();
       OpenSSL_add_all_algorithms();
@@ -68,10 +71,22 @@ SSL_CTX *initialize_ctx(char *ca_file) {
     if(!(SSL_CTX_load_verify_locations(ctx,ca_file, NULL)))
       berr_exit("Couldn't read CA list");
     SSL_CTX_set_verify_depth(ctx,1);
+	
+	gettimeofday(&t2, NULL);
+	int sec_diff = t2.tv_sec - t1.tv_sec; 
+	DPRINTF(DEBUG_INFO,"first half (time > %d secs) \n", sec_diff);
 
     /* Load randomness */
-    if(!(RAND_load_file("/dev/urandom",1024*1024)))
-    berr_exit("Couldn't load randomness");
+// DW: this was causing long (e.g., 3 second) delays for 
+// each SSL connection we set-up.  Apparently its just
+// used to seed a RNG, so it should be able to be small
+    if(!(RAND_load_file("/dev/urandom",256)))
+      berr_exit("Couldn't load randomness");
+	
+	gettimeofday(&t3,NULL);
+	sec_diff = t3.tv_sec - t2.tv_sec;
+	DPRINTF(DEBUG_INFO, "second half ( time > %d secs) \n", sec_diff);
+
        
     return ctx;
   }
@@ -93,6 +108,7 @@ void getSSLClientConnection(server_list* server, char* cert_file) {
 	host_addr.sin_family = AF_INET;
 	host_addr.sin_port = htons(server->port);
 	memcpy(&host_addr.sin_addr, &(server->ip_addr), sizeof(uint32_t));
+
 	DPRINTF(DEBUG_INFO, "connecting to probe server %s : %d \n",
 		inet_ntoa(host_addr.sin_addr), ntohs(host_addr.sin_port));
 	if (connect(server->sock, (struct sockaddr *)&host_addr, 
@@ -109,14 +125,18 @@ void getSSLClientConnection(server_list* server, char* cert_file) {
 
 	// Connect over SSL
 	ctx = initialize_ctx(cert_file);
+
+
 	server->ssl = SSL_new(ctx);
 	sbio = BIO_new_socket(server->sock, BIO_NOCLOSE);
 	SSL_set_bio(server->ssl, sbio, sbio);
+
 	if (SSL_connect(server->ssl)<=0){
 	     server->ssl = NULL;
 	     berr_exit("Error in the SSL connection");
 	     return;
   	}
+
 
 	DPRINTF(DEBUG_INFO, "server (0x%x) has SSL pointer (0x%x) \n",
 		(uint32_t)server, (uint32_t)server->ssl);
