@@ -6,9 +6,9 @@
 
 extern unsigned int notary_debug;
 #define DPRINTF(level, fmt, args...) \
-        do { if (notary_debug & (level)) fprintf(stderr, fmt , ##args ); } while(0)
+        do { if (notary_debug & (level)) fprintf(stderr, fmt , ##args ); } while(0);
 #define DEBUG_PERROR(errmsg) \
-        do { if (notary_debug & DEBUG_ERRS) perror(errmsg); } while(0)
+        do { if (notary_debug & DEBUG_ERRS) perror(errmsg); } while(0);
 #define IF_DEBUG(level) \
 	if(notary_debug & (level))
 
