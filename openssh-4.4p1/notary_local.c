@@ -18,7 +18,7 @@ void add_probe_server(SSHNotary *notary, uint32_t ip_address, uint16_t port){
 	INIT_LIST_HEAD(&(tmp->probe_results.list));
 	tmp->port = port;
 	tmp->contact_succeeded = 0;
-	list_add(&tmp->list,&(notary->probe_servers.list));
+	__list_add(&tmp->list,&(notary->probe_servers.list),(notary->probe_servers.list.next));
 	DPRINTF(DEBUG_INFO, "Adding Probe server: %s : %d \n",
 			inet_ntoa(*(struct in_addr*)&ip_address), tmp->port);
 }

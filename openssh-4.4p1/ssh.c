@@ -107,6 +107,10 @@
 
 extern char *__progname;
 
+// hack for scanner
+int long_jump_result;
+
+
 /* Flag indicating whether debug mode is on.  This can be set on the command line. */
 int debug_flag = 0;
 

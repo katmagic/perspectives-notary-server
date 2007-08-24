@@ -1084,18 +1084,21 @@ void load_db_to_trie(patricia_tree_t *tree, char* table_name) {
    snprintf(buf, 64, "SELECT prefix FROM %s", table_name);
 
    mysql = init_sql_conn();
- 
+
+    int count = 0;
     if(mysql_real_query(mysql, buf,strlen(buf))==0)/*success*/
     {
         result = mysql_store_result(mysql);
-        printf( "%ld Record(s) Found\n",(long) mysql_num_rows(result));
         if (result)  // there are rows
         {
             while ((row = mysql_fetch_row(result))) 
             {
-	       printf("adding exception: %s \n", row[0]);
+	      // printf("adding exception: %s \n", row[0]);
     	       add_prefix(tree, row[0]);
+               ++count;
             }
+            printf( "%ld record(s) found in table %s.  Trie size = %d\n",
+                  (long) mysql_num_rows(result), table_name, count);
             mysql_free_result(result);
          }
          else  // mysql_store_result() returned nothing

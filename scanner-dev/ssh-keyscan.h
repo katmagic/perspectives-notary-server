@@ -11,7 +11,7 @@
 int do_single_probe(char *host, uint16_t service_type, uint16_t service_port,
 		conn_node *conn);
 void init_scankeys(); 
-int conloop(ssh_key_holder *ssh_keys, int num_holders);
+void conloop(ssh_key_holder *ssh_keys, int num_holders);
 
 
 

@@ -90,13 +90,13 @@ typedef struct {
 
 // code that used to be in probe_server.h
 // stupid hack needed to get SSH and SSL to play along
-#define SSL void
+
 
 typedef struct {
 	struct list_head list;
 	int sock;
 	int offset; 
-	SSL* ssl;
+	void* ssl;
 	char buf[MAX_PACKET_LEN];
 } conn_node;
 
@@ -107,6 +107,7 @@ typedef struct {
 	uint32_t ip_addr;	
 	Key * key;
 	conn_node* conn;
+        char *version_str;
 } ssh_key_holder;
 
 

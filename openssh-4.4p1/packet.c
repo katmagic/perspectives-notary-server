@@ -85,6 +85,11 @@
 #define DBG(x)
 #endif
 
+// dw: this is used by the packet lib to signal
+// to higher level code that the connection was killed
+// (a hack, i know)
+extern unsigned int kill_connection;
+
 /*
  * This variable contains the file descriptors used for communicating with
  * the other side.  connection_in is used for reading; connection_out for
@@ -924,15 +929,18 @@ packet_read_seqnr(u_int32_t *seqnr_p)
 		FD_SET(connection_in, setp);
 
 		/* Wait for some data to arrive. */
+                //printf("waiting... \n");
 		while (select(connection_in + 1, setp, NULL, NULL, NULL) == -1 &&
 		    (errno == EAGAIN || errno == EINTR))
 			;
+                //printf("after select\n");
 
 		/* Read data from the socket. */
 		len = read(connection_in, buf, sizeof(buf));
 		if (len == 0) {
-			logit("Connection closed by %.200s", get_remote_ipaddr());
-			cleanup_exit(255);
+			//logit("Connection closed by %.200s", get_remote_ipaddr());
+                        fatal("Connection closed in packet_read() by %.200s", get_remote_ipaddr());
+                        //cleanup_exit(255);  dw
 		}
 		if (len < 0)
 			fatal("Read from socket failed: %.100s", strerror(errno));

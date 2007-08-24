@@ -29,7 +29,6 @@
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
-
 #include "../common.h"
 #include "mysql_storage.h" // for NO_KEY
 #include "../debug.h"
@@ -51,10 +50,15 @@
 #include "misc.h"
 #include "hostfile.h"
 
+#include "net_util.h"
 #include "patricia.h"    
 #include "mysql.h"
 #include <stdio.h>
+#include "fast_dns.h"
 
+// holy hack
+
+unsigned int kill_connection;
 
 /* Flag indicating whether IPv4 or IPv6.  This can be set on the command line.
    Default value is AF_UNSPEC means both IPv4 and IPv6. */
@@ -82,9 +86,26 @@ int nonfatal_fatal = 0;
 jmp_buf kexjmp;
 Key *kexjmp_key;
 
-unsigned int notary_debug = (DEBUG_NONE);
 
-static int conrecycle_with_dsa(uint32_t ip, uint16_t port);
+int long_jump_result;
+#define LJ_RESULT_BAD_KEYTYPE 2
+#define LJ_RESULT_UNKNOWN_ERROR 4
+
+// used in congreet
+#define ERROR_NO_SSH1 -1
+#define ERROR_NO_SSH2 -2
+
+
+unsigned int notary_debug = (DEBUG_ERROR);
+
+static int conrecycle_with_keytype(uint32_t ip, uint16_t port, 
+    short key_type);
+
+
+// defines the number of probes (and DNS lookups) we will 
+// do in parallel.  Must be less than the max number of sockets
+// supported by the system.
+#define SCAN_GROUP_SIZE 128
 
 /*
  * Keep a connection structure for each file descriptor.  The state
@@ -100,7 +121,7 @@ typedef struct Connection {
 	int c_plen;		/* Packet length field for ssh packet */
 	int c_len;		/* Total bytes which must be read. */
 	int c_off;		/* Length of data read so far. */
-	char rsa_failed; 
+	char rsa_failed;
 	ssh_key_holder holder;  /* holds info about the requester for a 'on-demand' probe */
 	char *c_data;		/* Data read from this fd */
 	Kex *c_kex;		/* The key-exchange struct for ssh2 */
@@ -238,16 +259,21 @@ keygrab_ssh2(con *c)
 	c->c_kex->kex[KEX_DH_GEX_SHA256] = kexgex_client;
 	c->c_kex->verify_host_key = hostjump;
 
+        long_jump_result = 0; // clear it
 	if (!(j = setjmp(kexjmp))) {
+                // this code is run right after state was
+                // saved by setjmp
 		nonfatal_fatal = 1;
 		dispatch_run(DISPATCH_BLOCK, &c->c_kex->done, c->c_kex);
 		fprintf(stderr, "Impossible! dispatch_run() returned!\n");
 		exit(1);
 	}
+        // this code is run after longjmp is called to
+        // restore the state saved by setjmp
 	nonfatal_fatal = 0;
 	xfree(c->c_kex);
 	c->c_kex = NULL;
-	if(kexjmp_key == NULL && c->holder.key_type == KEY_RSA){
+        if(long_jump_result & LJ_RESULT_BAD_KEYTYPE){
 		c->rsa_failed = 1;
 	}
 	packet_close();
@@ -268,7 +294,7 @@ tcpconnect(uint32_t ip_addr, uint16_t port)
 
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s < 0) {
-		error("socket: %s", strerror(errno));
+		error("socket: %s \n", strerror(errno));
 		return s;
 	}
 	if (set_nonblock(s) == -1)
@@ -277,7 +303,8 @@ tcpconnect(uint32_t ip_addr, uint16_t port)
 		// non-blocking socket should return EINPROGRESS
 		return s;
 	} else {
-		DPRINTF(DEBUG_ERROR, "connect : %s", strerror(errno));
+		DPRINTF(DEBUG_ERROR, "connect (%s): %s \n", ip_2_str(ip_addr),
+                    strerror(errno));
 	} 
 	close(s);
 	s = -1;
@@ -295,8 +322,9 @@ conalloc(uint32_t ip_addr, uint16_t service_port, uint16_t key_type)
 	
 	// connect is non-blocking, so normal failure
 	// should not happen here
-	if(s == -1) return -1;
-
+	if(s == -1) {
+          return -1;
+        }
 	if (s >= maxfd)
 		fatal("conalloc: fdno %d too high", s);
 	if (fdcon[s].c_status)
@@ -356,12 +384,12 @@ contouch(int s)
 // after a connection times out, this allocates a new
 // connection to try again
 static int
-conrecycle_with_dsa(uint32_t ip, uint16_t port)
+conrecycle_with_keytype(uint32_t ip, uint16_t port, short key_type)
 {
 	
-	DPRINTF(DEBUG_INFO, "recycling with DSA for %s. \n", 
-		inet_ntoa(*(struct in_addr*)&ip));
-	return conalloc(ip, port, KEY_DSA);
+	DPRINTF(DEBUG_INFO, "recycling with key-type %d for %s. \n", 
+		key_type, inet_ntoa(*(struct in_addr*)&ip));
+	return conalloc(ip, port, key_type);
 }
 
 void save_key(ssh_key_holder *ssh_keys, int *num_holders_used, con* c){
@@ -369,6 +397,9 @@ void save_key(ssh_key_holder *ssh_keys, int *num_holders_used, con* c){
 	(*num_holders_used)++;
 }
 
+// return -1 on error (no action necessary)
+// return special error code to indicate protocol version failure
+// 0 indicates success
 static void
 congreet(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 {
@@ -392,16 +423,16 @@ congreet(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 			break;
 	}
 	if (n == 0) {
-		char buf[32];
-		strncpy(buf,  inet_ntoa(*(struct in_addr*)&c->holder.ip_addr), 32);
 		switch (errno) {
 		case EPIPE:
-			printf( "%s: Connection closed by remote host\n", buf);
+			printf( "Connection closed by remote host: %s \n",
+                            ip_2_str(c->holder.ip_addr));
 			break;
 		case ECONNREFUSED:
 			break;
 		default:
-			DPRINTF(DEBUG_ERROR, "read (%s): %s", buf, strerror(errno));
+			DPRINTF(DEBUG_ERROR, "read (%s): %s \n", 
+                            ip_2_str(c->holder.ip_addr), strerror(errno));
 			break;
 		}
 		save_key(ssh_keys, num_holders_used,c);
@@ -415,6 +446,7 @@ congreet(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 		return;
 	}
 	*cp = '\0';
+        c->holder.version_str = strdup(buf);
 	if (sscanf(buf, "SSH-%d.%d-%[^\n]\n",
 	    &remote_major, &remote_minor, remote_version) == 3)
 		compat_datafellows(remote_version);
@@ -422,13 +454,16 @@ congreet(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 		datafellows = 0;
 	if (c->holder.key_type != KEY_RSA1) {
 		if (!ssh2_capable(remote_major, remote_minor)) {
-			DPRINTF(DEBUG_ERROR, "%s doesn't support ssh2 \n", c->holder.name);
-			save_key(ssh_keys, num_holders_used,c);
-			confree(s);
-			return;
+			DPRINTF(DEBUG_INFO, "%s doesn't support ssh2 \n", ip_2_str(c->holder.ip_addr));
+			uint32_t ip = c->holder.ip_addr;
+			uint16_t port = c->holder.port;
+			// don't save key...
+		   	confree(s);	
+			conrecycle_with_keytype(ip, port, KEY_RSA1);
+                        return;
 		}
 	} else if (remote_major != 1) {
-		DPRINTF(DEBUG_ERROR, "%s doesn't support ssh1", c->holder.name);
+		DPRINTF(DEBUG_ERROR, "%s doesn't support ssh1", ip_2_str(c->holder.ip_addr));
 		save_key(ssh_keys, num_holders_used,c);
 		confree(s);
 		return;
@@ -443,7 +478,7 @@ congreet(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 		return;
 	}
 	if (atomicio(vwrite, s, buf, n) != (size_t)n) {
-		error("write (%s): %s", c->holder.name, strerror(errno));
+		error("write (%s): %s", ip_2_str(c->holder.ip_addr), strerror(errno));
 		save_key(ssh_keys, num_holders_used,c);
 		confree(s);
 		return;
@@ -456,9 +491,10 @@ congreet(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 			uint16_t port = c->holder.port;
 			// don't save key...
 		   	confree(s);	
-			conrecycle_with_dsa(ip, port);
+			conrecycle_with_keytype(ip, port, KEY_DSA);
 		}else {
-			DPRINTF(DEBUG_INFO, "save key2 for s = %d \n", s);
+                        char * valid = (c->holder.key) ? "Found" : "NULL";
+			DPRINTF(DEBUG_INFO, "save key2 for s = %d (%s) \n", s, valid);
 			save_key(ssh_keys, num_holders_used,c);
 			confree(s);
 		}
@@ -479,11 +515,11 @@ conread(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 
 	if (c->c_status == CS_CON) {
 		congreet(s, ssh_keys, num_holders_used);  // congreet grabs the key for SSH2
-		return;
+                return;
 	}
 	n = atomicio(read, s, c->c_data + c->c_off, c->c_len - c->c_off);
 	if (n == 0) {
-		DPRINTF(DEBUG_ERROR, "read (%s): %s", inet_ntoa(*(struct in_addr*)&c->holder.ip_addr), 
+		DPRINTF(DEBUG_ERROR, "read (%s): %s \n", ip_2_str(c->holder.ip_addr), 
 			strerror(errno));
 		save_key(ssh_keys, num_holders_used,c);
 		confree(s);
@@ -502,7 +538,7 @@ conread(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 			break;
 		case CS_KEYS:
 			c->holder.key = keygrab_ssh1(c);
-			DPRINTF(DEBUG_ERROR, "saving key1 for s = %d \n", s);
+			DPRINTF(DEBUG_INFO, "saving key1 for s = %d \n", s);
 			save_key(ssh_keys, num_holders_used,c);
 			confree(s);
 			return;	
@@ -515,15 +551,13 @@ conread(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 	contouch(s);
 }
 
-int conloop(ssh_key_holder *ssh_keys, int num_holders) {
+void conloop(ssh_key_holder *ssh_keys, int num_holders, int *holder_index) {
 
 	struct timeval seltime, now;
 	fd_set *r, *e;
 	con *c;
 	int i;
 
-	bzero(ssh_keys, sizeof(ssh_key_holder) * num_holders);
-	int num_holders_used = 0;
 
 	gettimeofday(&now, NULL);
 	c = TAILQ_FIRST(&tq);
@@ -555,13 +589,13 @@ int conloop(ssh_key_holder *ssh_keys, int num_holders) {
 		if (FD_ISSET(i, e)) {
 			DPRINTF(DEBUG_ERROR, "%s: exception!\n", 
 				inet_ntoa(*(struct in_addr*)&fdcon[i].holder.ip_addr));
-			save_key(ssh_keys, &num_holders_used,&fdcon[i]);
+			save_key(ssh_keys, holder_index,&fdcon[i]);
 			confree(i);
 		} else if (FD_ISSET(i, r)){
 			// we will see if a key is returned here
 			DPRINTF(DEBUG_INFO, " reading data from: %s \n", 
 				inet_ntoa(*(struct in_addr*)&fdcon[i].holder.ip_addr));
-			conread(i, ssh_keys, &num_holders_used);
+			conread(i, ssh_keys, holder_index);
 		}
 
 	}
@@ -582,14 +616,13 @@ int conloop(ssh_key_holder *ssh_keys, int num_holders) {
 */
 		// just save a null key and free, no timeout
 		DPRINTF(DEBUG_INFO, "time is up for: %d \n", s);
-		save_key(ssh_keys, &num_holders_used,c);
+		save_key(ssh_keys, holder_index,c);
 		confree(s);
 
 		c = TAILQ_NEXT(c, c_link);
 	}
 
 
-	return num_holders_used;
 }
 
 void init_scankeys() {
@@ -618,180 +651,265 @@ void init_scankeys() {
 }
 
 
-MYSQL * init_sql_conn() {
-
-       char *server = "localhost";
-       char *user = "root";
-       char *password = "moosaysthecow";
-       char *database = "ssh";
-       
-       MYSQL *mysql = mysql_init(NULL);
-       
-       /* Connect to database */
-       if (!mysql_real_connect(mysql, server,
-             user, password, database, 0, NULL, 0)) {
-          fprintf(stderr, "%s\n", mysql_error(mysql));
-          exit(0);
-       }
-	return mysql;
-}
-
-    #define INSERT_SAMPLE "INSERT INTO ssh.probes(ip,hash,type) VALUES(?,?,?)"
-
-void    sql_add_row(MYSQL *mysql, char *ip_str, char* hash_str, char* type) {
-     
-       MYSQL_STMT *stmt;
-	char ip_buf[16];
-	char hash_buf[16];
-	unsigned long ip_str_len, hash_str_len, type_len = 1;
-
-
-	/* Prepare an INSERT query with 3 parameters */
-	stmt = mysql_stmt_init(mysql);
-	if (!stmt){
-  		fprintf(stderr, " mysql_stmt_init(), out of memory\n");
-  		exit(0);
-	}
-	if (mysql_stmt_prepare(stmt, INSERT_SAMPLE, strlen(INSERT_SAMPLE)))
-	{
-  		fprintf(stderr, " mysql_stmt_prepare(), INSERT failed\n");
-  		fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
-  		exit(0);
-	}
-
-	/* Get the parameter count from the statement */
-	int param_count= mysql_stmt_param_count(stmt);
-
-	if (param_count != 3) /* validate parameter count */
-	{
-  		fprintf(stderr, " invalid parameter count returned by MySQL\n");
-  		exit(0);
-	}
-
-	/* Bind the data for first two parameters */
-	/* the timestamp will default to the current time */
-	MYSQL_BIND    bind[3];
-	memset(bind, 0, sizeof(bind));
-	
-	/* IP address as string */
-	bind[0].buffer_type= MYSQL_TYPE_STRING;
-	bind[0].buffer= (char *)ip_buf;
-	bind[0].buffer_length= 16;
-	bind[0].is_null= 0;
-	bind[0].length= &ip_str_len;
-
-	/* partial hash as string */
-	bind[1].buffer_type= MYSQL_TYPE_STRING;
-	bind[1].buffer= (char *)hash_buf;
-	bind[1].buffer_length= 16;
-	bind[1].is_null= 0;
-	bind[1].length= &hash_str_len;
-
-	/* type as string */
-	bind[2].buffer_type= MYSQL_TYPE_STRING;
-	bind[2].buffer= (char *)type;
-	bind[2].buffer_length= 2;
-	bind[2].is_null= 0;
-	bind[2].length= &type_len;
-
-	/* Bind the buffers */
-	if (mysql_stmt_bind_param(stmt, bind))
-	{
-  		fprintf(stderr, " mysql_stmt_bind_param() failed\n");
-  		fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
-  		exit(0);
-	}
-	
-	// extra careful
-	ip_str_len = strlen(ip_str);
-	hash_str_len = strlen(hash_str);
-	if(ip_str_len > 15 || hash_str_len > 15) {
-		DPRINTF(DEBUG_ERROR, "strings are too long: %s or %s \n", 
-			ip_str, hash_str);
-		exit(0);
-	}
-	strncpy(ip_buf, ip_str, ip_str_len);
-	strncpy(hash_buf, hash_str, hash_str_len);
-
-
-	/* Execute the INSERT statement - 1*/
-	if (mysql_stmt_execute(stmt))
-	{
-  		fprintf(stderr, " mysql_stmt_execute(), 1 failed\n");
-  		fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
-  		exit(0);
-	}
-
-	/* Get the total rows affected */
-	int affected_rows= mysql_stmt_affected_rows(stmt);
-
-	if (affected_rows != 1) /* validate affected rows */
-	{
-  		fprintf(stderr, " invalid affected rows by MySQL\n");
-  		exit(0);
-	}
-	DPRINTF(DEBUG_INFO, "Added DB row for %s \n", ip_str);
-
-    }
-
-
 
 int probe_list(MYSQL* mysql, uint32_t *ip_addr_list, int num_ips, 
 		uint16_t service_port)
 {
 	ssh_key_holder *ssh_keys;
 	ssh_keys = (ssh_key_holder*) malloc(sizeof(ssh_key_holder) * num_ips);
+	bzero(ssh_keys, sizeof(ssh_key_holder) * num_ips);
 
 	if(num_ips + 2 >= MAXCON) {
 		DPRINTF(DEBUG_ERROR, "Do not have capacity to do %d probes \n", num_ips);
 		return -1;
 	}
 
-	printf("Beginning Probe Set (%d) \n", num_ips);
-	
+	printf("Beginning Probe Set of size %d . \n", num_ips);
+	printf("Start = %s ", ip_2_str(ip_addr_list[0]));
+        printf(" End =  %s \n", ip_2_str(ip_addr_list[num_ips - 1]));
+    
+        int cur_holder_index = 0;
+
 	int i;
 	for(i = 0; i < num_ips; i++) {
-		conalloc(ip_addr_list[i], service_port, KEY_RSA);
+		int ret = conalloc(ip_addr_list[i], service_port, KEY_RSA);
+                if(ret < 0) {
+                    // allocation fails when there is no route to host
+                    // or error is locally detected.  give up on those conns
+                    printf("failed conn \n");
+                    ++cur_holder_index;
+                }
 	}
-	
-    int total_used = 0;
-    int rows_added = 0;	
-    while(total_used < num_ips) {
-	
-	int num_holders_used = conloop(ssh_keys, num_ips);
+    
+    struct timeval t;
+    gettimeofday(&t,NULL);
+    int pre_probe_time = t.tv_sec;
 
-	if(num_holders_used > 0) {	
-		total_used += num_holders_used;
-		DPRINTF(DEBUG_INFO, "used %d total holders \n", total_used );	
-		for(int i = 0; i < num_holders_used; i++) {
-			ssh_key_holder *h = (&ssh_keys[i]);
-			char buf[32];
-			strcpy(buf, inet_ntoa(*(struct in_addr*)&h->ip_addr));
-			if(h->key != NULL) {
-				char *p = key_fingerprint(h->key, SSH_FP_MD5, SSH_FP_HEX);
-				char short_str[16];
-				strncpy(short_str, p, 16);
-				short_str[15] = 0;
-				char* type = h->key_type == KEY_RSA ? "R" : "D";
-				DPRINTF(DEBUG_INFO, "%s has fp %s (%s) \n", buf, short_str, type);	
-				sql_add_row(mysql, buf, short_str, type);
-				++rows_added;
-				xfree(p);
-			
-			}else {
-				DPRINTF(DEBUG_INFO, "key null for %s \n", buf);
-			}
-		}
+    while(cur_holder_index < num_ips) {
+	conloop(ssh_keys, num_ips, &cur_holder_index);
+    } // end while	
+
+    gettimeofday(&t,NULL);
+    int pre_dns_time = t.tv_sec;
+
+    /*
+    // slow serial DNS lookups for now
+    printf("Beginning DNS Lookups \n");
+    for(int i = 0; i < num_ips; i++) {
+	ssh_key_holder *h = (&ssh_keys[i]);
+        if(h->key != NULL) {
+            printf("looking up: %s \n", ip_2_str(h->ip_addr));
+            ssh_keys[i].name = getConfirmedDNSFromIP(h->ip_addr); // need to free this str later
+        }
+    }*/
+
+    do_parallel_dns(ssh_keys, num_ips);
+    
+    gettimeofday(&t,NULL);
+    int pre_store_time = t.tv_sec;
+
+    printf("Beginning MYSQL inserts \n");
+
+    int keys_found = 0;
+    for(int i = 0; i < num_ips; i++) {
+	ssh_key_holder *h = (&ssh_keys[i]);
+	if(h->key != NULL) {
+                ++keys_found;
+                store_ssh_probe_result(mysql, h->name, h->port,
+                  h->ip_addr, h->key, pre_probe_time, h->version_str) ;
+                free(h->name);
+                free(h->version_str);
 	}
-   } // end while	
+   }
 
-   printf("All %d connections closed.  Found %d keys. \n", total_used, rows_added);
+    gettimeofday(&t,NULL);
+    int done_time = t.tv_sec;
+
+   int probe_time = pre_dns_time - pre_probe_time;
+   int dns_time = pre_store_time - pre_dns_time;
+   int store_time = done_time - pre_store_time;
+
+   printf("Found %d keys. Probe Time: %d DNS Time: %d Store Time: %d \n", 
+        keys_found,probe_time, dns_time, store_time);
 
    free(ssh_keys);
-   return 1;
+   return keys_found;
 }
 
 
+
+void scan_range(MYSQL *mysql, patricia_tree_t* valid_ips, 
+                patricia_tree_t* not_valid_ips, 
+                uint32_t start_addr, uint32_t total_ips){
+
+  uint32_t* ip_addr_list = (uint32_t*)
+      malloc(sizeof(uint32_t) * SCAN_GROUP_SIZE);
+		 
+  int total_keys = 0;
+  uint32_t ip = 0, total = 0, total_probes = 0;
+  while(total != total_ips) {
+
+      int count = 0;
+      while(1) {
+	 if(count == SCAN_GROUP_SIZE) break;
+	 if(total == total_ips) break;
+
+	 ip = htonl(start_addr + total);
+         my_bool valid = ip_in_trie(valid_ips, ip);
+         my_bool invalid = ip_in_trie(not_valid_ips, ip);
+
+         if(valid && !invalid) {
+            ip_addr_list[count] = ip;
+            ++count;
+         }else {
+            DPRINTF(DEBUG_INFO, "Skipping IP: %s \n",
+		inet_ntoa(*(struct in_addr*)&ip));
+	 }
+	 ++total;
+      }
+      total_probes += count;
+      total_keys += probe_list(mysql, ip_addr_list, count, 22); 
+ }
+ printf("Finished range scan.  Probed %d of %d total addresses."
+     " Found %d keys. \n",total_probes, total_ips, total_keys);
+
+ free(ip_addr_list);
+
+}
+
+
+void scan_table(MYSQL *mysql, patricia_tree_t* valid_ips, 
+                patricia_tree_t* not_valid_ips, 
+                char *table_name){
+
+		  
+  char query_buf[128];
+  snprintf(query_buf, 128, "SELECT distinct(ip_addr) from %s", 
+        table_name);
+
+  if(mysql_real_query(mysql, query_buf, strlen(query_buf)) != 0) {
+      fprintf(stderr, "Error querying %s for addresses to probe: %s \n",
+            table_name, mysql_error(mysql));
+            return;
+  }
+  
+  uint32_t* ip_addr_list = (uint32_t*)
+      malloc(sizeof(uint32_t) * SCAN_GROUP_SIZE);
+  
+  int count = 0, total_keys = 0;
+  uint32_t total_probes = 0;
+
+  MYSQL_RES *result = mysql_use_result(mysql);
+  if(!result) goto end;
+
+
+  MYSQL_ROW row;
+  my_bool done = 0;
+  while(!done) {
+   
+      while(1) {
+	 if(count == SCAN_GROUP_SIZE) 
+           break; // run this set
+         
+         if((row = mysql_fetch_row(result)) == NULL) {
+              done = 1;
+              break; // run final set
+         }
+
+	 uint32_t ip = atoi(row[0]);
+         my_bool valid = ip_in_trie(valid_ips, ip);
+         my_bool invalid = ip_in_trie(not_valid_ips, ip);
+
+         if(valid && !invalid) {
+            ip_addr_list[count] = ip;
+            ++count;
+         }
+      } // end while(1)
+      total_probes += count;
+      total_keys += probe_list(mysql, ip_addr_list, count, 22); 
+    
+  } // end while(!done)
+
+  end: 
+
+  mysql_free_result(result);
+  printf("Finished table scan.  Probed %d of total addresses. "
+      " Found %d keys. \n",total_probes, total_keys);
+
+  free(ip_addr_list);
+
+}
+
+
+void usage() {
+
+  printf("usage: scanner t <valid-table> <exception-table> "
+             " <ip-table> \n");
+  printf("usage: scanner r <valid-table> <exception-table> "
+             " prefix \n");
+
+}
+
+int main(int argc, char** argv) {
+
+
+        if(argc < 4) {
+          usage();
+          exit(1);
+        }
+
+	patricia_tree_t *not_valid, *valid;
+	not_valid = New_Patricia(32);
+        valid = New_Patricia(32);
+        load_db_to_trie(valid, argv[2]);
+        load_db_to_trie(not_valid, argv[3]);
+      
+	init_scankeys();
+	MYSQL *mysql = open_mysql_conn("localhost", "root", "moosaysthecow",
+		"ssh");
+
+	if(argc == 5 && argv[1][0] == 't'){	
+            scan_table(mysql, valid, not_valid, argv[4]);
+	}else if(argc == 5 && argv[1][0] == 'p'){
+                prefix_t *prefix;
+                prefix = ascii2prefix(AF_INET, argv[4]);
+		uint32_t start_addr = *(uint32_t *)&prefix->add.sin;
+                int bits = 32 - prefix->bitlen;
+                int total_ips = 1 << bits;
+                start_addr = ntohl(start_addr);
+                Deref_Prefix(prefix);
+//		printf("total ips = %d (%d bits). Starts at %s \n", total_ips, bits,
+  //                  ip_2_str(htonl(start_addr)));
+    //            exit(0);
+                scan_range(mysql, valid, not_valid, start_addr, total_ips);
+	} else {
+            usage();
+        }
+       
+	close_mysql_conn(mysql);
+	Destroy_Patricia(not_valid, (void*)0);	
+	Destroy_Patricia(valid, (void*)0);	
+
+	return 0;
+}
+
+// ah ha!  this is how they "survive"
+// fatal errors
+void
+fatal(const char *fmt,...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
+	va_end(args);
+	if (nonfatal_fatal)
+		longjmp(kexjmp, -1);
+	else
+		exit(255);
+}
+
+/*
 int load_file(char* fname, uint32_t **ip_list) {
 	FILE *fp;
 	char line[100];
@@ -812,7 +930,7 @@ int load_file(char* fname, uint32_t **ip_list) {
 
 	int i;
    	for(i = 0; i < num_ips; i++) {
-      		c = fgets(line, 100, fp);  /* get one line from the file */
+      		c = fgets(line, 100, fp);  // get one line from the file 
          	DPRINTF(DEBUG_INFO, "line: %s", line);     
 		inet_aton(line, (struct in_addr*) &(*ip_list)[i]);
 	}
@@ -821,81 +939,5 @@ int load_file(char* fname, uint32_t **ip_list) {
 	return num_ips;
 }
 
-
-#define SCAN_GROUP_SIZE 40
-
-int main(int argc, char** argv) {
-
-	patricia_tree_t *exceptions;
-	exceptions = New_Patricia(32);
-	load_db_to_trie(exceptions, "exceptions");
-
-	uint32_t *ip_addr_list;
-	
-	init_scankeys();
-	MYSQL *mysql = init_sql_conn();
-
-	if(argv[1][0] == 'f'){	
-		// probe all IP's in a file
-		if(argc != 3) {
-			printf("usage: scanner f <fname>\n");
-			exit(1);
-		}
-		uint32_t size = load_file(argv[2], &ip_addr_list);	
-		probe_list(mysql, ip_addr_list, size, 22);
-		free(ip_addr_list);
-	}else {
-		if(argc !=3) {
-			printf("usage: scanner <start IP> <num IPs> \n");
-			exit(1);
-		}
-		uint32_t start_addr;
-		inet_aton(argv[1], (struct in_addr*)&start_addr);
-		start_addr = ntohl(start_addr);
-		uint32_t total_ips = atoi(argv[2]);
-		ip_addr_list = (uint32_t*)malloc(sizeof(uint32_t) * SCAN_GROUP_SIZE);		
-		uint32_t stop_ip = start_addr + total_ips;  
-		
-		while(stop_ip > start_addr) {
-			uint32_t count = 0, ip = 0, i = 0;
-			while(1) {
-				if(count == SCAN_GROUP_SIZE) break;
-				if(start_addr + i == stop_ip) break;
-
-				ip = htonl(start_addr + i);
-				if(!ip_in_trie(exceptions, ip)) {
-					ip_addr_list[i] = ip;
-					count++;
-				}else {
-					DPRINTF(DEBUG_INFO, "Skipping IP: %s \n",
-						inet_ntoa(*(struct in_addr*)&ip));
-				}
-				i++;
-			}
-			probe_list(mysql, ip_addr_list, count, 22);
-			start_addr += count; 
-		}
-		free(ip_addr_list);
-	}
-       
-	mysql_close(mysql);
-	Destroy_Patricia(exceptions, (void*)0);	
-
-	return 0;
-}
-
-void
-fatal(const char *fmt,...)
-{
-	va_list args;
-
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
-	va_end(args);
-	if (nonfatal_fatal)
-		longjmp(kexjmp, -1);
-	else
-		exit(255);
-}
-
+*/
 

@@ -62,6 +62,8 @@ int hash_hosts = 0;		/* Hash hostname on output */
 
 #define MAXMAXFD 256
 
+
+
 /* The number of seconds after which to give up on a TCP connection */
 int timeout = 5;
 

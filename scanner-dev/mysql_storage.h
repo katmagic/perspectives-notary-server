@@ -7,6 +7,7 @@
 
 #define NO_SERVICE -1
 #define NO_KEY -2
+#define NO_VERSION -3
 
 int get_last_obs_time(MYSQL *mysql, char* dns_name, uint16_t port,
 	uint16_t type);
@@ -22,11 +23,11 @@ int get_service_info(MYSQL *mysql, int sid, char** dns_name, uint16_t* port);
 void add_new_service(MYSQL *mysql, char *dns_name, uint16_t port);
 
 void store_ssh_probe_result(MYSQL *mysql, char *dns_name, uint16_t port,
-	uint32_t ip_addr, Key *key, int timestamp) ;
+	uint32_t ip_addr, Key *key, int timestamp, char* version_str) ;
 
 
 void insert_observation(MYSQL *mysql, int sid, int kid, 
-		int timestamp, uint32_t ip_addr);
+		int timestamp, uint32_t ip_addr, short vid);
 
 
 ssh_result_list* get_all_observations(MYSQL *mysql,
@@ -38,5 +39,6 @@ MYSQL * open_mysql_conn(char *server, char *user, char* password,
 void close_mysql_conn(MYSQL *mysql);
 
 
+void create_all_tables(MYSQL *mysql);
 
 #endif

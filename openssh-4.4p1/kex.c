@@ -59,6 +59,10 @@ extern const EVP_MD *evp_ssh_sha256(void);
 # endif
 #endif
 
+extern int long_jump_result; // dw: for scanner
+#define LJ_RESULT_BAD_KEYTYPE 2
+
+
 /* prototype */
 static void kex_kexinit_finish(Kex *);
 static void kex_choose_conf(Kex *);
@@ -331,8 +335,11 @@ static void
 choose_hostkeyalg(Kex *k, char *client, char *server)
 {
 	char *hostkeyalg = match_list(client, server, NULL);
-	if (hostkeyalg == NULL)
-		fatal("no hostkey alg");
+	if (hostkeyalg == NULL) {
+          // dw: scanner longjumps from fatal
+          long_jump_result = LJ_RESULT_BAD_KEYTYPE;
+          fatal("no hostkey alg");
+        }
 	k->hostkey_type = key_type_from_name(hostkeyalg);
 	if (k->hostkey_type == KEY_UNSPEC)
 		fatal("bad hostkey alg '%s'", hostkeyalg);

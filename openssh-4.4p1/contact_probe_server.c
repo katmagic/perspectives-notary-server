@@ -274,7 +274,7 @@ void process_packet_data(server_list *server, char *hostname) {
 	results->timestamps = timestamps;
 	results->addresses = addresses;
 	results->num_probes = num_probes;
-	list_add(&results->list, &head->list);
+	__list_add(&results->list, &head->list, head->list.next);
 
 }
 

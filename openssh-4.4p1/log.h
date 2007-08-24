@@ -46,6 +46,7 @@ typedef enum {
 	SYSLOG_LEVEL_NOT_SET = -1
 }       LogLevel;
 
+
 void     log_init(char *, LogLevel, SyslogFacility, int);
 
 SyslogFacility	log_facility_number(char *);
