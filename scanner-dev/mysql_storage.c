@@ -30,7 +30,7 @@ void create_all_tables(MYSQL *mysql) {
 
 	char *create_observations = "CREATE TABLE IF NOT EXISTS" 
 			" observations (sid INTEGER, kid INTEGER," 
-			" time INTEGER, ip_addr INTEGER)";
+			" time INTEGER, ip_addr INTEGER, vid SMALLINTEGER)";
 	create_table(create_observations, mysql);
 
 	char *create_background_probes = "CREATE TABLE IF NOT EXISTS" 
@@ -120,7 +120,7 @@ int get_service_id(MYSQL *mysql, char* dns_name, uint16_t port) {
 short get_version_id(MYSQL *mysql, char* version_str) {
 
 	char query_buf[128];
-	snprintf(query_buf, 128, "SELECT sid from service_id WHERE "
+	snprintf(query_buf, 128, "SELECT vid from version_id WHERE "
 			"version_str = '%s'", version_str);
 	if(mysql_real_query(mysql, query_buf, strlen(query_buf)) != 0) {
 		fprintf(stderr, "version_id query failed: %s \n",
@@ -437,6 +437,10 @@ void store_ssh_probe_result(MYSQL *mysql, char *dns_name, uint16_t port,
 	if(vid == NO_VERSION) {
 		add_new_version(mysql, version_str);
 		vid = get_version_id(mysql, version_str);
+		if(vid == NO_VERSION) {
+			DPRINTF(DEBUG_ERROR, "Error adding version ID \n");
+		}
+
 	} // ignore errors for versions.  who cares.
 
 	insert_observation(mysql, sid, kid, timestamp, ip_addr, vid);
@@ -453,8 +457,8 @@ void insert_observation(MYSQL *mysql, int sid, int kid,
 
 	char query_buf[128];
 	snprintf(query_buf, 128, 
-	"INSERT into observations(sid,kid,time,ip_addr) values (%d, %d, %d, %d)",
-	sid, kid, timestamp, ip_addr);
+	"INSERT into observations(sid,kid,time,ip_addr,vid) values (%d, %d, %d, %d, %d)",
+	sid, kid, timestamp, ip_addr, vid);
 	
 
 	if(mysql_real_query(mysql, query_buf, strlen(query_buf)) != 0){

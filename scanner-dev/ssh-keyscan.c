@@ -446,7 +446,7 @@ congreet(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 		return;
 	}
 	*cp = '\0';
-        c->holder.version_str = strdup(buf);
+        strncpy(c->holder.version_str, buf, 64);
 	if (sscanf(buf, "SSH-%d.%d-%[^\n]\n",
 	    &remote_major, &remote_minor, remote_version) == 3)
 		compat_datafellows(remote_version);
@@ -718,7 +718,7 @@ int probe_list(MYSQL* mysql, uint32_t *ip_addr_list, int num_ips,
                 store_ssh_probe_result(mysql, h->name, h->port,
                   h->ip_addr, h->key, pre_probe_time, h->version_str) ;
                 free(h->name);
-                free(h->version_str);
+                // free key!
 	}
    }
 

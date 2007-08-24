@@ -107,7 +107,7 @@ typedef struct {
 	uint32_t ip_addr;	
 	Key * key;
 	conn_node* conn;
-        char *version_str;
+        char version_str[64];
 } ssh_key_holder;
 
 
