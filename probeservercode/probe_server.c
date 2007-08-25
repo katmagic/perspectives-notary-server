@@ -414,6 +414,10 @@ int main(int argc, char** argv) {
 				if(h->key != NULL) {
 					store_ssh_probe_result(db, h->name, 
 						h->port, h->ip_addr, h->key, time) ;
+                                         //TODO: NEED to free memory by calling
+                                         // free_key()
+                                         // will also need to fix bug in 
+                                         // grabkey_ssh1 that reuses memory
 
 					// try to add to the background-probing table
 					// this is ineffecient

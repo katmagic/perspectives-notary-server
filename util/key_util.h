@@ -21,9 +21,14 @@ static void key_to_buf(Key *key, char** buf, int* buf_len) {
 		memcpy(*buf, msg.buf, *buf_len);
 		buffer_free(&msg);
 		
-        }else {
+        }else if (key->type == KEY_RSA || key->type == KEY_DSA) {
                 key_to_blob(key, (u_char**)buf, (u_int*) buf_len);
-        }
+        }else {
+             fprintf(stderr, "invalid type %d for key %x \n", 
+                 key->type, (unsigned int)key);
+             *buf = NULL;
+             *buf_len = -1;
+        }  
 }
 
 static Key *buf_to_key(char* buf, int buf_len, int key_type) {

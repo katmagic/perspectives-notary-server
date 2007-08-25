@@ -398,13 +398,18 @@ void store_ssh_probe_result(MYSQL *mysql, char *dns_name, uint16_t port,
 				uint32_t ip_addr, Key *key, int timestamp,
                                  char* version_str) {
 	if(key == NULL){
-		printf("no key to store \n");
+		DPRINTF(DEBUG_ERROR, "no key to store \n");
 		return;
 	}
 
 	char* buf;
 	int buf_size = 0;
 	key_to_buf(key, &buf, &buf_size);
+        if(buf == NULL) {
+              DPRINTF(DEBUG_ERROR, "Failed to convert key to data buffer \n");
+              return;
+        }
+
 
 	int kid = get_key_id(mysql, buf, buf_size, key->type);
 	if(kid == NO_KEY) {
@@ -414,7 +419,8 @@ void store_ssh_probe_result(MYSQL *mysql, char *dns_name, uint16_t port,
 		kid = get_key_id(mysql, buf, buf_size, key->type);
 		if(kid == NO_KEY) {
 			DPRINTF(DEBUG_ERROR, "Error adding key ID \n");
-			return;
+			xfree(buf);
+                        return;
 		}
 		
 	}
@@ -428,7 +434,8 @@ void store_ssh_probe_result(MYSQL *mysql, char *dns_name, uint16_t port,
 		sid = get_service_id(mysql, dns_name, port);
 		if(sid == NO_SERVICE) {
 			DPRINTF(DEBUG_ERROR, "Error adding service ID \n");
-			return;
+                        xfree(buf);
+                        return;
 		}
 		
 	}

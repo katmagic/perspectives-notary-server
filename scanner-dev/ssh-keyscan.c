@@ -189,10 +189,12 @@ keygrab_ssh1(con *c)
 	static Key *rsa;
 	static Buffer msg;
 
-	if (rsa == NULL) {
+// dw: wtf?  why do they do reuse the same memory for
+// SSH1 keys, but not for SSH2 keys?  
+//	if (rsa == NULL) {
 		buffer_init(&msg);
 		rsa = key_new(KEY_RSA1);
-	}
+//	}
 	buffer_append(&msg, c->c_data, c->c_plen);
 	buffer_consume(&msg, 8 - (c->c_plen & 7));	/* padding */
 	if (buffer_get_char(&msg) != (int) SSH_SMSG_PUBLIC_KEY) {
@@ -394,7 +396,12 @@ conrecycle_with_keytype(uint32_t ip, uint16_t port, short key_type)
 
 void save_key(ssh_key_holder *ssh_keys, int *num_holders_used, con* c){
 	memcpy(&ssh_keys[*num_holders_used], &(c->holder), sizeof(ssh_key_holder));
-	(*num_holders_used)++;
+        if(c->holder.key != NULL) {
+            DPRINTF(DEBUG_INFO, "save: key : %x   s : %d  i : %d type: %d \n",
+            (unsigned int) c->holder.key, c->c_fd, *num_holders_used,
+              c->holder.key->type);
+        }
+        (*num_holders_used)++;
 }
 
 // return -1 on error (no action necessary)
@@ -538,7 +545,7 @@ conread(int s, ssh_key_holder *ssh_keys, int *num_holders_used)
 			break;
 		case CS_KEYS:
 			c->holder.key = keygrab_ssh1(c);
-			DPRINTF(DEBUG_INFO, "saving key1 for s = %d \n", s);
+			DPRINTF(DEBUG_ERROR, "saving key1 for s = %d \n", s);
 			save_key(ssh_keys, num_holders_used,c);
 			confree(s);
 			return;	
@@ -715,10 +722,11 @@ int probe_list(MYSQL* mysql, uint32_t *ip_addr_list, int num_ips,
 	ssh_key_holder *h = (&ssh_keys[i]);
 	if(h->key != NULL) {
                 ++keys_found;
+               // printf("i = %d has key = %x \n", i, h->key);
                 store_ssh_probe_result(mysql, h->name, h->port,
                   h->ip_addr, h->key, pre_probe_time, h->version_str) ;
                 free(h->name);
-                // free key!
+                key_free(h->key);
 	}
    }
 
@@ -900,9 +908,11 @@ fatal(const char *fmt,...)
 {
 	va_list args;
 
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
-	va_end(args);
+        if(strcmp(fmt,"no hostkey alg") != 0){
+          va_start(args, fmt);
+          do_log(SYSLOG_LEVEL_FATAL, fmt, args);
+          va_end(args);
+        }
 	if (nonfatal_fatal)
 		longjmp(kexjmp, -1);
 	else
