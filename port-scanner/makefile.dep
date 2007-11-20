@@ -1,0 +1,450 @@
+main.o: main.cc nmap.h config.h nbase/nbase.h nbase/nbase_config.h \
+  nbase/nbase_ipv6.h output.h portlist.h tcpip.h libpcap/pcap.h \
+  libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h osscan.h scan_engine.h idle_scan.h \
+  NmapOps.h
+nmap.o: nmap.cc nmap.h config.h nbase/nbase.h nbase/nbase_config.h \
+  nbase/nbase_ipv6.h output.h portlist.h tcpip.h libpcap/pcap.h \
+  libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h osscan.h osscan2.h scan_engine.h \
+  idle_scan.h NmapOps.h MACLookup.h nbase/nbase.h nmap_tty.h nmap_dns.h
+targets.o: targets.cc targets.h config.h nmap.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h output.h portlist.h tcpip.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h Target.h FingerPrintResults.h TargetGroup.h service_scan.h \
+  libpcre/pcre.h osscan.h NmapOps.h scan_engine.h nmap_dns.h nmap_tty.h
+tcpip.o: tcpip.cc libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h tcpip.h config.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h libpcap/pcap.h \
+  libpcap/pcap-bpf.h nmap_error.h nbase/nbase.h utils.h nmap.h output.h \
+  portlist.h global_structures.h services.h charpool.h protocols.h \
+  nmap_rpc.h timing.h targets.h Target.h FingerPrintResults.h \
+  TargetGroup.h service_scan.h libpcre/pcre.h NmapOps.h
+nmap_error.o: nmap_error.cc nmap_error.h config.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h output.h portlist.h tcpip.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h utils.h nmap.h global_structures.h \
+  services.h charpool.h protocols.h nmap_rpc.h timing.h targets.h \
+  Target.h FingerPrintResults.h TargetGroup.h service_scan.h \
+  libpcre/pcre.h NmapOps.h
+utils.o: utils.cc nmap.h config.h nbase/nbase.h nbase/nbase_config.h \
+  nbase/nbase_ipv6.h output.h portlist.h tcpip.h libpcap/pcap.h \
+  libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h NmapOps.h
+idle_scan.o: idle_scan.cc idle_scan.h portlist.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h tcpip.h config.h libpcap/pcap.h \
+  libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h nmap.h \
+  output.h global_structures.h services.h charpool.h protocols.h \
+  nmap_rpc.h timing.h targets.h Target.h FingerPrintResults.h \
+  TargetGroup.h service_scan.h libpcre/pcre.h scan_engine.h osscan.h \
+  NmapOps.h
+osscan.o: osscan.cc osscan.h nmap.h config.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h output.h portlist.h tcpip.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h NmapOps.h nmap_tty.h
+osscan2.o: osscan2.cc osscan.h nmap.h config.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h output.h portlist.h tcpip.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h osscan2.h NmapOps.h
+output.o: output.cc output.h portlist.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h tcpip.h config.h libpcap/pcap.h \
+  libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h nmap.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h osscan.h NmapOps.h NmapOutputTable.h \
+  MACLookup.h nbase/nbase.h
+scan_engine.o: scan_engine.cc libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h scan_engine.h portlist.h \
+  nbase/nbase.h nbase/nbase_config.h nbase/nbase_ipv6.h tcpip.h config.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h nmap_error.h utils.h nmap.h output.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h NmapOps.h nmap_tty.h
+timing.o: timing.cc timing.h tcpip.h config.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h libpcap/pcap.h \
+  libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h nbase/nbase.h utils.h \
+  nmap.h output.h portlist.h global_structures.h services.h charpool.h \
+  protocols.h nmap_rpc.h targets.h Target.h FingerPrintResults.h \
+  TargetGroup.h service_scan.h libpcre/pcre.h NmapOps.h
+charpool.o: charpool.cc charpool.h utils.h config.h nmap_error.h \
+  nbase/nbase.h nbase/nbase_config.h nbase/nbase_ipv6.h nmap.h output.h \
+  portlist.h tcpip.h libpcap/pcap.h libpcap/pcap-bpf.h \
+  libdnet-stripped/include/dnet.h libdnet-stripped/include/dnet/os.h \
+  libdnet-stripped/include/dnet/eth.h libdnet-stripped/include/dnet/ip.h \
+  libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h global_structures.h services.h \
+  protocols.h nmap_rpc.h timing.h targets.h Target.h FingerPrintResults.h \
+  TargetGroup.h service_scan.h libpcre/pcre.h
+services.o: services.cc services.h nmap.h config.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h output.h portlist.h tcpip.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h protocols.h charpool.h nmap_rpc.h timing.h \
+  targets.h Target.h FingerPrintResults.h TargetGroup.h service_scan.h \
+  libpcre/pcre.h NmapOps.h
+protocols.o: protocols.cc protocols.h nmap.h config.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h output.h portlist.h tcpip.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h nmap_rpc.h timing.h targets.h \
+  Target.h FingerPrintResults.h TargetGroup.h service_scan.h \
+  libpcre/pcre.h NmapOps.h
+nmap_rpc.o: nmap_rpc.cc nmap_rpc.h nmap.h config.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h output.h portlist.h tcpip.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h targets.h \
+  Target.h FingerPrintResults.h TargetGroup.h service_scan.h \
+  libpcre/pcre.h timing.h NmapOps.h
+portlist.o: portlist.cc portlist.h nbase/nbase.h nbase/nbase_config.h \
+  nbase/nbase_ipv6.h nmap_error.h config.h nmap.h output.h tcpip.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h utils.h global_structures.h \
+  services.h charpool.h protocols.h nmap_rpc.h timing.h targets.h \
+  Target.h FingerPrintResults.h TargetGroup.h service_scan.h \
+  libpcre/pcre.h NmapOps.h
+NmapOps.o: NmapOps.cc nmap.h config.h nbase/nbase.h nbase/nbase_config.h \
+  nbase/nbase_ipv6.h output.h portlist.h tcpip.h libpcap/pcap.h \
+  libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h NmapOps.h
+TargetGroup.o: TargetGroup.cc TargetGroup.h nmap.h config.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h output.h portlist.h tcpip.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h service_scan.h \
+  libpcre/pcre.h NmapOps.h
+Target.o: Target.cc libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h Target.h nmap.h config.h \
+  nbase/nbase.h nbase/nbase_config.h nbase/nbase_ipv6.h output.h \
+  portlist.h tcpip.h libpcap/pcap.h libpcap/pcap-bpf.h nmap_error.h \
+  utils.h global_structures.h services.h charpool.h protocols.h \
+  nmap_rpc.h timing.h targets.h TargetGroup.h service_scan.h \
+  libpcre/pcre.h FingerPrintResults.h osscan.h NmapOps.h
+FingerPrintResults.o: FingerPrintResults.cc FingerPrintResults.h nmap.h \
+  config.h nbase/nbase.h nbase/nbase_config.h nbase/nbase_ipv6.h output.h \
+  portlist.h tcpip.h libpcap/pcap.h libpcap/pcap-bpf.h \
+  libdnet-stripped/include/dnet.h libdnet-stripped/include/dnet/os.h \
+  libdnet-stripped/include/dnet/eth.h libdnet-stripped/include/dnet/ip.h \
+  libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h TargetGroup.h service_scan.h libpcre/pcre.h \
+  osscan.h NmapOps.h
+service_scan.o: service_scan.cc service_scan.h nmap.h config.h \
+  nbase/nbase.h nbase/nbase_config.h nbase/nbase_ipv6.h output.h \
+  portlist.h tcpip.h libpcap/pcap.h libpcap/pcap-bpf.h \
+  libdnet-stripped/include/dnet.h libdnet-stripped/include/dnet/os.h \
+  libdnet-stripped/include/dnet/eth.h libdnet-stripped/include/dnet/ip.h \
+  libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  libpcre/pcre.h NmapOps.h nsock/include/nsock.h nmap_tty.h
+NmapOutputTable.o: NmapOutputTable.cc NmapOutputTable.h utils.h config.h \
+  nmap_error.h nbase/nbase.h nbase/nbase_config.h nbase/nbase_ipv6.h \
+  nmap.h output.h portlist.h tcpip.h libpcap/pcap.h libpcap/pcap-bpf.h \
+  libdnet-stripped/include/dnet.h libdnet-stripped/include/dnet/os.h \
+  libdnet-stripped/include/dnet/eth.h libdnet-stripped/include/dnet/ip.h \
+  libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h global_structures.h services.h \
+  charpool.h protocols.h nmap_rpc.h timing.h targets.h Target.h \
+  FingerPrintResults.h TargetGroup.h service_scan.h libpcre/pcre.h
+MACLookup.o: MACLookup.cc MACLookup.h nbase/nbase.h nbase/nbase_config.h \
+  nbase/nbase_ipv6.h nmap.h config.h nbase/nbase.h output.h portlist.h \
+  tcpip.h libpcap/pcap.h libpcap/pcap-bpf.h \
+  libdnet-stripped/include/dnet.h libdnet-stripped/include/dnet/os.h \
+  libdnet-stripped/include/dnet/eth.h libdnet-stripped/include/dnet/ip.h \
+  libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h
+nmap_tty.o: nmap_tty.cc config.h output.h portlist.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h tcpip.h libpcap/pcap.h \
+  libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h nmap.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h nmap_tty.h NmapOps.h
+nmap_dns.o: nmap_dns.cc nmap.h config.h nbase/nbase.h \
+  nbase/nbase_config.h nbase/nbase_ipv6.h output.h portlist.h tcpip.h \
+  libpcap/pcap.h libpcap/pcap-bpf.h libdnet-stripped/include/dnet.h \
+  libdnet-stripped/include/dnet/os.h libdnet-stripped/include/dnet/eth.h \
+  libdnet-stripped/include/dnet/ip.h libdnet-stripped/include/dnet/ip6.h \
+  libdnet-stripped/include/dnet/addr.h \
+  libdnet-stripped/include/dnet/arp.h \
+  libdnet-stripped/include/dnet/icmp.h \
+  libdnet-stripped/include/dnet/tcp.h libdnet-stripped/include/dnet/udp.h \
+  libdnet-stripped/include/dnet/intf.h \
+  libdnet-stripped/include/dnet/route.h \
+  libdnet-stripped/include/dnet/fw.h libdnet-stripped/include/dnet/tun.h \
+  libdnet-stripped/include/dnet/blob.h \
+  libdnet-stripped/include/dnet/rand.h nmap_error.h utils.h \
+  global_structures.h services.h charpool.h protocols.h nmap_rpc.h \
+  timing.h targets.h Target.h FingerPrintResults.h TargetGroup.h \
+  service_scan.h libpcre/pcre.h NmapOps.h nmap_dns.h \
+  nsock/include/nsock.h nmap_tty.h
