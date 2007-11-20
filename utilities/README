@@ -1,0 +1,33 @@
+
+This directory contains a lot of utilities that are useful for testing
+notary code and converting from the old MySQL database format to the 
+new Berkeley DB format.  A lot of the parameters are hardcoded for now,
+so using them elsewhere without modifying the code will likely break.  
+
+It can build the following targets:
+
+simple_client :  a very simple notary client that queries a notary 
+server for a single observation
+
+load_test_client : takes files containing service-ids and does a bulk
+query to a single notary server for all service-ids, measuring how 
+long it takes to complete.
+
+signature_util : runs through an entire notary database, either verifying
+the signatures are correct, or calculating and then verifying all signatures.
+Warning: calculating all signature can take a LONG time.  
+
+db_search :  takes a regular expression and a db file and prints out
+all entries in the db with keys that match the regex.  
+
+update_timespans_test :  code that tests the code used by a notary to update
+a database record based on a new observation.
+
+---- the code below uses outdated database formats and is useful only 
+as a reference.  It will not run.  -- 
+
+batch_dns: uses c-ares to do batch DNS look-ups in parallel.  
+
+mysql_bdb_convert :  converts content from old MySQL format to new BDB format.
+
+

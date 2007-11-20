@@ -231,7 +231,7 @@ key_fingerprint_raw(const Key *k, enum fp_type dgst_type,
 	return retval;
 }
 
-char *
+static char *
 key_fingerprint_hex(u_char *dgst_raw, u_int dgst_raw_len)
 {
 	char *retval;

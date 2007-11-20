@@ -60,7 +60,6 @@ extern const EVP_MD *evp_ssh_sha256(void);
 #endif
 
 
-
 /* prototype */
 static void kex_kexinit_finish(Kex *);
 static void kex_choose_conf(Kex *);
