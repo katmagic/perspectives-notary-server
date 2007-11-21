@@ -2,8 +2,6 @@
 #include "notary_util.h"
 #include "common.h"
 #include <time.h>
-#include "mysql_storage.h"
-#include "key.h"
 
 void xfree(void*);
 
@@ -210,6 +208,9 @@ void add_observation_to_list(ssh_key_info_list *info_list,
 
 void print_key_info_timespans(ssh_key_info* info) {
 
+  if(info == NULL) 
+    return;
+
   char *key_buf = (char*)(info + 1);
   int len = ntohs(info->key_len_bytes);
   int *timespans = (int*)(key_buf + len);
@@ -228,6 +229,8 @@ void print_key_info_timespans(ssh_key_info* info) {
 
 
 void print_key_info_list(ssh_key_info_list* info_list) {
+    if(info_list == NULL) 
+       return;
 
         struct list_head *pos,*tmp;
         ssh_key_info_list* cur;
@@ -246,6 +249,8 @@ void print_key_info_list(ssh_key_info_list* info_list) {
 
 void free_key_info_list(ssh_key_info_list* info_list) {
 
+        if(info_list == NULL) return;
+
         ssh_key_info_list *l = info_list;
         struct list_head *pos,*tmp;
         ssh_key_info_list* cur;
@@ -261,52 +266,6 @@ void free_key_info_list(ssh_key_info_list* info_list) {
 }
 
 
-// caller must free memory in buf
-void key_to_buf(Key *key, char** buf, int* buf_len) {
-
-        if(key->type == KEY_RSA1) {
-		// dw: there's likely a better way to do this
-		Buffer msg;
-		buffer_init(&msg);
-		buffer_put_int(&msg, BN_num_bits(key->rsa->n));
-		buffer_put_bignum(&msg, key->rsa->e);
-		buffer_put_bignum(&msg, key->rsa->n);
-
-		*buf_len = buffer_len(&msg);
-
-		*buf = (char*)malloc(*buf_len);
-		memcpy(*buf, msg.buf, *buf_len);
-		buffer_free(&msg);
-		
-        }else if (key->type == KEY_RSA || key->type == KEY_DSA) {
-                key_to_blob(key, (u_char**)buf, (u_int*) buf_len);
-        }else {
-             fprintf(stderr, "invalid type %d for key %x \n", 
-                 key->type, (unsigned int)key);
-             *buf = NULL;
-             *buf_len = -1;
-        }  
-}
-
-Key *buf_to_key(char* buf, int buf_len, int key_type) {
-
-	if(key_type == KEY_RSA1) {
-		Buffer msg;
-		buffer_init(&msg);
-		buffer_append(&msg, buf, (u_int)buf_len);
-
-        	(void) buffer_get_int(&msg); // ignored
-
-		Key *key = key_new(KEY_RSA1);
-	        buffer_get_bignum(&msg, key->rsa->e);
-        	buffer_get_bignum(&msg, key->rsa->n);
-		return key;
-		
-	} else {
-		return key_from_blob((u_char*)buf, buf_len);
-	}
-
-}
 
 char * ssh_fingerprint_hex(u_char *dgst_raw, u_int dgst_raw_len){
 

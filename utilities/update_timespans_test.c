@@ -6,90 +6,14 @@
 
 #include "db.h"
 #include "common.h"
-
-#include "mysql.h"
-#include "common.h"
 #include "notary_crypto.h"
-#include "mysql_storage.h"
 #include "notary_util.h"
 #include "bdb_storage.h"
+#include "benchmark_util.h"
 
 unsigned int notary_debug = DEBUG_ERROR;
 
-
-
-
-
-char ** get_random_hoststrings(int num) {
-        char **all_hosts = (char**)malloc(sizeof(char*) * num);
-
-        MYSQL *mysql2 = open_mysql_conn("localhost","root",
-                                  "moosaysthecow","ssh");
-
-        char query_buf[128];
-        snprintf(query_buf, 128, 
-          "SELECT dns_name from service_id order by RAND() limit %d",
-          num);
-
-	int error_code = 
-		mysql_real_query(mysql2, query_buf, strlen(query_buf));
-	if(error_code) {
-		fprintf(stderr, "Error looking up key: %s \n",
-			mysql_error(mysql2));
-		exit(1);
-        }
-
-	MYSQL_RES* result = mysql_store_result(mysql2);
-	
-        int i;
-        MYSQL_ROW row;
-        for(i = 0; i < num; i++) {
-
-            row = mysql_fetch_row(result);
-
-            if(row == NULL || row[0] == NULL){
-              printf("early null at i = %d \n", i);
-              exit(1);
-            }
-            int len = strlen(row[0]) + 4;
-            all_hosts[i] = (char*)malloc(len);
-            snprintf(all_hosts[i], len, "%s:22",row[0]);
-
-        }
-        printf("Read %d names from MySQL \n", i);
-        return all_hosts;
-}
-
-
-
-void read_speed_test(DB *db, int count) {
-  
-        char **all_hosts = get_random_hoststrings(count);
-
-        warm_db(db); 
-
-        char buf[4000];
-        struct timeval start, end;
-        gettimeofday(&start,NULL);
-
-        int failures = 0;
-        int i;
-        for(i = 0; i < count; i++) {
-            int r = get_data(db, all_hosts[i], buf, 4000);
-            if(r < 0) ++failures;
-        }
-        
-        gettimeofday(&end,NULL);
-        float sec_diff = (float) (end.tv_sec - start.tv_sec);
-        int usec_diff = end.tv_usec - start.tv_usec;
-        float usec_fraction = ((float)(usec_diff))/(1000000.0);
-        float time_result = sec_diff + usec_fraction;
-        printf("For %d lookups, %f seconds \n",
-            count, time_result);
-
-        printf("%d failures \n", failures);
-}
-
+/*
 int  get_a_public_key(DB* db, char* service_id,
                               char *buf_out, uint8_t* key_type_out){
 
@@ -121,7 +45,7 @@ int  get_a_public_key(DB* db, char* service_id,
        *key_type_out = cur->info->key_type;
        return len;
 }
-
+*/
 
 int make_timespan_change(DB* db, RSA *priv_key,
                       char *service_id, int timestamp) {
@@ -175,7 +99,8 @@ main(int argc, char** argv)
       RSA *priv_key = load_private_key("private.pem");
 
       int count = 1000;
-      char** all_hosts = get_random_hoststrings(count);
+      int actual; 
+      char **all_hosts = get_random_serviceids(count, db, &actual);
       int i;
 
       int failures = 0;
@@ -185,7 +110,7 @@ main(int argc, char** argv)
         struct timeval start, end;
         gettimeofday(&start,NULL);
       
-      for(i = 0; i < count;i++) {
+      for(i = 0; i < actual;i++) {
          if(make_timespan_change(db,priv_key,all_hosts[i],now.tv_sec))
            ++failures;
       }
@@ -195,7 +120,7 @@ main(int argc, char** argv)
         float usec_fraction = ((float)(usec_diff))/(1000000.0);
         float time_result = sec_diff + usec_fraction;
         printf("For %d lookups, %f seconds \n",
-            count - failures, time_result);
+            actual - failures, time_result);
 
         printf("failures: %d \n", failures);
       bdb_close(db);

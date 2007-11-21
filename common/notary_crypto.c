@@ -10,43 +10,63 @@
 #include "common.h"
 
 
-RSA* load_private_key(char *filename) {
+int read_key_file(char *filename, char *buf, int max_len) {
+  FILE* f = fopen(filename, "r");
 
-  EVP_PKEY *priv_key = NULL;
-  BIO *priv_key_bio = BIO_new(BIO_s_file());
-  if(BIO_read_filename(priv_key_bio, filename) <= 0){
-      printf("Error opening '%s' \n", filename);
-      return NULL;
+  size_t bytes = fread(buf, 1, max_len ,f); 
+  if(ferror(f)){ 
+    perror("file open");
+    exit(1);
   }
-  priv_key = PEM_read_bio_PrivateKey(priv_key_bio, NULL,
-                                           NULL, NULL);
-  if(!priv_key) {
-      printf("priv_key is null\n");
-      return NULL;
+
+  if(!feof(f)) {
+    DPRINTF(DEBUG_ERROR, "Unabled to read full file "
+          " with key buffer of size %d \n", max_len);
+    exit(1);
   }
-  BIO_free(priv_key_bio);
-  RSA *rsa = EVP_PKEY_get1_RSA(priv_key);
-  EVP_PKEY_free(priv_key);
+
+  return bytes;
+
+}
+
+
+
+RSA* key_from_bio(BIO *key_bio, BOOL is_private) {
+
+  EVP_PKEY *pkey = NULL;
+  
+  if(is_private) {
+    pkey = PEM_read_bio_PrivateKey(key_bio, 
+                          NULL,NULL, NULL);
+  }else {
+    pkey = PEM_read_bio_PUBKEY(key_bio, NULL,
+                                        NULL, NULL);
+  }
+  if(!pkey) {
+      printf("key read from BIO is null\n");
+      exit(1);
+  }
+  BIO_free(key_bio);
+  RSA *rsa = EVP_PKEY_get1_RSA(pkey);
+  EVP_PKEY_free(pkey);
   return rsa;
 }
 
-RSA* load_public_key(char *filename) {
+RSA *key_from_buf(char *buf, int len, BOOL is_private) {
+  BIO *key_bio = BIO_new_mem_buf(buf, len);
+  return key_from_bio(key_bio, is_private);
+}
 
-  EVP_PKEY *pub_key = NULL;
-  BIO *pub_key_bio = BIO_new(BIO_s_file());
-  if(BIO_read_filename(pub_key_bio, filename) <= 0){
-      printf("Error opening '%s' \n",filename);
-      return NULL;
-  }
-  pub_key = PEM_read_bio_PUBKEY(pub_key_bio, NULL,
-                                           NULL, NULL);
-  if(!pub_key) {
-      printf("pub_key is null\n");
-      return NULL;
-  }
-  RSA *rsa = EVP_PKEY_get1_RSA(pub_key);
-  EVP_PKEY_free(pub_key);
-  return rsa;
+RSA* load_private_key(char *filename) {
+  char buf[1024];
+  int len = read_key_file(filename, buf, 1024);
+  return key_from_buf(buf,len,TRUE);
+}
+
+RSA* load_public_key(char *filename) {
+  char buf[1024];
+  int len = read_key_file(filename, buf, 1024);
+  return key_from_buf(buf,len, FALSE);
 }
 
 

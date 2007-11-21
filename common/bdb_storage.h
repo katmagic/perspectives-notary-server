@@ -2,6 +2,7 @@
 #define _BDB_STORAGE_H_
 
 #include "db.h"
+#include <openssl/rsa.h>
 
 DB * bdb_open(char *filename, uint32_t open_flags);
 DB * bdb_open_env(char *evn_file, uint32_t evn_flags, 

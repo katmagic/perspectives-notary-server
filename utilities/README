@@ -21,13 +21,9 @@ db_search :  takes a regular expression and a db file and prints out
 all entries in the db with keys that match the regex.  
 
 update_timespans_test :  code that tests the code used by a notary to update
-a database record based on a new observation.
+a database record based on a new observation.  
 
----- the code below uses outdated database formats and is useful only 
-as a reference.  It will not run.  -- 
-
-batch_dns: uses c-ares to do batch DNS look-ups in parallel.  
-
-mysql_bdb_convert :  converts content from old MySQL format to new BDB format.
+db_speed_test: A simple test to grab random service_ids and see how long
+BDB takes to read them. 
 
 

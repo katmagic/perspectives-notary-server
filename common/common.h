@@ -16,7 +16,7 @@
 #include <arpa/inet.h>
 
 #include "list.h" // modified linked-list from linux
-#include "key.h" // SSH key data-structure
+//#include "key.h" // SSH key data-structure
 #include "debug.h"
 
 #ifndef TRUE 

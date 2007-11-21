@@ -12,7 +12,7 @@
 #include "common.h"
 #include "net_util.h"
 #include "notary_crypto.h"
-#include "notary_client.h"
+#include "contact_notary.h"
 
 // used for server load testing.  
 // loads a set number of host-ids to query server for
@@ -51,7 +51,7 @@ unsigned int notary_debug = DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO;
 int main(int argc, char *argv[])
 {
    int sock;
-   struct sockaddr_in server;
+   struct sockaddr_in reply_addr;
 
    if (argc != 4) { printf("Usage: server port num-hosts \n");
                     exit(1);
@@ -72,11 +72,10 @@ int main(int argc, char *argv[])
      perror("socket");
      exit(1);
    }
-
-   server.sin_family = AF_INET;
-   uint32_t ip = str_2_ip(argv[1]);
-   server.sin_addr = *(struct in_addr*)&ip;
-   server.sin_port = htons(atoi(argv[2]));
+   
+   server_list server;
+   server.ip_addr = str_2_ip(argv[1]);
+   server.port = atoi(argv[2]);
 
    struct timeval start, end;
    gettimeofday(&start,NULL);
@@ -101,7 +100,7 @@ int main(int argc, char *argv[])
         FD_SET(sock, &readfds);
         int num_fds = select(sock + 1, &readfds, NULL, NULL, &select_timeout);
         if(num_fds || (next_wait == sent_total)) {
-          recv_len = recv_single_reply(sock, recv_buf, MAX_PACKET_LEN);
+          recv_len = recv_single_reply(sock, recv_buf, MAX_PACKET_LEN, &reply_addr);
           ssh_key_info_list* list = parse_message(recv_buf, recv_len, pub_key);
           print_key_info_list(list);
           printf("\n");

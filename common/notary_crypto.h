@@ -1,8 +1,10 @@
 #ifndef NOTARY_CRYPTO_H_
 #define NOTARY_CRYPTO_H_
 
+#include "common.h"
 #include <openssl/rsa.h>
 
+RSA *key_from_buf(char *buf, int len, BOOL is_private);
 RSA* load_private_key(char *filename);
 RSA* load_public_key(char *filename);
 int get_signature(char *hdr, unsigned int hdr_size, 

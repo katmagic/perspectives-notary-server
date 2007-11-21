@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmalloc.h"
-#include "mysql_storage.h"
 #include "db.h"
 #include "notary_util.h"
 #include "notary_crypto.h"

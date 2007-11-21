@@ -680,15 +680,16 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 				    "key for IP address '%.128s' to the list "
 				    "of known hosts.", type, ip);
 		}
-		
+	/*	
 		if(options.notary_always_probe) {
 			do_probe_check(hostname, port, host_key, original_real_uid,
 				options.notary_always_prompt);
 		}
+                */
 		break;
 	case HOST_NEW:
 
-		do_probe_check(hostname, port, host_key, original_real_uid,1);
+	//	do_probe_check(hostname, port, host_key, original_real_uid,1);
 
 		if (options.host_key_alias == NULL && port != 0 &&
 		    port != SSH_DEFAULT_PORT) {
@@ -778,7 +779,7 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 			    "list of known hosts.", hostp, type);
 		break;
 	case HOST_CHANGED:
-		do_probe_check(hostname, port, host_key, original_real_uid, 1);
+		//do_probe_check(hostname, port, host_key, original_real_uid, 1);
 		if (readonly == ROQUIET)
 			goto fail;
 		if (options.check_host_ip && host_ip_differ) {
