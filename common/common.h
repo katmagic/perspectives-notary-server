@@ -59,6 +59,10 @@ typedef struct {
 } __attribute__ ((packed)) ssh_key_info;
 
 
+#define SSH_RSA1 0
+#define SSH_RSA 1
+#define SSH_DSA 2
+
 #define KEY_INFO_SIZE(info)  \
 	sizeof(ssh_key_info) + ntohs(info->key_len_bytes) \
 	+ (2 * sizeof(int) * ntohs(info->num_timespans))
@@ -66,6 +70,9 @@ typedef struct {
 #define HEADER_SIZE(hdr)  \
 	(sizeof(notary_header) + \
               ntohs(hdr->name_len)) 
+
+#define FIND_TIMESPANS(info) \
+      ((int*)(((char*)(info + 1)) + ntohs(info->key_len_bytes)))
 
 typedef struct {
 	struct list_head list;

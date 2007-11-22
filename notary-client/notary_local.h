@@ -24,6 +24,7 @@ typedef struct {
 
 typedef struct {
 	server_list notary_servers;
+        int num_servers;
 } SSHNotary;
 
 void probe_for_key(SSHNotary *notary, int time_out_msecs,

@@ -66,12 +66,14 @@ void add_notary_server(SSHNotary *notary, uint32_t ip_address, uint16_t port,
                             (notary->notary_servers.list.next));
 	DPRINTF(DEBUG_INFO, "Adding notary server: %s : %d \n",
 			inet_ntoa(*(struct in_addr*)&ip_address), tmp->port);
+        ++(notary->num_servers);
 }
 
 SSHNotary* init_ssh_notary(){
 
 	SSHNotary *n = (SSHNotary*)malloc(sizeof(SSHNotary));
-	INIT_LIST_HEAD(&n->notary_servers.list);
+        n->num_servers = 0;
+        INIT_LIST_HEAD(&n->notary_servers.list);
 	return n;
 }
 

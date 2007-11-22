@@ -2,7 +2,9 @@
 
 #include "common.h"
 
-char * ssh_fingerprint_hex(u_char *dgst_raw, u_int dgst_raw_len);
+char *key_type_str(uint8_t type);
+char * buf_2_hexstr(char *buf, int buf_len);
+int hexstr_2_buf(char * str, char *buf_out, int buf_len); 
 void print_key_info_timespans(ssh_key_info* info);
 void print_ssh_key(ssh_key_info* info);
 void print_key_info_list(ssh_key_info_list* info_list);

@@ -239,9 +239,9 @@ void print_key_info_list(ssh_key_info_list* info_list) {
           cur = list_entry(pos, ssh_key_info_list, list);
           char *key_buf = (char*)(cur->info + 1);
           int len = ntohs(cur->info->key_len_bytes);
-          char *str = ssh_fingerprint_hex((u_char*) key_buf,
-                                  (u_int) len);
-          printf("Key: %s \n", str);
+          char *str = buf_2_hexstr(key_buf,len);
+          printf("%s key: %s \n", key_type_str(cur->info->key_type),
+                                  str);
           free(str);
           print_key_info_timespans(cur->info);
         } 
@@ -267,7 +267,7 @@ void free_key_info_list(ssh_key_info_list* info_list) {
 
 
 
-char * ssh_fingerprint_hex(u_char *dgst_raw, u_int dgst_raw_len){
+char * buf_2_hexstr(char *dgst_raw, int dgst_raw_len){
 
 	char *retval;
 	u_int i;
@@ -277,11 +277,32 @@ char * ssh_fingerprint_hex(u_char *dgst_raw, u_int dgst_raw_len){
         bzero(retval, str_len);
 	for (i = 0; i < dgst_raw_len; i++) {
 		char hex[4];
-		snprintf(hex, sizeof(hex), "%02x:", dgst_raw[i]);
+		snprintf(hex, sizeof(hex), "%02x:", (u_char)dgst_raw[i]);
 		strncat(retval, hex, dgst_raw_len * 3 + 1);
 	}
 
 	/* Remove the trailing ':' character */
 	retval[(dgst_raw_len * 3) - 1] = '\0';
 	return retval;
+}
+
+int hexstr_2_buf(char * str, char *buf_out, int buf_len) {  
+    char *ptr = str;
+    int i = 0;
+    while(i < buf_len) {
+      long int v = strtol(ptr, &ptr, 16);
+      if(v == 0) break;
+
+      ++ptr;
+      buf_out[i] = (char) v;
+      ++i;
+    }
+    return i;
+}
+
+char *key_type_str(uint8_t type) {
+  if(type == SSH_RSA1) return "ssh-rsa1";
+  if(type == SSH_RSA) return "ssh-rsa";
+  if(type == SSH_DSA) return "ssh-dsa";
+  return "unknown key-type";
 }
