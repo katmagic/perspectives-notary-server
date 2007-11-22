@@ -1,9 +1,71 @@
 
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "common.h"
 #include "net_util.h"
 #include "notary_util.h"
 #include "bdb_storage.h"
 #include "net_util.h"
+
+typedef struct {
+	uint16_t port;
+	uint32_t ip_addr;
+	char *db_env_fname;
+	char *db_fname;
+} server_config;
+
+
+
+void parse_config_file(server_config *conf, char* fname){
+	char buf[1024];
+	FILE *f;
+	assert(fname);
+
+	f = fopen(fname, "r");
+	if(f == NULL) {
+		fprintf(stderr,
+		"Notary Error: Invalid conf file %s \n", fname);
+		return;
+	}
+
+	while(fgets(buf, 1023,f) != NULL) {
+		if(*buf == '\n') continue;
+		if(*buf == '#') continue;
+		int size = strlen(buf);
+		buf[size - 1] = 0x0; // replace '\n' with NULL
+		char *delim = strchr(buf,'=');
+		if(delim == NULL) {
+			DPRINTF(DEBUG_ERROR, 
+				"Ignoring malformed line: %s \n", buf);
+			continue;
+		}
+		*delim = 0x0;
+	 
+		char *value = delim + 1;
+		DPRINTF(DEBUG_INFO, "key = '%s' value = '%s' \n", 
+				buf, value);
+		if(strcmp(buf,"ip_addr") == 0) { 
+			conf->ip_addr = str_2_ip(value);
+		} else if(strcmp(buf, "port") == 0) {
+			conf->port = atoi(value);
+		} else if(strcmp(buf, "db_env_fname") == 0){
+			conf->db_env_fname = strdup(value);
+		} else if(strcmp(buf, "db_fname") == 0) {
+			conf->db_fname = strdup(value);
+		} else {
+			DPRINTF(DEBUG_ERROR, "Unknown config value %s : %s \n",
+					buf, value);
+		}
+	}		
+}
+
+
 
 BOOL parse_header(notary_header *hdr, int recv_len, char** hostname_out, 
                                 uint16_t *type_out){
@@ -45,7 +107,7 @@ void sock_error(char *msg)
     exit(1);
 }
 
-void server_loop(DB *db, uint16_t port) {
+void server_loop(DB *db, uint32_t ip_addr, uint16_t port) {
 
    unsigned int fromlen;
    int sock, length, n;
@@ -58,7 +120,7 @@ void server_loop(DB *db, uint16_t port) {
    length = sizeof(server);
    bzero(&server,length);
    server.sin_family=AF_INET;
-   server.sin_addr.s_addr= INADDR_ANY; //str_2_ip("128.2.134.90");
+   server.sin_addr.s_addr= ip_addr;
    server.sin_port=htons(port);
    if (bind(sock,(struct sockaddr *)&server,length)<0) 
        sock_error("binding");
@@ -110,24 +172,28 @@ void server_loop(DB *db, uint16_t port) {
  }
 
 
-unsigned int notary_debug = DEBUG_ERROR | DEBUG_DATABASE;
+unsigned int notary_debug = DEBUG_ERROR | DEBUG_DATABASE | DEBUG_INFO;
 
 int main(int argc, char** argv) {
 
-    if(argc != 3) {
-        printf("usage: <db-filename> <listen-port> \n");
+    server_config conf;
+
+    if(argc != 2) {
+        printf("usage: <config file> \n");
         exit(1);
     }
 
+    parse_config_file(&conf, argv[1]);
+
     uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
-    DB *db = bdb_open_env("/notary", env_flags, argv[1], DB_RDONLY);
+    DB *db = bdb_open_env(conf.db_env_fname, env_flags, conf.db_fname, DB_RDONLY);
     if(db == NULL){
       printf("bdb_open failed \n");
       exit(1);
     }
     warm_db(db);
 
-    server_loop(db, atoi(argv[2]));
+    server_loop(db, conf.ip_addr, conf.port);
     
     bdb_close(db);
   
