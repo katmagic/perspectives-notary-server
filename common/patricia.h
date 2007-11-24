@@ -101,7 +101,7 @@ make_and_lookup (patricia_tree_t *tree, char *string);
 
 char ip_in_trie(patricia_tree_t* tree, uint32_t ip);
 
-void load_db_to_trie(patricia_tree_t* tree, char* table_name);
+void load_file_to_trie(patricia_tree_t* tree, char* fname);
 
 
 

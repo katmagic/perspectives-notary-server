@@ -25,7 +25,7 @@ DB * bdb_open(char *filename, uint32_t open_flags) {
       return dbp;
 }
 
-DB * bdb_open_env(char *evn_file, uint32_t evn_flags, 
+DB * bdb_open_env(char *env_file, uint32_t env_flags, 
                   char *db_name, uint32_t db_open_flags) {
       DB_ENV *dbenv;
      
@@ -36,7 +36,7 @@ DB * bdb_open_env(char *evn_file, uint32_t evn_flags,
         exit(1);
       }
 
-      ret = dbenv->open(dbenv, "/notary", DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB, 0);
+      ret = dbenv->open(dbenv, env_file, env_flags, 0);
       if(ret) {
         printf("dbenv->open failed: %s \n", db_strerror(ret));
         exit(1);
@@ -61,7 +61,7 @@ void bdb_close(DB *db){
 }
 
 
-void bdb_env_close(DB *db){
+void bdb_close_env(DB *db){
   DB_ENV *env = db->get_env(db);
   db->close(db,0);
   

@@ -1,0 +1,4 @@
+db_env_fname=/notary
+db_fname=ssh.db
+private_key_fname=../keys/private.pem
+exceptions_fname=../probing_blacklist

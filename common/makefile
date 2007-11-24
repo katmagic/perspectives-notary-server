@@ -1,7 +1,7 @@
 
 SSL_DIR=/usr/local/ssl
 CPPFLAGS= -g -O2 -Wall -fno-strict-aliasing -I$(SSL_DIR)/include
-LIBNOTARYCOMMON_OBJS = notary_util.o net_util.o notary_crypto.o bdb_storage.o
+LIBNOTARYCOMMON_OBJS = notary_util.o net_util.o notary_crypto.o bdb_storage.o patricia.o flex_queue.o
 
 libnotarycommon.a: $(LIBNOTARYCOMMON_OBJS)
 	$(AR) rv $@ $(LIBNOTARYCOMMON_OBJS)

@@ -20,7 +20,7 @@ int read_key_file(char *filename, char *buf, int max_len) {
   }
 
   if(!feof(f)) {
-    DPRINTF(DEBUG_ERROR, "Unabled to read full file "
+    DPRINTF(DEBUG_ERROR, "Unable to read full file "
           " with key buffer of size %d \n", max_len);
     exit(1);
   }
@@ -58,14 +58,14 @@ RSA *key_from_buf(char *buf, int len, BOOL is_private) {
 }
 
 RSA* load_private_key(char *filename) {
-  char buf[1024];
-  int len = read_key_file(filename, buf, 1024);
+  char buf[5000];
+  int len = read_key_file(filename, buf, 5000);
   return key_from_buf(buf,len,TRUE);
 }
 
 RSA* load_public_key(char *filename) {
-  char buf[1024];
-  int len = read_key_file(filename, buf, 1024);
+  char buf[5000];
+  int len = read_key_file(filename, buf, 5000);
   return key_from_buf(buf,len, FALSE);
 }
 

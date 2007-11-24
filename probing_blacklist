@@ -1,0 +1,99 @@
+206.124.12.46/32 dw: complained about SSH probes 2007-09-10 09:30:57
+209.120.179.38/32  splash host incident of  02 2007-08-21 15:00:02
+204.137.51.140/32  downey savings incident of  03 2007-08-21 15:00:02
+10.1.1.1/32  Neil Spring <nspring@cs.washington.edu> 2007-08-21 15:00:02
+204.29.139.2/32  aplatform.com, june  03.  less clueless than most.  2007-08-21 15:00:02
+64.19.60.66/32  mdpublications.com; 20030723-04 doesn t own adjacent addrs. 2007-08-21 15:00:02
+64.72.72.128/26  belsito.net runs "sonicwall" that complains automatically. 20040108 2007-08-21 15:00:02
+210.0.84.0/28  nexnet.net.au in telstra, perhaps 210.0.80.0/20, 20040109 2007-08-21 15:00:02
+198.182.247.0/24  tess associates / intelligent software, 20040109 2007-08-21 15:00:02
+63.198.156.142/32  learningtree.com called buggy traceroute a UDP bomb attack. 20040203 2007-08-21 15:00:02
+206.222.70.150/32 endtoend.com/Trader called buggy traceroute a UDP bomb attack. 20040226  2007-09-02 15:54:07
+212.136.137.7/32  sent abuse reports about simple tcp traffic. 20040314 2007-08-21 15:00:02
+63.113.210.0/24  ingdirect called traceroute a port scan. 20040319 2007-08-21 15:00:02
+65.39.204.38/32  automated complaint about traceroute 20040320 2007-08-21 15:00:02
+200.239.192.1/32  an irc server that is unhappy about traceroute packets biohard.pop-rio.com.br 20040326 2007-08-21 15:00:02
+210.114.93.1/32  complained about small, useless udp packets. pl #594, 20040418 2007-08-21 15:00:02
+208.30.84.2/32  mew3.com "possible port scan" from a netgear ids, pl #681 20040428 2007-08-21 15:00:02
+204.137.51.0/24  downey savings incident of  04 #1128 20040609 2007-08-21 15:00:02
+69.57.148.19/32  premierservers.com #1226 20040621 2007-08-21 15:00:02
+64.246.32.50/32  buywebhost.net/mydnsbox.com #1275 20040625   2007-08-21 15:00:02
+64.246.48.164/32  awnameservers.net #1275 20040625   2007-08-21 15:00:02
+66.246.77.20/32  awnameservers.net #1275 20040625    2007-08-21 15:00:02
+69.93.213.235/32  hostarab.net #1349 20040706 2007-08-21 15:00:02
+67.18.3.12/32  infranetwork.net #1614 20040803 2007-08-21 15:00:02
+63.247.93.90/32  serv19.veryspeed.com #1649 20040806 2007-08-21 15:00:02
+69.93.139.106/32  indexsignal.com #1727 20040812 2007-08-21 15:00:02
+69.93.114.218/32  unnamed under theplanet.com #1875 20040830 2007-08-21 15:00:02
+204.137.52.0/24  downey savings again, looks like a dsl pool #2290 20041003 2007-08-21 15:00:02
+164.55.0.0/16  Trevor Torrence, FactSet Research Systems 203-810-1724 #2587 20041020 2007-08-21 15:00:02
+192.234.235.0/24  Trevor Torrence, FactSet Research Systems 203-810-1724 #2587 20041020 2007-08-21 15:00:02
+64.209.89.0/24  Trevor Torrence, FactSet Research Systems 203-810-1724 #2587 20041020 2007-08-21 15:00:02
+212.86.27.194/32  Jarmo Koski, Sampo-Rosenlew Oy, jarmo.koski@sampo-rosenlew.fi #2704 20041027  2007-08-21 15:00:02
+204.137.52.0/24  downey savings, because they own that block too. (no incident for this subnet) 2007-08-21 15:00:02
+203.9.180.66/32  mark.krynen@sytec.co.nz 20050112 #3713 2007-08-21 15:00:02
+217.10.204.1/32  rxtian@ns.6test.edu.cn 20050119 #3818 2007-08-21 15:00:02
+158.101.0.1/32  3com abuse@3com.com 20050315 #4709 2007-08-21 15:00:02
+199.37.180.0/23  fberryman@att.com #5015 20050411 2007-08-21 15:00:02
+143.210.0.0/16  djr@leicester.ac.uk 20050215 #4294 2007-08-21 15:00:02
+194.82.121.178/32  djr@leicester.ac.uk 20050215 #4294 2007-08-21 15:00:02
+192.77.139.2/32  junk@justinhickey.com 20050414 #5140 2007-08-21 15:00:02
+205.234.145.216/32  apf-alert@hostforweb.com 20050422 #5328 2007-08-21 15:00:02
+64.71.97.3/32  unknown #5159 20050415 2007-08-21 15:00:02
+67.159.21.70/32  orgfree.com report@sfrh.net automated message #5279 20050421 2007-08-21 15:00:02
+205.234.132.7/32  root@richmond.servershost.net apf-alert@hostforweb.com #5347 20050423 2007-08-21 15:00:02
+208.184.214.224/27  noky@nextbus.com three traceroute packets. #6697 20050626  2007-08-21 15:00:02
+68.196.127.107/32  peace_uni@yahoo.com "Please stop these ICMP packets coming to my IP address." #6951 20050727 2007-08-21 15:00:02
+207.135.81.82/32  mike@bowns.net "Please do not scan our firewall." #7057 20050805 2007-08-21 15:00:02
+24.187.7.163/32  jvernice@u-g.com "why are you scanning my ports" #7110 20050815 2007-08-21 15:00:02
+193.221.55.4/30  abuse@afaudit.com #7152 20050819 2007-08-21 15:00:02
+130.74.184.0/21  bus.olemiss.edu doesn t like icmp replies. #7656 20050930  2007-08-21 15:00:02
+130.74.64.0/18  bus.olemiss.edu doesn t like icmp replies. #7657 20050930  2007-08-21 15:00:02
+12.76.58.0/24  dial-access.att.net. #7687 20051003 2007-08-21 15:00:02
+69.238.232.38/32  bgeddes@lawrenceequipment doesn t like nyu_d traceroute #7778 20051012 2007-08-21 15:00:02
+204.238.34.206/31  terry l. ridder of strauss.blauedonau.com really doesn t like king. #8338-8351 20051202 2007-08-21 15:00:02
+25.117.9.128/25  kitsap bank doesn t like nyu_d traceroute #8297 20051128 2007-08-21 15:00:02
+142.104.162.0/24  uvic.ca has a honeypot here and isn t quiet about it #8133 20051109  2007-08-21 15:00:02
+195.30.32.0/25  netage.de doesn t like nyu_d traceroute #7975 20051102 2007-08-21 15:00:02
+216.127.94.0/24  Phendra systems #8205 20051116 2007-08-21 15:00:02
+216.60.18.0/24  bank of oklahoma considers pings port scans $kandula$ 2007-08-21 15:00:02
+147.227.0.0/16  some military honcho $kandula$   2007-08-21 15:00:02
+209.227.80.1/32  $kandula$   2007-08-21 15:00:02
+66.242.242.0/24  bristol electric $kandula$ 2007-08-21 15:00:02
+69.18.89.0/24  more bristol electric $kandula$ 2007-08-21 15:00:02
+66.63.9.49/32  some public school $kandula$ 2007-08-21 15:00:02
+192.108.3.0/24  some naval bureau $kandula$ 2007-08-21 15:00:02
+204.222.174.1  random napa dude $kandula$ 2007-08-21 15:00:02
+206.36.0.0/14  military DoD $kandula$ 2007-09-02 15:52:59
+214.0.0.0/8  more military DoD $kandula$ 2007-08-21 15:00:02
+199.208.112.0/21  naval hospital $kandula$ 2007-08-21 15:00:02
+199.208.120.0/22  same naval hospital $kandula$ 2007-08-21 15:00:02
+203.20.87.0/24  overzealous extra_logged operator $kandula$ 2007-08-21 15:00:02
+198.107.240.0/23  portland general electric, got traceroute $kandula$ 2007-08-21 15:00:02
+216.57.96.0/20  nebraska $kandula$ 2007-08-21 15:00:02
+216.142.175.1/32  from morley $dan$ 2007-08-22 06:04:16
+205.244.251.65/32  from morley $dan$ 2007-08-22 06:04:16
+137.99.210.0/24  from morley $dan$ 2007-08-22 06:04:16
+6.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+7.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+11.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+21.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+22.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+26.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+28.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+29.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+30.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+33.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+44.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+55.0.0.0/8  military $dan$ 2007-08-22 06:04:16
+205.0.0.0/11  military $dan$ 2007-08-22 06:04:16
+205.32.0.0/12  military $dan$ 2007-08-22 06:04:16
+205.48.0.0/13  military $dan$ 2007-08-22 06:04:16
+207.14.29.0/24 dw: complained about port scaning 2007-09-12 12:54:07
+207.132.0.0/15 dw: DoD network, discovered during scanning 2007-09-12 18:28:45
+206.208.62.37/32 dw: monitors all logs, noticed ssh connection from us and complained 2007-09-17 09:45:41
+206.208.62.32/27 dw: oitc.com: complained about ssh probes 2007-09-22 07:39:47
+206.208.58.50/32 dw: oitc.com: complained about ssh probes 2007-09-22 07:40:04
+206.208.58.51/32 dw: oitc.com: complained about ssh probes 2007-09-22 07:40:15
+206.208.58.52/32 dw: oitc.com: complained about ssh probes 2007-09-22 07:40:20
+206.208.58.127/32 dw: oitc.com: complained about ssh probes 2007-09-22 07:40:32

@@ -1,9 +1,10 @@
-
+#ifndef _NOTARY_UTIL_H_
+#define _NOTARY_UTIL_H_
 
 #include "common.h"
 
 char *key_type_str(uint8_t type);
-char * buf_2_hexstr(char *buf, int buf_len);
+char *buf_2_hexstr(char *buf, int buf_len);
 int hexstr_2_buf(char * str, char *buf_out, int buf_len); 
 void print_key_info_timespans(ssh_key_info* info);
 void print_ssh_key(ssh_key_info* info);
@@ -19,3 +20,5 @@ void add_observation_to_list(ssh_key_info_list *info_list,
       char *digest, int digest_len, int key_type, int timestamp);
 unsigned int data_from_list(ssh_key_info_list *info_list, 
                     char* buf_out, int max_size);
+
+#endif

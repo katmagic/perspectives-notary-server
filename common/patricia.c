@@ -31,8 +31,9 @@
 #include <netinet/in.h> /* BSD, Linux: for inet_addr */
 #include <arpa/inet.h> /* BSD, Linux, Solaris: for inet_addr */
 
-#include "mysql.h"
 #include "patricia.h"
+#include "debug.h"
+
 
 #define Delete free
 
@@ -1055,69 +1056,27 @@ void add_prefix(patricia_tree_t *tree, char *prefix_str){
 }
 
 
-static MYSQL * init_sql_conn() {
+void load_file_to_trie(patricia_tree_t *tree, char* fname) {
 
-       char *server = "localhost";
-       char *user = "root";
-       char *password = "moosaysthecow";
-       char *database = "ssh";
-       
-       MYSQL *mysql = mysql_init(NULL);
-       
-       /* Connect to database */
-       if (!mysql_real_connect(mysql, server,
-             user, password, database, 0, NULL, 0)) {
-          fprintf(stderr, "%s\n", mysql_error(mysql));
-          exit(0);
-       }
-	return mysql;
-}
+  char buf[1024];
+  FILE *f;
+  assert(fname);
 
-
-
-void load_db_to_trie(patricia_tree_t *tree, char* table_name) {
-
-    MYSQL *mysql;
-    MYSQL_RES *result;
-    MYSQL_ROW row;
-    char buf[64];
-
-   snprintf(buf, 64, "SELECT prefix FROM %s", table_name);
-
-   mysql = init_sql_conn();
+  f = fopen(fname, "r");
+  if(f == NULL) {
+    DPRINTF(DEBUG_ERROR, "Invalid trie file: %s \n", fname);
+    return;
+  }
 
     int count = 0;
-    if(mysql_real_query(mysql, buf,strlen(buf))==0)/*success*/
-    {
-        result = mysql_store_result(mysql);
-        if (result)  // there are rows
-        {
-            while ((row = mysql_fetch_row(result))) 
-            {
-	      // printf("adding exception: %s \n", row[0]);
-    	       add_prefix(tree, row[0]);
-               ++count;
-            }
-            printf( "%ld record(s) found in table %s.  Trie size = %d\n",
-                  (long) mysql_num_rows(result), table_name, count);
-            mysql_free_result(result);
-         }
-         else  // mysql_store_result() returned nothing
-         {
-            if(mysql_field_count(mysql) > 0)
-            // mysql_store_result() should have returned data
-            {
-                printf( "Error, No Records Found : %s\n", mysql_error(mysql));
-            }
-        }
+    while(fgets(buf, 1024, f) != NULL) {
+              char *space = strchr(buf, ' ');
+              *space = 0x0;
+              printf("adding prefix = '%s' \n", buf);
+    	      add_prefix(tree, buf);
+              ++count;
     }
-    else
-    {
-        printf( "Failed to find any records and caused an error: %s\n", 
-		mysql_error(mysql));
-    }
-
-    mysql_close(mysql);
+    printf( "Done loading records. Trie size = %d\n", count);
 
 }
 

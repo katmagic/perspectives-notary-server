@@ -77,10 +77,10 @@ LIBSSH_OBJS=acss.o authfd.o authfile.o bufaux.o bufbn.o buffer.o \
 
 
 
-SSHOBJS= ssh.o readconf.o clientloop.o sshtty.o \
+SSHOBJS= notary_ssh_scanner.o ssh.o readconf.o clientloop.o sshtty.o \
 	sshconnect.o sshconnect1.o sshconnect2.o
 
-COMMONOBJS = ../common/mysql_storage.o  ../common/notary_util.o ../common/patricia.o ../common/bdb_storage.o ../common/notary_crypto.o  ../common/libdb-4.6.a 
+COMMONOBJS = ../common/libnotarycommon.a ../common/libdb-4.6.a 
 SSHDOBJS=sshd.o auth-rhosts.o auth-passwd.o auth-rsa.o auth-rh-rsa.o \
 	sshpty.o sshlogin.o servconf.o serverloop.o \
 	auth.o auth1.o auth2.o auth-options.o session.o \

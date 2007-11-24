@@ -9,6 +9,7 @@ DB * bdb_open_env(char *evn_file, uint32_t evn_flags,
                   char *db_name, uint32_t db_open_flags);
 
 void bdb_close(DB *db);
+void bdb_close_env(DB *db);
 
 unsigned int get_data(DB* db, char* host_and_port, char* buf,
                             int max_size);

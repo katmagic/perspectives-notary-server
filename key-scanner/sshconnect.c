@@ -68,9 +68,12 @@
 #include "version.h"
 #include "pathnames.h"
 
-#include "notary_util.h"
+#include "notary_ssh_scanner.h"
 #include "patricia.h"
 
+// ssh connect makes a read-only access to the 
+// trie that is in each child's address space because
+// of the fork().  
 extern patricia_tree_t *not_valid;
 
 char *client_version_string = NULL;
@@ -924,79 +927,6 @@ fail:
 	return -1;
 }
 
-void record_key(char *dns_name, uint32_t ip_addr, uint16_t port, Key *key){
-
-    int s, len;
-    struct sockaddr_un remote;
-
-    if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-        perror("socket");
-        exit(1);
-    }
-
-    uint8_t *digest;
-    uint32_t digest_len;
-
-    digest = key_fingerprint_raw(key, SSH_FP_MD5,&digest_len);
-    if(digest == NULL) {
-        exit(29); // special exit code
-    }
-  //  key_to_buf(key,&key_buf2,&buf_len2);
-  //  printf("recording key len = %d for (%s) : \n", buf_len2, dns_name);
-  //  key_write(key,stdout);
-  //  printf("\n");
-    //for(int i = 0; i < buf_len2; i++) {
-    //  printf("%d = %d \n", i, key_buf2[i]);
-    //}
-  //  printf("\n");
-
-    remote.sun_family = AF_UNIX;
-    strcpy(remote.sun_path, "ssh_probe");
-    len = strlen(remote.sun_path) + sizeof(remote.sun_family);
-    if (connect(s, (struct sockaddr *)&remote, len) == -1) {
-        perror("connect");
-        exit(1);
-    }
-
-    int name_len = strlen(dns_name);
-   /* char* key_buf;
-    int key_len = 0;
-    key_to_buf(key, &key_buf, &key_len);
-    if(key_buf == NULL){ 
-        printf("Failed to convert key to data buffer \n");
-        exit(10);
-    }
-    */
-
-    int version_len = strlen(server_version_string);
-
-    int total_len = name_len +  digest_len 
-          + version_len + 12; // ip-addr, port, key_type, null-byte X 2 = 12
-    char * buf = (char*)malloc(total_len);
-    char *ptr = buf;
-    memcpy(ptr, dns_name, name_len + 1);
-    ptr += name_len + 1;
-    memcpy(ptr, server_version_string, version_len + 1);
-    ptr += version_len + 1;
-    memcpy(ptr, &ip_addr, 4);
-    ptr += 4;
-    memcpy(ptr, &port, 2);
-    ptr += 2;
-    memcpy(ptr, &key->type, 4);
-    ptr += 4;
-    memcpy(ptr, digest, digest_len);
-
-    int n = send(s, buf,total_len , 0);
-    if(n == -1) {
-       perror("send");
-       exit(1);
-    }
-
-    free(digest);
-    free(buf);
-    close(s);
-}
-
 
 /* returns 0 if key verifies or -1 if key does NOT verify */
 int
@@ -1011,7 +941,7 @@ verify_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
         uint32_t ip_addr = *(int *)&addr->sin_addr;
         uint16_t port = ntohs(addr->sin_port);
 
-        record_key(host, ip_addr, port, host_key);
+        record_key(host, ip_addr, port, host_key, server_version_string);
         exit(8);
 
 	if (options.verify_host_key_dns &&

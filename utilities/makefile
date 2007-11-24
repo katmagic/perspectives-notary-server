@@ -5,7 +5,10 @@ LIBS=  ../notary-client/libnotaryclient.a ../common/libnotarycommon.a -lpthread 
 LDFLAGS=-L. -L$(BDB_DIR)/lib -L$(SSL_DIR)/lib -L../common/
 CFLAGS=-g -O2 -I. -Wall -Wpointer-arith -Wuninitialized -Wsign-compare -std=gnu99 -I../common -I../notary-client -I$(SSL_DIR)/include -I$(BDB_DIR)/include
 
-all: test_policy full_client simple_client load_test_client db_search signature_util db_speed_test update_timespans_test
+all: db_multiaccess_test test_policy full_client simple_client load_test_client db_search signature_util db_speed_test update_timespans_test
+
+db_multiaccess_test: db_multiaccess_test.o
+	gcc $(LDFLAGS) $? $(LIBS) -o $@
 
 test_policy: test_policy.o
 	gcc $(LDFLAGS) $? $(LIBS) -o $@

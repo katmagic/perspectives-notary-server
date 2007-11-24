@@ -74,6 +74,10 @@ typedef struct {
 #define FIND_TIMESPANS(info) \
       ((int*)(((char*)(info + 1)) + ntohs(info->key_len_bytes)))
 
+// TODO: this struct is useless, as there should simply be a 
+// list_head elem in the ssh_key_info struct.  However, i currently
+// don't feel like changing all the code that uses this struct, so it
+// stays for now.  
 typedef struct {
 	struct list_head list;
 	ssh_key_info* info;	
