@@ -6,8 +6,12 @@ so using them elsewhere without modifying the code will likely break.
 
 It can build the following targets:
 
+full_client:  a simple client that uses the SSHNotary interface to
+query servers specified in a client config file.  
+
 simple_client :  a very simple notary client that queries a notary 
-server for a single observation
+server for a single observation, using lower level notary functionality
+that avoids the SSHNotary interface. 
 
 load_test_client : takes files containing service-ids and does a bulk
 query to a single notary server for all service-ids, measuring how 
