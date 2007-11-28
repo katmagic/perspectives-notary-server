@@ -97,10 +97,16 @@ void fetch_notary_observations(SSHNotary *notary,
         int recv_len = recv_single_reply(sock, recv_buf, MAX_PACKET_LEN, &recv_addr);
         uint32_t server_ip = *(uint32_t*)&(recv_addr.sin_addr.s_addr);
         uint16_t server_port = ntohs(recv_addr.sin_port);
-        server = find_server(notary, server_ip, server_port); 
-        server->received_reply = 1; // got something, even if its invalid
-        server->notary_results = parse_message(recv_buf, recv_len, server->public_key);
-        ++reply_count;
+        server = find_server(notary, server_ip, server_port);
+        if(server == NULL) {
+          DPRINTF(DEBUG_ERROR, "Could not find server state for reply message\n");  
+        }else {
+          DPRINTF(DEBUG_INFO, "Parsing message from: %s : %d \n", 
+              ip_2_str(server->ip_addr), server->port);
+          server->received_reply = 1; // got something, even if its invalid
+          server->notary_results = parse_message(recv_buf, recv_len, server->public_key);
+          ++reply_count;
+        }
     }else {
         if(retry_count == max_retries) {
             DPRINTF(DEBUG_INFO, "Reached max notary connect attempts \n");

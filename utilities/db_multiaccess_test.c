@@ -37,7 +37,7 @@ void db_test_reader() {
     sleep(1);
   }
 
-  bdb_env_close(db);
+  bdb_close_env(db);
 }
 
 void db_test_writer() {
@@ -76,7 +76,7 @@ void db_test_writer() {
   }
 
   printf("done writing \n");
-  bdb_env_close(db);
+  bdb_close_env(db);
 }
 
 unsigned int notary_debug = DEBUG_ERROR;

@@ -9,5 +9,5 @@
 port=2222
 ip_addr=0.0.0.0
 db_env_fname=/notary
-db_fname=ssh.db
+db_fname=small.db
 

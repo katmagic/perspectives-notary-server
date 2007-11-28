@@ -48,7 +48,7 @@ void loop_over(DB *db, char *regex, int limit){
             printf("Host: '%s' \n", (char*)key.data);
             ssh_key_info_list *list = list_from_data(data.data, data.size,
                                                       SIGNATURE_LEN);
-            print_key_info_list(list);
+            print_key_info_list(stdout, list);
             printf("\n");
             free_key_info_list(list);
             ++matches;

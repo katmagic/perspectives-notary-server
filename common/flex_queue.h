@@ -9,9 +9,9 @@ typedef struct {
 } flex_queue;
 
 flex_queue *queue_init(int start_count, int elem_size);
-void queue_pushback(flex_queue *q, char *data_in);
+void queue_pushback(flex_queue *q, void *data_in);
 int queue_size(flex_queue *q);
-void queue_popfront(flex_queue *q, char *data_out);
+void queue_popfront(flex_queue *q, void *data_out);
 void queue_free(flex_queue *q);
 
 

@@ -82,7 +82,7 @@ SSHNotary* init_ssh_notary(){
 // this function should be called when the notary is free,
 // or when a new host is being checked
 void free_key_info(SSHNotary* notary) {
-
+        DPRINTF(DEBUG_INFO, "Freeing key_info data for all servers\n");
 	server_list *server;
 	struct list_head *pos;
 	list_for_each(pos,&notary->notary_servers.list){
@@ -93,6 +93,7 @@ void free_key_info(SSHNotary* notary) {
 }
  
 void free_ssh_notary(SSHNotary* notary){
+
 	free_key_info(notary); // call before freeing server info
 
 	server_list *server;
@@ -109,7 +110,6 @@ void free_ssh_notary(SSHNotary* notary){
 // expects the port in host byte order, the ip address in network byte order
 // (i.e., as stored in the server struct) 
 server_list * find_server(SSHNotary* notary, uint32_t server_ip, uint16_t server_port){
-	free_key_info(notary); // call before freeing server info
 
 	server_list *server;
 	struct list_head *pos, *q;
@@ -131,9 +131,9 @@ void print_notary_reply(SSHNotary *notary) {
 		server = list_entry(outer_pos, server_list, list);
 
 		printf("***********  Probes from server %s ********** \n", 
-			inet_ntoa(*(struct in_addr*)&server->ip_addr));
+			ip_2_str(server->ip_addr));
 		
-		print_key_info_list(server->notary_results);
+		print_key_info_list(stdout, server->notary_results);
 	}
 }
 

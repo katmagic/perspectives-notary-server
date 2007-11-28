@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
       printf("Failed to parse message and create list of keys \n");
       exit(1);
    }
-   print_key_info_list(list);
+   print_key_info_list(stdout, list);
    printf("\n");
    free_key_info_list(list);
 

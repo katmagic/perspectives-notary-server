@@ -14,7 +14,7 @@ flex_queue *queue_init(int start_count, int elem_size) {
   return q;
 }
 
-void queue_pushback(flex_queue *q, char *data_in) {
+void queue_pushback(flex_queue *q, void *data_in) {
   char *array_back = q->data + (q->max_elems * q->elem_size);
   if(q->last_elem == array_back) {
     q->max_elems *= 2;
@@ -37,7 +37,7 @@ int queue_size(flex_queue *q) {
 }
 
 // should only be called if queue size is great than zero 
-void queue_popfront(flex_queue *q, char *data_out) {
+void queue_popfront(flex_queue *q, void *data_out) {
   
   if(queue_size(q) <= 0) { 
     printf("error: queue size is %d in 'get_front' \n", queue_size(q));

@@ -59,6 +59,7 @@ data_from_list(ssh_key_info_list *info_list,
 ssh_key_info_list *list_from_data(char *data_ptr, int data_len,
                                             int sig_len) {
 
+
         ssh_key_info_list *head = 
           (ssh_key_info_list*)malloc(sizeof(ssh_key_info_list));
         INIT_LIST_HEAD(&(head->list));
@@ -69,12 +70,17 @@ ssh_key_info_list *list_from_data(char *data_ptr, int data_len,
         int so_far = 0;
         while(so_far < total_len) {
               int key_info_size = KEY_INFO_SIZE(ptr);
+              if(key_info_size <= 0) {
+                  DPRINTF(DEBUG_ERROR, "invalid key_info size = %d\n",
+                      key_info_size);
+                  return NULL;
+              }
               ssh_key_info *info = (ssh_key_info*) 
                                         malloc(key_info_size);
               memcpy(info, ptr, key_info_size);
-
               ssh_key_info_list* tmp = (ssh_key_info_list*)
                                         malloc(sizeof(ssh_key_info_list));
+              DPRINTF(DEBUG_INFO, "Adding key_info of size = %d bytes to list\n", key_info_size);
               tmp->info = info;
               __list_add(&(tmp->list),&(head->list), head->list.next);
               
@@ -150,7 +156,7 @@ void add_observation_to_list(ssh_key_info_list *info_list,
             }
           
           } 
-          printf("matching key/timespan not found \n");
+          DPRINTF(DEBUG_ERROR, "matching key/timespan not found \n");
           exit(1);
         }else if (key_match_index != -1) {
               // need to add another timespan to an 
@@ -179,7 +185,7 @@ void add_observation_to_list(ssh_key_info_list *info_list,
                 cur->info = new_info;
                 return;
             }
-            printf("matching key not found \n");
+            DPRINTF(DEBUG_ERROR, "matching key not found \n");
             exit(1);
         }else {
             // no matching key found.  we need to add a 
@@ -206,7 +212,7 @@ void add_observation_to_list(ssh_key_info_list *info_list,
 }
 
 
-void print_key_info_timespans(ssh_key_info* info) {
+void print_key_info_timespans(FILE *f, ssh_key_info* info) {
 
   if(info == NULL) 
     return;
@@ -219,8 +225,8 @@ void print_key_info_timespans(ssh_key_info* info) {
   for(i = 0; i < num_spans; i++){
     int t_start = ntohl(timespans[0]);
     int t_end = ntohl(timespans[1]);
-    printf("start: \t %s", ctime((const time_t*)&t_start));
-    printf("end: \t %s\n", ctime((const time_t*)&t_end));
+    fprintf(f, "start:\t %d - %s", t_start, ctime((const time_t*)&t_start));
+    fprintf(f, "end:\t %d - %s", t_end, ctime((const time_t*)&t_end));
     timespans += 2;
   }
 
@@ -228,22 +234,28 @@ void print_key_info_timespans(ssh_key_info* info) {
 
 
 
-void print_key_info_list(ssh_key_info_list* info_list) {
-    if(info_list == NULL) 
-       return;
+void print_key_info_list(FILE *f, ssh_key_info_list* info_list) {
 
+        if(info_list == NULL) 
+            return;
         struct list_head *pos,*tmp;
         ssh_key_info_list* cur;
 
         list_for_each_safe(pos, tmp, &info_list->list) {
           cur = list_entry(pos, ssh_key_info_list, list);
+
+          if(cur->info == NULL) {
+              printf("cur->info should never be null \n");
+              exit(1);
+          }
           char *key_buf = (char*)(cur->info + 1);
           int len = ntohs(cur->info->key_len_bytes);
           char *str = buf_2_hexstr(key_buf,len);
-          printf("%s key: %s \n", key_type_str(cur->info->key_type),
+          fprintf(f, "%s key: %s \n", keytype_2_str(cur->info->key_type),
                                   str);
           free(str);
-          print_key_info_timespans(cur->info);
+          print_key_info_timespans(f, cur->info);
+          fprintf(f, "\n");
         } 
 }
 
@@ -290,8 +302,12 @@ int hexstr_2_buf(char * str, char *buf_out, int buf_len) {
     char *ptr = str;
     int i = 0;
     while(i < buf_len) {
+      char *before = ptr; 
       long int v = strtol(ptr, &ptr, 16);
-      if(v == 0) break;
+      if(ptr == before) {
+         assert(v == 0);
+         break;
+      }
 
       ++ptr;
       buf_out[i] = (char) v;
@@ -300,9 +316,17 @@ int hexstr_2_buf(char * str, char *buf_out, int buf_len) {
     return i;
 }
 
-char *key_type_str(uint8_t type) {
+char *keytype_2_str(uint8_t type) {
   if(type == SSH_RSA1) return "ssh-rsa1";
   if(type == SSH_RSA) return "ssh-rsa";
   if(type == SSH_DSA) return "ssh-dsa";
   return "unknown key-type";
 }
+
+uint8_t str_2_keytype(char *str) {
+  if(strcmp(str,"ssh-rsa1") == 0) return SSH_RSA1;
+  if(strcmp(str,"ssh-rsa") == 0) return SSH_RSA;
+  if(strcmp(str,"ssh-dsa") == 0) return SSH_DSA;
+  return 255;
+}
+

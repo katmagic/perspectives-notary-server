@@ -27,9 +27,6 @@ typedef struct {
         int num_servers;
 } SSHNotary;
 
-void probe_for_key(SSHNotary *notary, int time_out_msecs,
-		char *name, uint16_t service_type, 
-		uint16_t service_port);
 
 SSHNotary* init_ssh_notary(); 
 
