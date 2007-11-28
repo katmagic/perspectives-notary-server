@@ -32,7 +32,7 @@ to help you zero on the portions of the code you actually need to change.
 \item \textbf{notary-client:} Provides a library to connect to multiple 
 notary servers, verify their replies, and implement simple quorum duration
 policies.   
-\item \textbf{notary-server:} A simple server deamon that responds to client 
+\item \textbf{notary-server:} A simple server daemon that responds to client 
 requests based on the contents of its local database.  
 \item \textbf{key-scanner:}  A program that adds entries to the database 
 of the notary server by probing services at regular intervals.  This 
@@ -43,21 +43,26 @@ Currently, we only have an SSH scanner, but an SSL scanner is in the works.
 \noindent 
 Additionally, there are a few other sub-directories, which we explain here:
 \begin{enumerate}
-\item \textbf{common:}  Contains headers and code likely to be used by multiple
+\item \textbf{common:}  Contains headers and code likely to be used 
+by multiple
 of the notary programs.  This includes packet parsing and packet creation 
 routines, cryptographic functions, and database functionality.  
 \item \textbf{utilities:} Contains simple programs use to test, demonstrate,
 or benchmark functionality related to any of the notary programs.  These 
 programs can be a good place to start learning about the code because they 
-often exercise core functionalty in very simple ways. 
+often exercise core functionality in very simple ways. 
+\item \textbf{config:} Contains example configuration files for clients, 
+servers, and scanners.  It also contains a small database you can use to
+run the server (small.db) and a text file (small.txt) describing the 
+contents of the database.  
 \item \textbf{openssh-4.4p1:}  This is the entire openssh code base, slightly
 modified to use the notary-client libraries to authenticate un-cached keys.  
 \item \textbf{port-scanner:} This is a slightly modified version of nmap to 
 do extremely parallel TCP layer port scanning to identify if a host is likely
 running a particular service on its standard port.  
 \item \textbf{keys:} Contains example keys used for development and testing 
-and instructions on how to generate keys for actual use.  Many utility programs
-are hardcoded to access these keys.   
+and instructions on how to generate keys for actual use.  Many utility 
+programs are hardcoded to access these keys.   
 \end{enumerate}
 
 \section{Building the Code}
@@ -65,7 +70,7 @@ are hardcoded to access these keys.
 The code should build with gcc and make on any Unix system, though it has
 been tested only on Linux and BSD. \\  
 
-\noindent\textbf{Build Dependancies:} There are two primary dependancies:
+\noindent\textbf{Build Dependencies:} There are two primary dependencies:
 OpenSSL and Berkeley DB, both of which can be somewhat troublesome.   
 For Berkeley DB, you need 4.6, which is the latest version.  You can 
 download it at http://www.oracle.com/technology/software/products/berkeley-db/db/index.html and build it yourself or install the \emph{development} package
@@ -80,7 +85,7 @@ install (usually /usr/local/ssl ) using both -I and -L . \\
 makefile, so you have to invoke the makefiles in each directory manually. 
 You need to build the `common' directory first, as all other code
 links against it.  Makefiles in 'notary-client', 'notary-server' and 'utilities'
-can then be invoked independantly.  
+can then be invoked independently.  
 
 \section {Common Code}
 
@@ -101,7 +106,7 @@ important \#define values and macros. \\
 bdb\_storage.c & Wrappers to simplify accessing and modifying observed key
 data within a Berkeley DB. \\  
 
-debug.h & Definds the DPRINTF macro used throughout all code.  Every program
+debug.h & Defines the DPRINTF macro used throughout all code.  Every program
 must include a global 'notary\_debug' variable set to the desired debug level.
 See file for details.  \\
 
@@ -144,9 +149,9 @@ There are only three files in this directory:\\
 notary\_local.c & Implements the main SSHNotary interface used by clients.
 This includes parsing configuration files describing notary servers, 
 generating a request packet and verifying and parsing the reply.  All
-functionality in this file is independant of the actual socket layer 
+functionality in this file is independent of the actual socket layer 
 used communicate with the server. (We should probably also remove all 
-file I/O to make it completely platform independant.) \\
+file I/O to make it completely platform independent.) \\
 
 contact\_notary.c &  Non-blocking posix sockets to contact notary servers and
 receive replies using UDP.  Handles simple retransmission. \\
@@ -161,7 +166,7 @@ An example of how to use the interfaces provided by this client code can be
 found in `utilities/full\_client.c'.  While the many interface names refer to
 `ssh', the interface will remain essentially the same for `ssl'.  
 
-The file `notary-client/notary\_list.txt' 
+The file `config/client\_config.txt' 
 provides an example of the file format required
 to inform the SSHNotary interface about notary server addresses and the
 associated public keys.  This file simply uses the public key in the `keys'
@@ -175,15 +180,81 @@ to understand enough about the server in order to build and configure it
 correctly for testing.  Typing `make' will build the executable 
 `notary-server/notary\_server'.  It takes all configuration parameters from
 a single file of name-value pairs.  We provide an example of such a file in
-`notary-server/config.txt'.  It allows you to specify the IP address and port
+`config/server\_config.txt'.  It allows you to specify the IP address and port
 for the server, as well as two Berkeley DB parameters.  The first database
 parameter indicates the ``DB environment directory filename'', 
 which is a directory
 that will contain the database as well as metadata related to the database
-(e.g., logs and locking info).  The second is the DB filename itself, which
-is currently hardcoded to ``ssh.db'' for development.  If you want to run a 
+(e.g., logs and locking info).  The second is the DB filename itself.
+If you want to run a 
 server without a scanner (the easiest approach if you're developing a client)
-contact Dan and he can give you a static server database file that will let
-you run one or more test servers.  
+you can copy the file `config/small.db' to some directory that will serve
+as the database environment directory (the current server config sets this
+directory to be `/notary' by default) .  
+
+\noindent\textbf{TODO:} Describe outline of the server code.   
+
+\section{Utilities}
+
+The `utilities' sub-directory contains the source for many (often) simple
+binaries that demonstrate, test, or modify notary behavior.  We will
+briefly describe those most likely to be of interest to developers.
+All example shell commands below are executed from within the `utilities'
+directory.  
+
+\subsection{full\_client}
+
+This simple program almost exactly mirrors the API calls that a real-world
+client application would use to load a notary configuration from file, 
+contact the notary servers, and interpret the results.  As you can see, 
+doing so is pretty simple.  However, this client does not use the 
+notary replies to invoke a ``key acceptance policy'', since it has no
+real key to test.  Still, it should give you a very good idea of what
+your client will need to do in order to use a notaries. Consider if someone
+wanted to find all keys observed for the host gs5025.sp.cs.cmu.edu on port
+22 ?\\ 
+
+\noindent\textbf{Example Usage:} \\ 
+\texttt{./full\_client ../config/client\_config.txt gs5025.sp.cs.cmu.edu:22} \\
+
+\noindent Note: This example assumes that you have a server running and
+have modified the client configuration to point to this server.  
+
+\subsection{db2file and file2db}
+
+Database files used with Berkeley DB (e.g., `config/small.db') are binary
+file and thus are unreadable and unmodifiable from the command-line.  
+These two utilities convert between a text representation of a notary's
+database and the binary Berkeley DB format.  The following command 
+prints an entire database to a text file: \\
+
+\noindent\textbf{Example Usage:}  \\
+\texttt{./db2file ../config/small.db db\_dump.txt} \\
+
+Similarly, if you modified db\_dump.txt to change some of the database
+contents, and wanted to change store those changes back to a new database
+file, you could do the following: \\
+
+\noindent\textbf{Example Usage:}  \\
+\texttt{./file2db db\_dump.txt modified.db} \\
+
+A couple of important things to note.  First, when parsing from text to 
+to the database format, file2db only looks at the integer representation
+of timespans (i.e., it ignores the printed dates).  As a result, changing
+the date text will not change the timespan.  You need to change the 
+integer value itself.  If you want the contents of a database created by
+file2db to contain valid signatures, you must provide a third parameter 
+that indicates a valid private key (e.g., `../keys/private.pem').  If
+no key is provided, the signature contents are simple garbage.
+Also, the data format is very particular, so be 
+careful to replicate it exactly.  Data about a single key (i.e., the key
+and all of its timespans) is terminated by a blank line.  Information 
+about all keys from a single host is terminated using the a line that
+contains only the text ``End Host''. 
+
+Note that these two utilities combine to provide a simple tool for 
+replicating a single database on multiple servers that have different 
+public/private keys.  This can be useful for testing more complex 
+scenarios.
 
 \end{document}

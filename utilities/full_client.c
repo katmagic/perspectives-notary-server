@@ -33,6 +33,13 @@ int main(int argc, char *argv[])
    fetch_notary_observations(notary, argv[2], 
             TIMEOUT, NUM_RETRIES);
    print_notary_reply(notary);
+
+   // NOTE: a really client would likely also take the 
+   // key received by the application and pass it to a
+   // ``policy'' function like check_quorum_duration()
+   // in notary-client/client_policy.c to decide whether
+   // to accept or reject that key based on the observations
+   
    free_ssh_notary(notary);
    return 0;
 }
