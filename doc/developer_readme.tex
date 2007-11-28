@@ -1,0 +1,189 @@
+\documentclass[pdftex,singlecolumn,11pt,letterpaper]{article}
+\usepackage{xspace}
+
+\newcommand{\name}{Perspectives\xspace}
+
+\title{ \name Developer Documentation }
+\author{Dan Wendlandt \\ dwendlan@cs.cmu.edu }
+
+
+\begin{document}
+
+\maketitle 
+
+
+The goal of this document is to give you an overview of the \name 
+source code and hopefully get you started along the path of making changes to
+it.  We assume you have already carefully read the \name paper and 
+understand the conceptual design on the system.  Additionally, we place a 
+particular emphasis on making client-side changes, since adding a new 
+policy or adding \name to a new piece of client software is the most
+likely cause of anyone needing to become familiar with the \name 
+source code.  
+
+\section{Overview of Code Layout}
+
+There are three main programs withing the the \name source code, each of 
+which corresponds to a sub-directory within the source.  Prior to 
+describing modules of the code in depth, we describe the overall layout 
+to help you zero on the portions of the code you actually need to change. 
+
+\begin{enumerate}
+\item \textbf{notary-client:} Provides a library to connect to multiple 
+notary servers, verify their replies, and implement simple quorum duration
+policies.   
+\item \textbf{notary-server:} A simple server deamon that responds to client 
+requests based on the contents of its local database.  
+\item \textbf{key-scanner:}  A program that adds entries to the database 
+of the notary server by probing services at regular intervals.  This 
+program should be run on the same machine at the notary server code.  
+Currently, we only have an SSH scanner, but an SSL scanner is in the works.   
+\end{enumerate} 
+
+\noindent 
+Additionally, there are a few other sub-directories, which we explain here:
+\begin{enumerate}
+\item \textbf{common:}  Contains headers and code likely to be used by multiple
+of the notary programs.  This includes packet parsing and packet creation 
+routines, cryptographic functions, and database functionality.  
+\item \textbf{utilities:} Contains simple programs use to test, demonstrate,
+or benchmark functionality related to any of the notary programs.  These 
+programs can be a good place to start learning about the code because they 
+often exercise core functionalty in very simple ways. 
+\item \textbf{openssh-4.4p1:}  This is the entire openssh code base, slightly
+modified to use the notary-client libraries to authenticate un-cached keys.  
+\item \textbf{port-scanner:} This is a slightly modified version of nmap to 
+do extremely parallel TCP layer port scanning to identify if a host is likely
+running a particular service on its standard port.  
+\item \textbf{keys:} Contains example keys used for development and testing 
+and instructions on how to generate keys for actual use.  Many utility programs
+are hardcoded to access these keys.   
+\end{enumerate}
+
+\section{Building the Code}
+
+The code should build with gcc and make on any Unix system, though it has
+been tested only on Linux and BSD. \\  
+
+\noindent\textbf{Build Dependancies:} There are two primary dependancies:
+OpenSSL and Berkeley DB, both of which can be somewhat troublesome.   
+For Berkeley DB, you need 4.6, which is the latest version.  You can 
+download it at http://www.oracle.com/technology/software/products/berkeley-db/db/index.html and build it yourself or install the \emph{development} package
+via a package manager like apt-get.  Any recent SSL version will work, and
+you can download it at http://www.openssl.org/source/ or just install 
+libssl-dev from a package manager.  However, a build
+can fail if it uses header files and libraries with conflicting version 
+numbers.  To fix this, specify the exact location location of your SSL 
+install (usually /usr/local/ssl ) using both -I and -L . \\ 
+
+\noindent\textbf{Makefiles and Build Order:}  Currently, there is no master
+makefile, so you have to invoke the makefiles in each directory manually. 
+You need to build the `common' directory first, as all other code
+links against it.  Makefiles in 'notary-client', 'notary-server' and 'utilities'
+can then be invoked independantly.  
+
+\section {Common Code}
+
+This `common' directory contains library functionality used by multiple 
+binaries within the notary code-base.  The following table describes 
+a bit about each file.  \\ 
+
+\begin{tabular*}{1.1\textwidth}{ @{\extracolsep{\fill}} | p{3cm} | p{10cm} | }
+\hline 
+\textbf{File Name}  & \textbf{Purpose} \\
+\hline 
+common.h & Main header file for all notary code.  Contains the struct 
+defining the notary packet header (\texttt{notary\_header}) and also the 
+\texttt{ssh\_key\_info\_list} struct, which represents a list of observed
+keys (used by both notary server and client).  Also includes many 
+important \#define values and macros. \\
+
+bdb\_storage.c & Wrappers to simplify accessing and modifying observed key
+data within a Berkeley DB. \\  
+
+debug.h & Definds the DPRINTF macro used throughout all code.  Every program
+must include a global 'notary\_debug' variable set to the desired debug level.
+See file for details.  \\
+
+notary\_util.c & Contains utility functions to covert between packets and 
+\texttt{ssh\_key\_info\_lists} as well as code to print notary related data. \\
+
+notary\_crypto.c & OpenSSL wrappers to load public/private
+keys from buffers/files and sign or verify signatures.  \\
+
+net\_util.c & Helper functions to parse/print IP addresses and perform DNS 
+lookups.  \\
+
+patricia.c & A Patricia Trie for prefix look-ups, used to blacklist IP ranges
+from scanning.  \\
+
+list.h & A linked-list based on the linux kernal's data structure.  \\
+
+flex\_queue & A vector that supports only simple queue operations. \\ 
+\hline
+\end{tabular*}\\
+
+Invoking `make' builds the libnotarycommon.a archive, which is used when 
+linking to create notary binaries in other directories.  
+
+\section{Notary Client Code}
+
+Code within the `notary-client' directory does not build a binary, rather
+it creates a library to link against when adding \name functionality to 
+a third-party client application (e.g., the openssh client, or the Firefox
+browser).  When building these applications, you will need to link against
+the libnotaryclient.a file created within this directory, as well as the 
+libnotarycommon.a file created in `common'.  
+
+There are only three files in this directory:\\
+
+\begin{tabular*}{1.1\textwidth}{ @{\extracolsep{\fill}} | p{3cm} | p{10cm} | }
+\hline 
+\textbf{File Name}  & \textbf{Purpose} \\
+\hline 
+notary\_local.c & Implements the main SSHNotary interface used by clients.
+This includes parsing configuration files describing notary servers, 
+generating a request packet and verifying and parsing the reply.  All
+functionality in this file is independant of the actual socket layer 
+used communicate with the server. (We should probably also remove all 
+file I/O to make it completely platform independant.) \\
+
+contact\_notary.c &  Non-blocking posix sockets to contact notary servers and
+receive replies using UDP.  Handles simple retransmission. \\
+
+client\_policy & Implements client policies based on the replies from multiple
+servers.  Currently, this is just a simple quorum duration policy.  \\
+   
+\hline
+\end{tabular*} \\
+
+An example of how to use the interfaces provided by this client code can be
+found in `utilities/full\_client.c'.  While the many interface names refer to
+`ssh', the interface will remain essentially the same for `ssl'.  
+
+The file `notary-client/notary\_list.txt' 
+provides an example of the file format required
+to inform the SSHNotary interface about notary server addresses and the
+associated public keys.  This file simply uses the public key in the `keys'
+directory as the public key for all notary servers, which is ok for 
+development purposes.  
+
+\section{Notary Server}
+
+Even if you are planning only on creating a \name client, you will still want
+to understand enough about the server in order to build and configure it 
+correctly for testing.  Typing `make' will build the executable 
+`notary-server/notary\_server'.  It takes all configuration parameters from
+a single file of name-value pairs.  We provide an example of such a file in
+`notary-server/config.txt'.  It allows you to specify the IP address and port
+for the server, as well as two Berkeley DB parameters.  The first database
+parameter indicates the ``DB environment directory filename'', 
+which is a directory
+that will contain the database as well as metadata related to the database
+(e.g., logs and locking info).  The second is the DB filename itself, which
+is currently hardcoded to ``ssh.db'' for development.  If you want to run a 
+server without a scanner (the easiest approach if you're developing a client)
+contact Dan and he can give you a static server database file that will let
+you run one or more test servers.  
+
+\end{document}
