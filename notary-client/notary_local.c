@@ -124,7 +124,7 @@ server_list * find_server(SSHNotary* notary, uint32_t server_ip, uint16_t server
 
 
 // print all information received from probe servers
-void print_notary_reply(SSHNotary *notary) {
+void print_notary_reply(FILE * f, SSHNotary *notary) {
 	server_list *server;
 	struct list_head *outer_pos;
 	list_for_each(outer_pos,&notary->notary_servers.list){
@@ -133,7 +133,7 @@ void print_notary_reply(SSHNotary *notary) {
 		printf("***********  Probes from server %s ********** \n", 
 			ip_2_str(server->ip_addr));
 		
-		print_key_info_list(stdout, server->notary_results);
+		print_key_info_list(f, server->notary_results);
 	}
 }
 
@@ -211,58 +211,37 @@ void print_probe_info2(SSHNotary *notary) {
 }
 */
 
-// loads a file where probe servers are listed one per line:
-// <server ip> <server port> 
-// (no per-probe server public keys yet) 
+// similar to fgets, but for a buffer instead of a file 
+char * get_line(char *input_buf, char *output_buf, int buf_size) {
+    char *end = input_buf; 
+    BOOL is_done = FALSE;           
+    char *limit = input_buf + buf_size - 2; // need space for \0
 
-/*
- * We don't use this anymore, as we now include public keys in the 
- * same file
- *
-void load_notary_servers(SSHNotary *notary, char* fname){
-	char buf[1024];
-	FILE *f;
-	assert(fname);
+    while(*end != '\n' && end != limit) {
+       if(*(end++) == EOF){
+         printf("reached EOF! \n"); 
+         is_done = TRUE;        
+         break;
+      }
+    }
+    int len = (end - input_buf) + 1;
+    memcpy(output_buf, input_buf, len);
+    output_buf[len] = 0; // null terminate at one past
 
-	f = fopen(fname, "r");
-	if(f == NULL) {
-		fprintf(stderr,
-		"Notary Error: Invalid probe-server file %s \n", fname);
-		return;
-	}
-
-	while(fgets(buf, 1023,f) != NULL) {
-		if(*buf == '\n') continue;
-		if(*buf == '#') continue;
-		int size = strlen(buf);
-		buf[size - 1] = 0x0; // replace '\n' with NULL
-		char *delim = strchr(buf,' ');
-		if(delim == NULL) {
-			DPRINTF(DEBUG_ERROR, 
-				"Ignoring malformed line: %s \n", buf);
-			continue;
-		}
-		*delim = 0x0;
-	 
-		uint32_t ip_addr;
-		inet_aton(buf, (struct in_addr *)&ip_addr);
-		int port = (uint16_t) atoi(delim + 1);
-		add_notary_server(notary, ip_addr, port);
-	
-	}
+    return is_done ? NULL : (end + 1); 
 }
-*/
-
 
 #define PEM_PUB_START "-----BEGIN PUBLIC KEY-----\n"
 #define PEM_PUB_END "-----END PUBLIC KEY-----\n"
 
-int read_single_pubkey(FILE *f, char *buf, int max_len) {
+char *read_single_pubkey(char *input_buf, char *output_buf, int max_len, int *bytes_read) {
 
         int offset = 0;
         char line[1024];
         BOOL key_started = FALSE; 
-	while(fgets(line, 1024, f) != NULL) {
+  
+        char *ptr = input_buf; 
+	while( (ptr = get_line(ptr, line, 1024)) != NULL) {
             if(strcmp(PEM_PUB_START, line) == 0)
               key_started = TRUE;
 
@@ -275,30 +254,52 @@ int read_single_pubkey(FILE *f, char *buf, int max_len) {
               exit(1);
             }
             // don't copy null terminator
-            memcpy(buf + offset, line, line_len);
+            memcpy(output_buf + offset, line, line_len);
             offset += line_len;
 
-            if(strcmp(PEM_PUB_END, line) == 0)
-              return offset;
+            if(strcmp(PEM_PUB_END, line) == 0) {
+              *bytes_read = offset; 
+              return ptr;
+            }
         }
         DPRINTF(DEBUG_ERROR, "Error: reached EOF before finished reading key \n");
         exit(1);
-        return -1; // shutup compiler
+        return NULL; // shutup compiler
 }
 
-void load_notary_servers(SSHNotary *notary, char* fname){
-	char buf[1024];
-	FILE *f;
+#define MAX_FILE_SIZE 100000 
+#define MAX_LINE_LENGTH 1024
+
+void load_notary_server_file(SSHNotary *notary, char *fname) {
+	char buf[MAX_FILE_SIZE];
 	assert(fname);
 
-	f = fopen(fname, "r");
+	FILE *f = fopen(fname, "r");
 	if(f == NULL) {
-		fprintf(stderr,
-		"Notary Error: Invalid probe-server file %s \n", fname);
+		DPRINTF(DEBUG_ERROR, 
+		"Notary Error: Invalid client config file %s \n", fname);
 		return;
 	}
+        
+        size_t bytes_read = fread(buf, 1, MAX_FILE_SIZE, f);
+        if(ferror(f)) {
+            DPRINTF(DEBUG_ERROR, "Error reading client config file: %s \n", fname);
+            return;
+        }
 
-	while(fgets(buf, 1023,f) != NULL) {
+        load_notary_servers(notary, buf, bytes_read);
+
+}
+
+void load_notary_servers(SSHNotary *notary, char* data, int buf_len){
+
+        char buf[MAX_LINE_LENGTH];
+
+        char *ptr = data;
+        char *end = data + buf_len - 1; 
+	while((ptr = get_line(ptr, buf, MAX_LINE_LENGTH)) != NULL 
+            && ptr < end) {
+
 		if(*buf == '\n') continue;
 		if(*buf == '#') continue;
 		int size = strlen(buf);
@@ -313,9 +314,10 @@ void load_notary_servers(SSHNotary *notary, char* fname){
 	 
 		uint32_t ip_addr = str_2_ip(buf);
 		int port = (uint16_t) atoi(delim + 1);
-                char buf[1024];
-                int key_file_len = read_single_pubkey(f, buf, 1024);
-                RSA * pub_key = key_from_buf(buf, key_file_len, FALSE);
+                char buf2[1024];
+                int key_len = -1; 
+                ptr = read_single_pubkey(ptr, buf2, 1024, &key_len);
+                RSA * pub_key = key_from_buf(buf2, key_len, FALSE);
                 DPRINTF(DEBUG_INFO, "loaded key for server '%s' : %d \n", 
                           ip_2_str(ip_addr), port);
 		add_notary_server(notary, ip_addr, port, pub_key);

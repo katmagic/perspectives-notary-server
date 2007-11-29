@@ -1,6 +1,7 @@
 #ifndef _NOTARY_LOCAL_H_
 #define _NOTARY_LOCAL_H_
 
+#include <stdio.h>
 #include <openssl/ssl.h>
 #include <openssl/rsa.h>
 #include "common.h"
@@ -34,9 +35,11 @@ void free_ssh_notary(SSHNotary* notary);
 
 void free_key_info(SSHNotary* notary);
 
-void load_notary_servers(SSHNotary *notary, char* fname);
+void load_notary_servers(SSHNotary *notary, char* buf, int buf_len);
 
-void print_notary_reply(SSHNotary *notary);
+void load_notary_server_file(SSHNotary *notary, char* fname);
+
+void print_notary_reply(FILE *f, SSHNotary *notary);
 
 notary_header* create_request(char*hostname, uint16_t service_type);
 

@@ -55,10 +55,10 @@ int main(int argc, char **argv)
    char *key_buf = keybuf_from_filename(argv[3]);
 
    SSHNotary *notary = init_ssh_notary();
-   load_notary_servers(notary, argv[1]); 
+   load_notary_server_file(notary, argv[1]); 
    fetch_notary_observations(notary, argv[2], 
             TIMEOUT, NUM_RETRIES);
-   print_notary_reply(notary);
+   print_notary_reply(stdout, notary);
 
    printf("checking quorum \n");
    BOOL result = check_quorum_duration(notary, key_buf, KEY_LEN, SSH_RSA, 
