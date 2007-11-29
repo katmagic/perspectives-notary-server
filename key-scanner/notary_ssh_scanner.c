@@ -141,7 +141,7 @@ void parse_config_file(scanner_config *conf, char* fname){
 
 int do_ssh(char *host_str);
 
-#define TIMEOUT 3
+#define TIMEOUT 7
 #define MAX_SIMULTANEOUS 256
 
 
@@ -218,12 +218,12 @@ void handle_finished_client(int s, int cur_time) {
     
     char *str = buf_2_hexstr((char*)key_ptr, key_len);
     DPRINTF(DEBUG_INFO, "'%s' has %s key: '%s' \n", name_buf, 
-          key_type_str(key_type), str); 
+          keytype_2_str(key_type), str); 
     free(str);
-/*
+
     record_observation(db, priv_key, name_buf, key_ptr, key_len,
                               key_type, cur_time);
-*/
+
     close(s2);
 
 }
@@ -313,8 +313,8 @@ void check_probe_progress(probe_info *probe, uint32_t now) {
 
       // check if we should timeout this child 
       if(now > (probe->start_time + TIMEOUT)) {
-        //   printf("timeout for: %s (child # %d)  \n", 
-        //   all_probes[i].dns_name , all_probes[i].pid);
+        printf("timeout for: %s (child # %d)  \n", 
+          probe->dns_name , probe->pid);
         kill(probe->pid, SIGKILL);
         // note: we kill it here, but we don't set probe->pid = 0
         // because we wait for the indication of a child's 

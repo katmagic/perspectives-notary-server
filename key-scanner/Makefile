@@ -56,7 +56,7 @@ PERL=/usr/bin/perl
 SED=/bin/sed
 ENT=
 XAUTH_PATH=/usr/bin/xauth
-LDFLAGS=-L. -Lopenbsd-compat/ -lmysqlclient 
+LDFLAGS=-L. -Lopenbsd-compat/ -ldb-4.6 
 EXEEXT=
 
 INSTALL_SSH_PRNG_CMDS=
@@ -80,7 +80,7 @@ LIBSSH_OBJS=acss.o authfd.o authfile.o bufaux.o bufbn.o buffer.o \
 SSHOBJS= notary_ssh_scanner.o ssh.o readconf.o clientloop.o sshtty.o \
 	sshconnect.o sshconnect1.o sshconnect2.o
 
-COMMONOBJS = ../common/libnotarycommon.a ../common/libdb-4.6.a 
+COMMONOBJS = ../common/libnotarycommon.a  
 SSHDOBJS=sshd.o auth-rhosts.o auth-passwd.o auth-rsa.o auth-rh-rsa.o \
 	sshpty.o sshlogin.o servconf.o serverloop.o \
 	auth.o auth1.o auth2.o auth-options.o session.o \

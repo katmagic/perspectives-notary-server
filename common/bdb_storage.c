@@ -170,6 +170,7 @@ void record_observation(DB* db, RSA *priv_key,
       
       if(info_list == NULL) {
           // allocate new list-head
+          DPRINTF(DEBUG_INFO, "Creating new DB entry for: %s \n", service_id); 
           info_list = (ssh_key_info_list*)malloc(sizeof(ssh_key_info_list));
           INIT_LIST_HEAD(&(info_list->list));
       }

@@ -1072,7 +1072,7 @@ void load_file_to_trie(patricia_tree_t *tree, char* fname) {
     while(fgets(buf, 1024, f) != NULL) {
               char *space = strchr(buf, ' ');
               *space = 0x0;
-              printf("adding prefix = '%s' \n", buf);
+              //printf("adding prefix = '%s' \n", buf);
     	      add_prefix(tree, buf);
               ++count;
     }
