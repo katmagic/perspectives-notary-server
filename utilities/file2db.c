@@ -38,6 +38,7 @@ void parse_file(RSA* priv_key){
     int hostname_len = strlen(hostname);
     hostname[hostname_len - 1] = 0x0; // sscanf misses a single quote
     --hostname_len;
+    make_lowercase(hostname, hostname_len); 
     DPRINTF(DEBUG_INFO, "host: '%s' \n", hostname);
 
     memcpy(data, hostname, hostname_len + 1); // copy null terminator
@@ -150,16 +151,25 @@ int main(int argc, char** argv) {
       signal(SIGINT, close_db);
         
       f = fopen(argv[1], "r");
+      if(f == NULL) {
+        DPRINTF(DEBUG_ERROR, "Couldn't open '%s' \n", argv[1]); 
+        exit(1); 
+      }
 
       db = bdb_open(argv[2], DB_CREATE);
       if(db == NULL) {
-          printf("bdb_open failed \n");
+          DPRINTF(DEBUG_ERROR, "bdb_open failed for '%s' \n", argv[2]);
           exit(1);
       }
 
       RSA *priv_key = NULL;
-      if(argc == 4) 
-        priv_key = load_private_key(argv[3]); 
+      if(argc == 4) {  
+        priv_key = load_private_key(argv[3]);
+        if(priv_key == NULL) {
+          DPRINTF(DEBUG_ERROR, "failed to load private key '%s' \n", argv[3]);
+          exit(1);
+        }
+      }
 
       parse_file(priv_key); 
 

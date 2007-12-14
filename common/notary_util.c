@@ -245,7 +245,7 @@ void print_key_info_list(FILE *f, ssh_key_info_list* info_list) {
           cur = list_entry(pos, ssh_key_info_list, list);
 
           if(cur->info == NULL) {
-              printf("cur->info should never be null \n");
+              DPRINTF(DEBUG_ERROR, "cur->info should never be null \n");
               exit(1);
           }
           char *key_buf = (char*)(cur->info + 1);
@@ -330,3 +330,10 @@ uint8_t str_2_keytype(char *str) {
   return 255;
 }
 
+void make_lowercase(char *str, int len) {
+  int i;
+  for(i = 0; i < len; i++) {
+      if ((str[i] >= 0x41) && (str[i] <= 0x5a))
+        str[i] = (char)(str[i] | 0x20);
+  }
+}

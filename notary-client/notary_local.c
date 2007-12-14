@@ -50,6 +50,7 @@ notary_header* create_request(char*hostname, uint16_t service_type) {
         hdr->service_type = htons(service_type);
 	char* name_start = (char*)(hdr+1);
 	memcpy(name_start, hostname, name_len);
+        make_lowercase(name_start, name_len - 1); // notary only deals with lower-case
         return hdr;
 }
 
@@ -219,7 +220,6 @@ char * get_line(char *input_buf, char *output_buf, int buf_size) {
 
     while(*end != '\n' && end != limit) {
        if(*(end++) == EOF){
-         printf("reached EOF! \n"); 
          is_done = TRUE;        
          break;
       }

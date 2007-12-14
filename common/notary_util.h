@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+void make_lowercase(char *str, int len);
 char *keytype_2_str(uint8_t type);
 uint8_t str_2_keytype(char *str);
 char *buf_2_hexstr(char *buf, int buf_len);

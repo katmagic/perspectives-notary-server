@@ -119,6 +119,17 @@ int store_data(DB *db, char *host_and_port, char *buf,
 }
 
 
+void delete_record(DB * db, char *record_id) {
+  DBT key; 
+
+  memset(&key, 0, sizeof(DBT));
+  key.data = record_id;
+  key.size = strlen(record_id) + 1; 
+
+  db->del(db, NULL, &key,0); 
+
+}
+
 // just touch all the data so it will be in memory for sure
 void warm_db(DB* db) {
     DBC *cursorp;
