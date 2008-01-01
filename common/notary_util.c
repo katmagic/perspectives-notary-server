@@ -236,8 +236,10 @@ void print_key_info_timespans(FILE *f, ssh_key_info* info) {
 
 void print_key_info_list(FILE *f, ssh_key_info_list* info_list) {
 
-        if(info_list == NULL) 
-            return;
+        if(info_list == NULL) { 
+          fprintf(f, "[NULL LIST]  \n"); 
+          return;
+        }
         struct list_head *pos,*tmp;
         ssh_key_info_list* cur;
 

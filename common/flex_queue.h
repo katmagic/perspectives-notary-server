@@ -13,6 +13,8 @@ void queue_pushback(flex_queue *q, void *data_in);
 int queue_size(flex_queue *q);
 void queue_popfront(flex_queue *q, void *data_out);
 void queue_free(flex_queue *q);
+void queue_peek(flex_queue *q, int index, void *data_out);
+void queue_sort(flex_queue *q, int(*compar)(const void*, const void*));
 
 
 #endif

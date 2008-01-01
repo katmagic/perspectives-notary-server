@@ -24,6 +24,9 @@
  #define FALSE 0
 #endif
 
+#define SERVICE_TYPE_SSH 1
+#define SERVICE_TYPE_SSL 2
+
 #define BOOL uint8_t
 
 #define SIGNATURE_LEN 172

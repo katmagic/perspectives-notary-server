@@ -36,6 +36,20 @@ int queue_size(flex_queue *q) {
   return ((q->last_elem - q->first_elem) / q->elem_size);
 }
 
+// take a peek at data in a particular index 
+void queue_peek(flex_queue *q, int index, void *data_out) {
+  
+  int size = queue_size(q); 
+  if(index < 0 || index >= size) { 
+    printf("error: invalid index '%d' for queue of length '%d'\n", 
+        index, size);
+    return;
+  }
+ 
+  int offset = index * q->elem_size;
+  memcpy(data_out, q->first_elem + offset, q->elem_size); 
+}
+
 // should only be called if queue size is great than zero 
 void queue_popfront(flex_queue *q, void *data_out) {
   
@@ -62,6 +76,12 @@ void queue_popfront(flex_queue *q, void *data_out) {
 void queue_free(flex_queue *q) {
   free(q->data);
   free(q);
+}
+
+// just a wrapper to the standard qsort function
+void queue_sort(flex_queue *q, int(*compar)(const void*, const void*)) {
+  int num_members = queue_size(q); 
+  qsort(q->first_elem, num_members, q->elem_size, compar);
 }
 
 
