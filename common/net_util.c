@@ -6,6 +6,93 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/un.h>
+#include <sys/wait.h>
+#include "common.h"
+
+
+// send data to a local unix socket, identified by 'name'
+int sendToUnixSock(char *name, char *buf, int buf_len){ 
+    
+    int s, len;
+    struct sockaddr_un remote;
+
+    if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+        perror("socket");
+        exit(1);
+    }
+    
+    remote.sun_family = AF_UNIX;
+    strcpy(remote.sun_path, name);
+    len = strlen(remote.sun_path) + sizeof(remote.sun_family);
+    if (connect(s, (struct sockaddr *)&remote, len) == -1) {
+        perror("connect");
+        exit(1);
+    }
+    
+    int n = send(s, buf, buf_len , 0);
+    if(n == -1) {
+       perror("send");
+       exit(1);
+    }
+    close(s);
+    return n; 
+}
+
+int openUnixServerSock(char *name) {
+    int s, len;
+    struct sockaddr_un local;
+
+    if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+        perror("unix socket");
+        exit(1);
+    }
+
+    local.sun_family = AF_UNIX;
+    strcpy(local.sun_path, name);
+    unlink(local.sun_path);
+    len = strlen(local.sun_path) + sizeof(local.sun_family);
+    if (bind(s, (struct sockaddr *)&local, len) == -1) {
+        perror("unix bind");
+        exit(1);
+    }
+
+    if (listen(s, 5) == -1) {
+        perror("unix listen");
+        exit(1);
+    }
+    DPRINTF(DEBUG_INFO, "Opened unix sock '%s', sock = %d \n",
+		name, s);
+    return s;
+}
+
+// given a client server socket, accept a single client 
+// connection and return all data from that connection 
+// (up to buf_len bytes) in the caller-allocated 'buf' 
+void readUnixClientData(int s, char *buf, int buf_len) {
+        int n = -1, t, s2;
+        struct sockaddr_un remote;
+
+        t = sizeof(remote);
+        if ((s2 = accept(s, (struct sockaddr *)&remote, &t)) == -1) {
+            perror("accept");
+            exit(1);
+        }
+
+        int so_far = 0;
+        while(n != 0) { 
+          n = recv(s2, buf + so_far, buf_len - so_far, 0);
+          if (n < 0){ 
+            perror("recv");
+            break;
+          }
+          so_far += n;
+        } 
+            
+    close(s2);
+    return so_far; 
+}
+
 
 char *ip_2_str(uint32_t ip) {
   return inet_ntoa(*(struct in_addr*)&ip);
