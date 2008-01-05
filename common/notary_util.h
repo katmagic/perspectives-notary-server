@@ -21,5 +21,6 @@ void add_observation_to_list(ssh_key_info_list *info_list,
       char *digest, int digest_len, int key_type, int timestamp);
 unsigned int data_from_list(ssh_key_info_list *info_list, 
                     char* buf_out, int max_size);
+int get_key_info_list(char *response, int *response_len, int max_len, ssh_key_info_list *info_list);
 
 #endif

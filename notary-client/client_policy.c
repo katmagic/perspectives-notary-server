@@ -102,6 +102,7 @@ ssh_key_info* find_key_at_time(ssh_key_info_list *notary_obs, uint32_t time) {
 BOOL get_all_time_changes(SSHNotary *notary, flex_queue* time_changes) {
   
   struct list_head *outer_pos;
+  BOOL is_empty = TRUE;
   server_list *server;
   list_for_each(outer_pos,&notary->notary_servers.list){
     server = list_entry(outer_pos, server_list, list);
@@ -126,6 +127,7 @@ BOOL get_all_time_changes(SSHNotary *notary, flex_queue* time_changes) {
       for(int i = 0; i < num_spans * 2; i = i + 2) {
         uint32_t start = ntohl(timespans[i]);
         uint32_t end = ntohl(timespans[i + 1]);
+        is_empty = FALSE;
         if(is_first) {
           is_first = FALSE;
           queue_pushback(time_changes, &start); 
@@ -135,7 +137,7 @@ BOOL get_all_time_changes(SSHNotary *notary, flex_queue* time_changes) {
     }
 
   }
-  return TRUE; 
+  return !(is_empty); 
 }
 
 // for a given key, check whether it has quorum at this specific time.
@@ -177,13 +179,18 @@ BOOL has_quorum_at_time(SSHNotary *notary, char *key_data, uint16_t key_len,
 }
 
 uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len, 
-      uint8_t key_type, int quorum_size, uint32_t stale_limit_sec) {
+      uint8_t key_type, int quorum_size, uint32_t stale_limit_sec, int *status) {
 
         struct timeval now;
         gettimeofday(&now, NULL);
        
         flex_queue *time_changes = queue_init(20, sizeof(int)); 
-        get_all_time_changes(notary, time_changes); 
+        if(!get_all_time_changes(notary, time_changes))
+        {
+            *status = -1;
+            return 0;
+        }
+        *status = 0;
         
         // TODO: if any notary has results that are older than
         // stale_time_secs, we should ignore it when trying
@@ -203,11 +210,11 @@ uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len
 
             if( ! has_quorum_at_time(notary,key_data,key_len,
                   key_type,quorum_size,cur_time + 1)) {
-              DPRINT(DEBUG_INFO, "quorum failed for time %d \n", cur_time + 1); 
+              DPRINTF(DEBUG_INFO, "quorum failed for time %d \n", cur_time + 1); 
               break;
             }
         }
-               
+        
         printf("now = %d  oldest = %d \n", (int) now.tv_sec, oldest); 
         int diff = now.tv_sec - oldest; 
         printf("diff = %d  hours = %f  days = %f \n",

@@ -47,4 +47,8 @@ ssh_key_info_list* parse_message(char *buf, int msg_len, RSA* pub_key);
 
 server_list * find_server(SSHNotary* notary, uint32_t server_ip, uint16_t server_port);
 
+char *get_notary_reply(SSHNotary *notary);
+int get_number_of_notaries(SSHNotary *notary);
+
+
 #endif

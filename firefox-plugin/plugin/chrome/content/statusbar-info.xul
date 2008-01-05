@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<dialog id="statusbar-settings"
+	xmlns:html="http://www.w3.org/1999/xhtml"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	title="Perspective Information"
+	width="500px"
+	height="300px"
+	buttons="ok"
+	ondialogok="return true;"
+	onload="LoadInfo()">
+
+<script type="application/x-javascript" src="statusbar-info.js"/>
+
+
+<vbox flex="1" width="300">
+<hbox flex="1">
+<tabbox flex="1">
+	<tabs>
+		<tab label="Information"/>
+	</tabs>
+	<tabpanels>
+		<tabpanel id="perspective-information-tab">
+			<vbox style="text-align: center" flex="1">
+				<spacer flex="1"/>
+				<label value="Perspective Version 1.0" style="font-weight: bold"/>
+				<spacer flex="1"/>
+			
+	                        <vbox style="text-align: left" flex="1">
+
+                                    <spacer flex="1"/>
+                                    <label value="Detailed Information:" style="font-weight: bold"/>
+                                    <spacer flex="1"/>
+                                    <textbox
+                                    id="perspective-statusinfo-description"
+                                    multiline="true" readonly="true"
+                                    rows = "10" cols="100" value = "Default Text" />
+                                    <spacer flex="1"/>
+                                </vbox>
+                        </vbox>
+		</tabpanel>
+	</tabpanels>
+</tabbox>
+</hbox>
+
+</vbox>
+
+</dialog>
+

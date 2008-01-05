@@ -138,6 +138,39 @@ void print_notary_reply(FILE * f, SSHNotary *notary) {
 	}
 }
 
+//Get Notary Reply 
+char *get_notary_reply(SSHNotary *notary) {
+	server_list *server;
+	struct list_head *outer_pos;
+        int response_len = 0;
+        int max_len = 4096;
+        int n = 0;
+        // Macro 4096 
+        char *response = (char *) malloc(sizeof(char) * max_len);
+        if(!response)
+        {
+            return NULL;
+        }
+	list_for_each(outer_pos,&notary->notary_servers.list){
+		server = list_entry(outer_pos, server_list, list);
+                
+
+                n = snprintf(response + response_len, max_len - response_len,"***********  Probes from server %s ********** \n", 
+			ip_2_str(server->ip_addr));
+	        
+                response_len += n;
+
+		get_key_info_list(response, &response_len, max_len, server->notary_results);
+	}
+        return response;
+}
+
+int get_number_of_notaries(SSHNotary *notary)
+{
+    return notary->num_servers;
+}
+
+
 #define MAX_NUM_KEYS 64
 
 /*  

@@ -222,3 +222,9 @@ start:	 1189022717 - Wed Sep  5 16:05:17 2007
 end:	 1189910706 - Sat Sep 15 22:45:06 2007
 
 End Host
+StartHost: 'moo.cmcl.cs.cmu.edu:2'
+ssh-rsa key:  57:A4:C2:6F:8D:6C:59:98:88:F3:8D:46:2E:1A:40:35
+start:	 1198719978 - Wed Dec 26 16:05:17 2007
+end:	 1199238378 - Wed Jan  2 18:23:14 2008
+
+End Host

@@ -1,0 +1,27 @@
+#include "nsISupports.idl"
+
+interface nsIX509Cert;
+interface nsIInterfaceRequestor;
+
+//[scriptable, uuid(5c6846c6-ccf9-11db-8314-0800200c9a66)]
+[scriptable, uuid(78ecbcad-4fdb-63cc-5571-7bd38d536d18)]
+interface psvIBadCertHandler : nsISupports {
+  
+    boolean setExtDir();
+
+   boolean confirmMismatchDomain(in nsIInterfaceRequestor socketInfo,
+                                 in AUTF8String targetURL,
+                                 in nsIX509Cert cert);
+
+   boolean confirmUnknownIssuer(in nsIInterfaceRequestor socketInfo, 
+                                in nsIX509Cert cert,
+                                out short certAddType);
+
+ boolean confirmCertExpired(in nsIInterfaceRequestor socketInfo,
+                            in nsIX509Cert cert);
+
+ void notifyCrlNextupdate(in nsIInterfaceRequestor socketInfo,
+                          in AUTF8String targetURL, 
+			  in nsIX509Cert cert);
+
+};

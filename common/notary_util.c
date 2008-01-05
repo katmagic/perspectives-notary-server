@@ -232,6 +232,29 @@ void print_key_info_timespans(FILE *f, ssh_key_info* info) {
 
 }
 
+int get_key_info_timespans(char *response, int *response_len, int max_len, ssh_key_info *info)
+{
+    int n = 0;
+  if(info == NULL) 
+    return -1;
+
+  char *key_buf = (char*)(info + 1);
+  int len = ntohs(info->key_len_bytes);
+  int *timespans = (int*)(key_buf + len);
+  int num_spans = ntohs(info->num_timespans);
+  int i;
+  for(i = 0; i < num_spans; i++){
+    int t_start = ntohl(timespans[0]);
+    int t_end = ntohl(timespans[1]);
+    n = snprintf(response + *response_len, max_len - *response_len, "start:\t %d - %s", t_start, ctime((const time_t*)&t_start));
+    *response_len += n;
+    n = snprintf(response + *response_len, max_len - *response_len, "end:\t %d - %s", t_end, ctime((const time_t*)&t_end));
+    *response_len += n;
+    timespans += 2;
+  }
+  return 0;
+}
+
 
 
 void print_key_info_list(FILE *f, ssh_key_info_list* info_list) {
@@ -261,6 +284,43 @@ void print_key_info_list(FILE *f, ssh_key_info_list* info_list) {
         } 
 }
 
+
+int get_key_info_list(char *response, int *response_len, int max_len, ssh_key_info_list *info_list)
+{
+        int n = 0;
+        if(info_list == NULL) 
+            return -1;
+        struct list_head *pos,*tmp;
+        ssh_key_info_list* cur;
+
+        list_for_each_safe(pos, tmp, &info_list->list) {
+          cur = list_entry(pos, ssh_key_info_list, list);
+
+          if(cur->info == NULL) {
+              DPRINTF(DEBUG_ERROR, "cur->info should never be null \n");
+              return -1;
+          }
+          char *key_buf = (char*)(cur->info + 1);
+          int len = ntohs(cur->info->key_len_bytes);
+          char *str = buf_2_hexstr(key_buf,len);
+          n = snprintf(response + *response_len, max_len - *response_len, "%s key: %s \n", keytype_2_str(cur->info->key_type),
+                                  str);
+          *response_len += n;                        
+          free(str);
+          get_key_info_timespans(response, response_len, max_len, cur->info);
+          n = snprintf(response + *response_len, max_len - *response_len, "\n");
+          *response_len += n;
+        } 
+        return 0;
+}
+
+
+
+
+
+
+
+
 void free_key_info_list(ssh_key_info_list* info_list) {
 
         if(info_list == NULL) return;
@@ -287,7 +347,7 @@ char * buf_2_hexstr(char *dgst_raw, int dgst_raw_len){
 	u_int i;
 
         int str_len = dgst_raw_len * 3 + 1;
-	retval = malloc(str_len);
+	retval = (char *)malloc(str_len);
         bzero(retval, str_len);
 	for (i = 0; i < dgst_raw_len; i++) {
 		char hex[4];

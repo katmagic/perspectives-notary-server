@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE window SYSTEM "chrome://perspectives/locale/perspectives.dtd">
+
+<overlay id="perspectives-overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+<script type="application/x-javascript" src="mismatch_overlay.js"/>
+
+<window id="domainMismatch" flex="100%"> <!-- domain mismatch overlay -->
+    <box id="psv-box"  flex="100%">
+        <label id="warning-label" flex="100%" value="" style="font-weight: bold; text-align: center;"/>
+    </box>
+</window>
+
+<window id="serverCertExpired" flex="100%">  <!-- cert expired overlay -->
+    <box id="psv-box"  flex="100%">
+        <label id="warning-label" flex="100%" value="" style="font-weight: bold; text-align: center;"/>
+    </box>
+</window>
+
+</overlay>
+

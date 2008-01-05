@@ -69,12 +69,12 @@ int openUnixServerSock(char *name) {
 // given a client server socket, accept a single client 
 // connection and return all data from that connection 
 // (up to buf_len bytes) in the caller-allocated 'buf' 
-void readUnixClientData(int s, char *buf, int buf_len) {
+int readUnixClientData(int s, char *buf, int buf_len) {
         int n = -1, t, s2;
         struct sockaddr_un remote;
 
         t = sizeof(remote);
-        if ((s2 = accept(s, (struct sockaddr *)&remote, &t)) == -1) {
+        if ((s2 = accept(s, (struct sockaddr *)&remote, (socklen_t *)&t)) == -1) {
             perror("accept");
             exit(1);
         }
