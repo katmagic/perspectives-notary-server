@@ -160,7 +160,8 @@ char *get_notary_reply(SSHNotary *notary) {
 	        
                 response_len += n;
 
-		get_key_info_list(response, &response_len, max_len, server->notary_results);
+		get_key_info_list(response, &response_len, max_len, 
+                    server->notary_results);
 	}
         return response;
 }
