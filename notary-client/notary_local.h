@@ -7,8 +7,8 @@
 #include "common.h"
 #include "notary_crypto.h"
 
-
-
+// represents a single notary server and its reply on the 
+// client side
 typedef struct {
 	struct list_head list;
 	
@@ -23,10 +23,14 @@ typedef struct {
         uint32_t consistent_secs;	
 } server_list;
 
+// master handle given to client 
 typedef struct {
 	server_list notary_servers;
         int num_servers;
 } SSHNotary;
+
+typedef SSHNotary Notary; 
+
 
 
 SSHNotary* init_ssh_notary(); 

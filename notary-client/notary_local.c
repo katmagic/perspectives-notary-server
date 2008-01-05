@@ -101,7 +101,8 @@ void free_ssh_notary(SSHNotary* notary){
 	struct list_head *pos, *q;
 	list_for_each_safe(pos, q, &notary->notary_servers.list){
 		server = list_entry(pos, server_list, list);
-                RSA_free(server->public_key);
+                if(server->public_key) 
+                  RSA_free(server->public_key);
 		list_del(&server->list);
 		free(server);
 	}
@@ -131,8 +132,8 @@ void print_notary_reply(FILE * f, SSHNotary *notary) {
 	list_for_each(outer_pos,&notary->notary_servers.list){
 		server = list_entry(outer_pos, server_list, list);
 
-		printf("***********  Probes from server %s ********** \n", 
-			ip_2_str(server->ip_addr));
+		printf("***********  Probes from server %s:%d ********** \n", 
+			ip_2_str(server->ip_addr), server->port);
 		
 		print_key_info_list(f, server->notary_results);
 	}
@@ -155,8 +156,9 @@ char *get_notary_reply(SSHNotary *notary) {
 		server = list_entry(outer_pos, server_list, list);
                 
 
-                n = snprintf(response + response_len, max_len - response_len,"***********  Probes from server %s ********** \n", 
-			ip_2_str(server->ip_addr));
+                n = snprintf(response + response_len, max_len - response_len,
+                    "***********  Probes from server %s:%d ********** \n", 
+			ip_2_str(server->ip_addr), server->port);
 	        
                 response_len += n;
 
@@ -165,6 +167,7 @@ char *get_notary_reply(SSHNotary *notary) {
 	}
         return response;
 }
+
 
 int get_number_of_notaries(SSHNotary *notary)
 {

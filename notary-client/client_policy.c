@@ -1,5 +1,6 @@
 #include "flex_queue.h"
 #include "client_policy.h"
+#include "net_util.h"
 
 // NOTE: this quorum code isn't actually correct.  It calculates something
 // stronger than quorum, since it looks at only the most recent timespan for
@@ -70,7 +71,7 @@ BOOL check_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len, 
 
 
 int uint_compare(const void *a, const void *b) {
-  return *(uint32_t*)a - *(uint32_t*)b;
+  return *(uint32_t*)b - *(uint32_t*)a;
 }
 
 // returns a shallow copy of the key information with a timespan
@@ -87,11 +88,14 @@ ssh_key_info* find_key_at_time(ssh_key_info_list *notary_obs, uint32_t time) {
       elem = list_entry(inner_pos, ssh_key_info_list, list);
       ssh_key_info *info = elem->info;
       int *timespans = FIND_TIMESPANS(info);
-      for(int i = 0; i < info->num_timespans * 2; i = i + 2) {
-        uint32_t start = timespans[i];
-        uint32_t end = timespans[i + 1];
-        if(start >= time && end <= time) 
+      int num_spans = ntohs(info->num_timespans); 
+      for(int i = 0; i < num_spans * 2; i = i + 2) {
+        uint32_t start = ntohl(timespans[i]);
+        uint32_t end = ntohl(timespans[i + 1]);
+        if(start <= time && end >= time) {
+          //DPRINTF(DEBUG_POLICY, " %d is in span %d to %d \n", time, start, end); 
           return info; // no copy, just return pointer
+        }
       }
     }
     return NULL; 
@@ -112,7 +116,6 @@ uint32_t find_oldest_most_recent_timestamp(SSHNotary *notary,
   list_for_each(outer_pos,&notary->notary_servers.list){
     server = list_entry(outer_pos, server_list, list);
     if(server->notary_results == NULL) {
-      DPRINTF(DEBUG_ERROR, "results are null \n"); 
       continue;
     }
 
@@ -121,7 +124,7 @@ uint32_t find_oldest_most_recent_timestamp(SSHNotary *notary,
     struct list_head *inner_pos;
     ssh_key_info_list *elem;
 
-    uint32_t most_recent = 0; // find the most recent probe from this server
+    uint32_t most_recent = cur_time; // find the most recent probe from this server
     list_for_each(inner_pos,&(server->notary_results->list)) {
       elem = list_entry(inner_pos, ssh_key_info_list, list);
       ssh_key_info *info = elem->info;
@@ -130,8 +133,8 @@ uint32_t find_oldest_most_recent_timestamp(SSHNotary *notary,
       int num_spans = ntohs(info->num_timespans); 
 
       for(int i = 0; i < num_spans * 2; i = i + 2) {
-        uint32_t start = ntohl(timespans[i]);
-        if(start > most_recent) most_recent = start; 
+        uint32_t end = ntohl(timespans[i + 1]);
+        if(end < most_recent) most_recent = end; 
       }
     } // end for-each key 
 
@@ -157,7 +160,6 @@ void get_all_time_changes(SSHNotary *notary, flex_queue* time_changes) {
   list_for_each(outer_pos,&notary->notary_servers.list){
     server = list_entry(outer_pos, server_list, list);
     if(server->notary_results == NULL) {
-      DPRINTF(DEBUG_ERROR, "results are null \n"); 
       continue;
     }
 
@@ -175,10 +177,10 @@ void get_all_time_changes(SSHNotary *notary, flex_queue* time_changes) {
 
       // add two times for each timespan
       for(int i = 0; i < num_spans * 2; i = i + 2) {
-        uint32_t at_start = ntohl(timespans[i]);
-        uint32_t past_end = 1 + ntohl(timespans[i + 1]);
-        queue_pushback(time_changes, &at_start); 
-        queue_pushback(time_changes, &past_end); 
+        uint32_t before_start = ntohl(timespans[i]) - 1;
+        uint32_t at_end = ntohl(timespans[i + 1]);
+        queue_pushback(time_changes, &before_start); 
+        queue_pushback(time_changes, &at_end); 
       }
     }
 
@@ -195,31 +197,46 @@ BOOL has_quorum_at_time(SSHNotary *notary, char *key_data, uint16_t key_len,
 
   struct list_head *outer_pos;
   server_list *server;
+  int server_index = 0;
+
+  DPRINTF(DEBUG_POLICY, "BEGIN quorum Test for t = %d \n", time); 
+
   list_for_each(outer_pos,&notary->notary_servers.list){
     server = list_entry(outer_pos, server_list, list);
+    ++server_index; 
     
     if(server->notary_results == NULL) {
-      //printf("no results for server \n");
+      DPRINTF(DEBUG_POLICY,"Server %s:%d provided no results \n", 
+          ip_2_str(server->ip_addr), server->port);
       continue;
     }
     ssh_key_info* cur_key = find_key_at_time(server->notary_results, time);
 
     if(cur_key == NULL) {
-      DPRINTF(DEBUG_ERROR,"Failed to find a key at time %d \n", time);
+      DPRINTF(DEBUG_POLICY,"Server %s:%d has no key for this time\n", 
+          ip_2_str(server->ip_addr), server->port);
       continue;
     }
 
-    if(key_type != cur_key->key_type) continue;
-    if(key_len != ntohs(cur_key->key_len_bytes)) continue;
-
+    BOOL mismatch = FALSE; 
+    if(key_type != cur_key->key_type) mismatch = TRUE;
+    if(key_len != ntohs(cur_key->key_len_bytes)) mismatch = TRUE;
     char *key_buf = (char*)(cur_key + 1);
-    if(memcmp(key_data, key_buf, key_len)) continue;
+    if(memcmp(key_data, key_buf, key_len)) mismatch = TRUE;
 
+    if(mismatch) {
+      DPRINTF(DEBUG_POLICY,"Server %s:%d has different key \n", 
+          ip_2_str(server->ip_addr), server->port);
+      continue;
+    }
+
+    DPRINTF(DEBUG_POLICY,"Server %s:%d found key match \n", 
+          ip_2_str(server->ip_addr), server->port);
     ++total_valid; 
   }
-  DPRINTF(DEBUG_INFO,"QUORUM TEST: required = %d  received = %d \n", 
+  DPRINTF(DEBUG_POLICY,"END quorum test: required = %d  received = %d \n", 
       quorum_size, total_valid); 
-  return (quorum_size <= total_valid); 
+  return (total_valid >= quorum_size); 
 
 }
 
@@ -240,13 +257,21 @@ uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len
         uint32_t oldest_recent = find_oldest_most_recent_timestamp(notary, 
                                               now.tv_sec, stale_limit_sec); 
 
+        DPRINTF(DEBUG_POLICY, "oldest_recent = %d  (cur-time = %d) \n", 
+            oldest_recent, (uint32_t)now.tv_sec); 
         int size = queue_size(time_changes); 
         if(size == 0) {
+          DPRINTF(DEBUG_POLICY, "No timespans found \n"); 
           *status = -1;
           return 0; 
         }
+    
         *status = 0; 
-        
+        if(oldest_recent == (uint32_t)now.tv_sec) { 
+          DPRINTF(DEBUG_POLICY, "No quorum because all most-recent timespans are stale \n"); 
+          return 0; 
+        }
+
         int i;
         queue_sort(time_changes, uint_compare); 
         uint32_t test_time, oldest_valid = now.tv_sec; 
@@ -254,12 +279,14 @@ uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len
             queue_peek(time_changes, i, &test_time);
 
             // ignore any times that are more recent than 'oldest_recent'
-            if(test_time > oldest_recent) 
+            if(test_time > oldest_recent) { 
+              DPRINTF(DEBUG_POLICY,"skipping test_time = %d \n", test_time); 
               continue; 
-
+            }
+              
             if( ! has_quorum_at_time(notary,key_data,key_len,
                   key_type,quorum_size, test_time)) {
-              DPRINTF(DEBUG_INFO, "quorum failed for time = %d \n", test_time); 
+              DPRINTF(DEBUG_POLICY, "QUORUM FAILED for time = %d \n", test_time); 
               break;
             }
             
@@ -267,11 +294,7 @@ uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len
             oldest_valid = test_time; 
         }
         
-        printf("now = %d  oldest = %d \n", (int) now.tv_sec, oldest_valid); 
         int diff = now.tv_sec - oldest_valid; 
-        printf("diff = %d  hours = %f  days = %f \n",
-            diff, SEC2HOUR(diff), SEC2DAY(diff)); 
-
         return diff; 
 
 }

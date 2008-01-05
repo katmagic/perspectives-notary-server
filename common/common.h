@@ -31,6 +31,7 @@
 
 #define SIGNATURE_LEN 172
 #define MAX_PACKET_LEN 4000
+#define KEY_LEN 16
 
 #define TYPE_FETCH_REQ 0x01
 #define TYPE_FETCH_REPLY_PARTIAL 0x02
@@ -85,19 +86,6 @@ typedef struct {
 	struct list_head list;
 	ssh_key_info* info;	
 } ssh_key_info_list;
-/*
-typedef struct {
-	struct list_head list;
-	Key* key;
-	int num_probes;
-	int *timestamps; // sorted list of the probe times, oldest to newest
-	int *addresses;
-} ssh_result_list;
-
-#define HDR2DATA(hdr) \
-	(((char*)hdr) + sizeof(notary_header) \
-	+ ntohs(hdr->name_len)) 
-*/
 
 #define min(X, Y)  ((X) < (Y) ? (X) : (Y))
 #define max(X, Y)  ((X) > (Y) ? (X) : (Y))
@@ -106,7 +94,7 @@ typedef struct {
 #define SEC2HOUR(x) ((float)x/3600.0)
 #define SEC2DAY(x) ((float)x/86400.0)
 
-
+#define DAY2SEC(x) ((int) (x * 86400.0))
 
 
 #endif
