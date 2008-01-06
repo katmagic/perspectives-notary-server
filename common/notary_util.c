@@ -91,6 +91,9 @@ ssh_key_info_list *list_from_data(char *data_ptr, int data_len,
 }
 
 // assumes info_list is NOT NULL
+// 1-4-2008:  modified this to save and use pointers directly instead 
+// of indices into the list and to change how timestamps are updated.  
+// revert to SVN copy if things go bad :P 
 void add_observation_to_list(ssh_key_info_list *info_list, 
       char *digest, int digest_len, int key_type, int timestamp) {
 
@@ -98,11 +101,9 @@ void add_observation_to_list(ssh_key_info_list *info_list,
         // 1) if there's an entry with this key already
         // 2) which entry is the newest
         struct list_head *pos,*tmp;
-        ssh_key_info_list* cur;
+        ssh_key_info_list *cur, *most_recent = NULL, *key_match = NULL;
 
-        int index = 0;
-        int most_recent_index = -1;
-        int key_match_index = -1; // this is dumb, use a pointer!
+       
         int most_recent_time = 0;
         list_for_each_safe(pos, tmp, &info_list->list) {
           cur = list_entry(pos, ssh_key_info_list, list);
@@ -111,7 +112,7 @@ void add_observation_to_list(ssh_key_info_list *info_list,
           if(len == digest_len &&
               cur->info->key_type == key_type && 
               (memcmp(digest, key_buf, len) == 0)) {
-              key_match_index = index;
+              key_match = cur;
           }
           int *timespans = (int*)(key_buf + len);
           int num_spans = ntohs(cur->info->num_timespans);
@@ -120,75 +121,70 @@ void add_observation_to_list(ssh_key_info_list *info_list,
               int t_end = ntohl(timespans[1]);
               if(t_end > most_recent_time) {
                   most_recent_time = t_end;
-                  most_recent_index = index;
+                  most_recent = cur;
               }
               timespans += 2;
           }
           
-          ++index;
         } 
 
-        if(key_match_index != -1 && 
-            most_recent_index == key_match_index) {
-            // easiest case.  just update the that timespan
-          
-            index = 0;
-            list_for_each_safe(pos, tmp, &info_list->list) {
-            if(index != key_match_index){ 
-              ++index;
-              continue;
+        // we always must update the t-end value of the
+        // most recent timespan if it exists.  
+        // if we observed the same key as last time that is, if:
+        // ((most_recent = key_match) && (key_match != NULL))
+        // update we update the t-end value to the current time and we're done.
+        // otherwise, we need to update the t-end value to be
+        // now - 1 seconds and continue
+            
+        if(most_recent != NULL) { 
+          char *mr_key_buf = (char*)(most_recent->info + 1);
+          int mr_len = ntohs(most_recent->info->key_len_bytes);
+          int *timespans = (int*)(mr_key_buf + mr_len);
+          int mr_num_spans = ntohs(most_recent->info->num_timespans);
+          int i;
+          for(i = 0; i < mr_num_spans; i++){
+            int t_end = ntohl(timespans[1]);
+            if(t_end == most_recent_time) {
+              // this is timespan to update
+              
+              if(most_recent == key_match) {
+                // easy case, we're all done! 
+                timespans[1] = htonl(timestamp);
+                return;
+              } 
+              // change t-end value for the old most recent key
+              timespans[1] = htonl(timestamp - 1); 
+              break;
             }
+            timespans += 2;
+          }
+        }
 
-            cur = list_entry(pos, ssh_key_info_list, list);
-            char *key_buf = (char*)(cur->info + 1);
-            int len = ntohs(cur->info->key_len_bytes);
-            int *timespans = (int*)(key_buf + len);
-            int num_spans = ntohs(cur->info->num_timespans);
-            int i;
-            for(i = 0; i < num_spans; i++){
-              int t_end = ntohl(timespans[1]);
-              if(t_end == most_recent_time) {
-                  // this is timespan to update
-                  timespans[1] = htonl(timestamp);
-                  return;
-              }
-              timespans += 2;
-            }
-          
-          } 
-          DPRINTF(DEBUG_ERROR, "matching key/timespan not found \n");
-          exit(1);
-        }else if (key_match_index != -1) {
-              // need to add another timespan to an 
+        // since the key from this probe did not match the most
+        // recent key we had seen, there are two options left
+
+        if (key_match != NULL) {
+              // we've seen this key before, but it wasn't most recent
+              // so we need to add another timespan to an 
               // existing ssh_key_info object 
               // (requires reallocation of memory)
-              index = 0;
-              list_for_each_safe(pos, tmp, &info_list->list) {
-                if(index != key_match_index) {
-                  ++index;
-                  continue;
-                }
 
-                cur = list_entry(pos, ssh_key_info_list, list);
-                int old_size = KEY_INFO_SIZE(cur->info);
+                int old_size = KEY_INFO_SIZE(key_match->info);
                 int new_size = old_size + (2 * sizeof(int));
                 ssh_key_info *new_info = (ssh_key_info*)
                                           malloc(new_size);
-                memcpy(new_info, cur->info, old_size);
+                memcpy(new_info, key_match->info, old_size);
                 new_info->num_timespans = htons(1 + 
-                                    ntohs(cur->info->num_timespans));
+                                    ntohs(key_match->info->num_timespans));
                 // add the timespans as the last 8 bytes
                 int *timespans = (int*)(((char*)new_info) + old_size);
                 timespans[0] = timespans[1] = htonl(timestamp);
               
-                free(cur->info);
-                cur->info = new_info;
-                return;
-            }
-            DPRINTF(DEBUG_ERROR, "matching key not found \n");
-            exit(1);
+                free(key_match->info);
+                key_match->info = new_info;
+            
         }else {
-            // no matching key found.  we need to add a 
+            // we've never seen this key before  we need to add a 
             // new ssh_key_info entry with 1 timespan to the list.
 
             ssh_key_info *new_info = (ssh_key_info*) malloc(
@@ -382,6 +378,7 @@ char *keytype_2_str(uint8_t type) {
   if(type == SSH_RSA1) return "ssh-rsa1";
   if(type == SSH_RSA) return "ssh-rsa";
   if(type == SSH_DSA) return "ssh-dsa";
+  if(type == SSL_ANY) return "ssl";
   return "unknown key-type";
 }
 
@@ -389,6 +386,7 @@ uint8_t str_2_keytype(char *str) {
   if(strcmp(str,"ssh-rsa1") == 0) return SSH_RSA1;
   if(strcmp(str,"ssh-rsa") == 0) return SSH_RSA;
   if(strcmp(str,"ssh-dsa") == 0) return SSH_DSA;
+  if(strcmp(str,"ssl") == 0) return SSL_ANY;
   return 255;
 }
 

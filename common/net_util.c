@@ -19,7 +19,7 @@ int sendToUnixSock(char *name, char *buf, int buf_len){
 
     if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
         perror("socket");
-        exit(1);
+        return -1;
     }
     
     remote.sun_family = AF_UNIX;
@@ -27,13 +27,13 @@ int sendToUnixSock(char *name, char *buf, int buf_len){
     len = strlen(remote.sun_path) + sizeof(remote.sun_family);
     if (connect(s, (struct sockaddr *)&remote, len) == -1) {
         perror("connect");
-        exit(1);
+        return -1;
     }
     
     int n = send(s, buf, buf_len , 0);
     if(n == -1) {
        perror("send");
-       exit(1);
+       return -1;
     }
     close(s);
     return n; 
@@ -70,17 +70,19 @@ int openUnixServerSock(char *name) {
 // connection and return all data from that connection 
 // (up to buf_len bytes) in the caller-allocated 'buf' 
 int readUnixClientData(int s, char *buf, int buf_len) {
-        int n = -1, t, s2;
+        int n = -1, s2;
+        socklen_t t; 
         struct sockaddr_un remote;
 
         t = sizeof(remote);
-        if ((s2 = accept(s, (struct sockaddr *)&remote, (socklen_t *)&t)) == -1) {
+        if ((s2 = accept(s, (struct sockaddr *)&remote, 
+                (socklen_t *)&t)) == -1) {
             perror("accept");
-            exit(1);
+            return -1;
         }
 
         int so_far = 0;
-        while(n != 0) { 
+        while(n != 0 && (so_far < buf_len)) { 
           n = recv(s2, buf + so_far, buf_len - so_far, 0);
           if (n < 0){ 
             perror("recv");
@@ -89,8 +91,8 @@ int readUnixClientData(int s, char *buf, int buf_len) {
           so_far += n;
         } 
             
-    close(s2);
-    return so_far; 
+      close(s2);
+      return so_far; 
 }
 
 

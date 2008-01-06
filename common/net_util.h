@@ -19,8 +19,8 @@
 char *ip_2_str(uint32_t ip);
 
 int sendToUnixSock(char *name, char *buf, int buf_len); 
-
 int openUnixServerSock(char *name); 
+int readUnixClientData(int s, char *buf, int buf_len);
 
 uint32_t str_2_ip(char* ip_str);
 
