@@ -40,23 +40,23 @@ PATHS= -DSSHDIR=\"$(sysconfdir)\" \
 
 CC=gcc
 LD=gcc
-CFLAGS=-g -O2 -Wall -Wpointer-arith -Wuninitialized -Wsign-compare -Wno-pointer-sign -std=gnu99 
-CPPFLAGS=-I. -I../common/ -I$(srcdir)  $(PATHS) -DHAVE_CONFIG_H -I/usr/include/mysql
-LIBS=-lresolv -lcrypto -lutil -lz -lnsl  -lcrypt
+CFLAGS=-g -O2 -Wall -Wpointer-arith -Wuninitialized -Wsign-compare 
+CPPFLAGS=-I. -I../common -I$(srcdir)  $(PATHS) -DHAVE_CONFIG_H
+LIBS=-lcrypto -lutil -lz  -lcrypt
 LIBSELINUX=
 SSHDLIBS=
 LIBEDIT=
 LIBPAM=
 LIBWRAP=
 AR=/usr/bin/ar
-AWK=mawk
+AWK=nawk
 RANLIB=ranlib
 INSTALL=/usr/bin/install -c
-PERL=/usr/bin/perl
+PERL=/usr/bin/perl5
 SED=/bin/sed
 ENT=
-XAUTH_PATH=/usr/bin/xauth
-LDFLAGS=-L. -Lopenbsd-compat/ -ldb-4.6 
+XAUTH_PATH=/usr/X11R6/bin/xauth
+LDFLAGS=-L. -Lopenbsd-compat/ 
 EXEEXT=
 
 INSTALL_SSH_PRNG_CMDS=
@@ -80,7 +80,8 @@ LIBSSH_OBJS=acss.o authfd.o authfile.o bufaux.o bufbn.o buffer.o \
 SSHOBJS= ssh.o readconf.o clientloop.o sshtty.o \
 	sshconnect.o sshconnect1.o sshconnect2.o
 
-COMMONOBJS = ../common/libnotarycommon.a  
+COMMONOBJS = ../common/libnotarycommon.a
+
 SSHDOBJS=sshd.o auth-rhosts.o auth-passwd.o auth-rsa.o auth-rh-rsa.o \
 	sshpty.o sshlogin.o servconf.o serverloop.o \
 	auth.o auth1.o auth2.o auth-options.o session.o \
@@ -115,7 +116,7 @@ PATHSUBS	= \
 	-e 's|/etc/ssh/sshrc|$(sysconfdir)/sshrc|g' \
 	-e 's|/usr/X11R6/bin/xauth|$(XAUTH_PATH)|g' \
 	-e 's|/var/empty|$(PRIVSEP_PATH)|g' \
-	-e 's|/usr/bin:/bin:/usr/sbin:/sbin|/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin|g'
+	-e 's|/usr/bin:/bin:/usr/sbin:/sbin||g'
 
 FIXPATHSCMD	= $(SED) $(PATHSUBS)
 
@@ -137,13 +138,11 @@ libssh.a: $(LIBSSH_OBJS)
 	$(AR) rv $@ $(LIBSSH_OBJS)
 	$(RANLIB) $@
 
-#NOTARYLIBS= -lcrypto -lssl -lssh -lstdc++ -lcrypto -lz -lssl -lcrypto 
-#NOTARYLIBS_BINARY= -lstdc++ -lz
 
 ssh-binary$(EXEEXT): $(LIBCOMPAT) $(SSHOBJS) 
 	$(LD) -o $@ $(SSHOBJS) $(LDFLAGS) -lssh -lopenbsd-compat libssl.a libcrypto.a 
 
-ssh$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHOBJS) 
+ssh$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHOBJS) $(COMMONOBJS)
 	$(LD) -o $@ $(SSHOBJS) $(COMMONOBJS) $(LDFLAGS) -lssh -lopenbsd-compat $(LIBS)
 
 sshd$(EXEEXT): libssh.a	$(LIBCOMPAT) $(SSHDOBJS)

@@ -71,7 +71,7 @@ int make_timespan_change(DB* db, RSA *priv_key,
       // calling this alone tests the 'update timespan' case
       record_observation(db, priv_key, service_id, 
                                   key_buf, key_len, key_type,
-                                  timestamp);
+                                  timestamp, TRUE);
 
 /*     // uncomment this call to test 'add new timespan' case
        // must also comment out memset above

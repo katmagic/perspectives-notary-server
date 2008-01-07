@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 
+// from NetBSD, apparently this is how you size a unix sock
+#define SUN_LEN(su) \
+      (sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
 
 #define TIMEVAL_TO_MILLIS(t) \
   ((((float)t->tv_sec) * 1000) + (((float)t->tv_usec) / 1000))   
@@ -13,13 +16,13 @@
 #define MILLIS_TO_TIMEVAL_USEC(m) (1000 * (((int)m) % 1000))  
 
 #define TIMEVAL_DIFF_MILLIS(t1,t2) \
-  ((((float)t1.tv_sec - t2.tv_sec) * 1000) \
-   + (((float)t1.tv_usec - t2.tv_usec) / 1000))   
+  ((((double)t1.tv_sec - (double)t2.tv_sec) * 1000) \
+   + (((double)t1.tv_usec - (double)t2.tv_usec) / 1000))   
 
 char *ip_2_str(uint32_t ip);
 
 int sendToUnixSock(char *name, char *buf, int buf_len); 
-int openUnixServerSock(char *name); 
+int openUnixServerSock(char *name, int max_queue); 
 int readUnixClientData(int s, char *buf, int buf_len);
 
 uint32_t str_2_ip(char* ip_str);

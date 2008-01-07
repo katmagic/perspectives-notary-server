@@ -208,7 +208,7 @@ void record_observation(DB* db, RSA *priv_key,
       unsigned int sig_len = SIGNATURE_LEN;
       int ret; 
 
-      if(do_signature) { 
+      if(do_signature) {
         sig_len = -1; 
         ret = get_signature(buf, name_len + data_len, priv_key,
                                   sig_buf, &sig_len);

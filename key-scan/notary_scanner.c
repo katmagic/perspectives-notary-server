@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
+#include <sys/signal.h> 
 
 //#include "patricia.h"
 #include "db.h"
@@ -112,10 +113,9 @@ void handle_finished_client(int cur_time) {
         DPRINTF(DEBUG_INFO, "'%s' has %s key: '%s' \n", buf, 
             keytype_2_str(key_type), str); 
         free(str);
-        
+       
         record_observation(db, priv_key, buf, key_ptr, key_len,
                               key_type, cur_time, DO_SIGNATURE);
-    
 }
 
 
@@ -168,7 +168,7 @@ void spawn_probe(int index, flex_queue *queue, uint32_t now) {
         int service_type = atoi(comma + 1); 
         if(service_type == SERVICE_TYPE_SSH) {
           ssh_args[1] = host_and_port;
-          execv(/*"./empty"*/"../ssh-scanner/ssh"/**/, ssh_args); 
+          execv("../ssh-scanner/ssh", ssh_args); 
         } else if(service_type == SERVICE_TYPE_SSL) {
           ssl_args[3] = host_and_port;
           execv("../ssl-scanner/apps/openssl", ssl_args); 
@@ -244,27 +244,38 @@ void check_server_sockets(uint32_t now) {
     fd_set readset;
     int result;
     struct timeval t;
-    t.tv_sec = 2;
-    t.tv_usec = 0;
-      
-    FD_ZERO(&readset);
-    FD_SET(child_finished_sock, &readset);
-    FD_SET(new_request_sock, &readset);
     int max = (child_finished_sock > new_request_sock) ? 
-		child_finished_sock + 1 : new_request_sock + 1; 
-    result = select(max, &readset, NULL, NULL, &t); 
+        child_finished_sock + 1 : new_request_sock + 1; 
+    int i = 0; 
+    while(1) { 
+      ++i;
+      if(i == 1)
+        t.tv_sec = 1;
+      else 
+        t.tv_sec = 0;
+      t.tv_usec = 0;
 
-    if(result > 0) {
+      FD_ZERO(&readset);
+      FD_SET(child_finished_sock, &readset);
+      FD_SET(new_request_sock, &readset);
+      result = select(max, &readset, NULL, NULL, &t); 
+
+      if(result > 0) {
         if(FD_ISSET(child_finished_sock, &readset)) {
-            handle_finished_client(now);
+          handle_finished_client(now);
         }
         if(FD_ISSET(new_request_sock, &readset)) {
-            add_probe_request(); 
+          add_probe_request(); 
         }
       }else if(result < 0) {
-          perror("select error: ");
+        perror("select error: ");
+        break; 
+      } else {
+        DPRINTF(DEBUG_ERROR, "select exits after %d iterations \n", i); 
+        // select returned nothing  
+        break; 
+      }
     }
-    
 }
 
 
@@ -295,8 +306,9 @@ int main(int argc, char** argv) {
 
    // create global UNIX domain server sockets
    // to get replies from other threads
-  child_finished_sock = openUnixServerSock(FINISHED_CHILD_SOCK_NAME );
-  new_request_sock = openUnixServerSock(NEW_REQUEST_SOCK_NAME);  
+  child_finished_sock = openUnixServerSock(FINISHED_CHILD_SOCK_NAME,
+                                    config.max_simultaneous);
+  new_request_sock = openUnixServerSock(NEW_REQUEST_SOCK_NAME, 100);  
  
   to_probe = queue_init(30, sizeof(char*));
   if(argc == 3) 
@@ -305,7 +317,7 @@ int main(int argc, char** argv) {
   struct timeval start;
   gettimeofday(&start,NULL);
   BOOL is_done = FALSE;
-    
+   
   printf("spawning initial probes \n");
   // spawn initial probes
   for(int i = 0; i < config.max_simultaneous; i++) {
@@ -314,6 +326,8 @@ int main(int argc, char** argv) {
         break;
       }
       spawn_probe(i, to_probe, start.tv_sec);
+      if((i % 40) == 0) 
+        check_server_sockets(start.tv_sec);
       ++total;
   }
   printf("done spawning initial probes \n");
@@ -341,21 +355,31 @@ int main(int argc, char** argv) {
             printf("******** total spawned = %d  finished = %d "
                 "successes = %d ******* \n",  total, finished, successes);
         }
+        if(finished % 10 == 0) {
+          gettimeofday(&now,NULL);
+          //  printf("start: %d sec %d usec \n", start.tv_sec, start.tv_usec);
+          //  printf("now: %d sec %d usec \n", now.tv_sec, now.tv_usec);
+          double since_start = TIMEVAL_DIFF_MILLIS(now,start) / 1000;
+          float finish_rate = ((float)finished/since_start); 
+          float success_rate = ((float)successes/finished); 
+          printf("finish_rate = %0.3f with %0.2f success (%0.3f sec) \n", 
+              finish_rate, success_rate, since_start); 
+
+        }
 
       }
     } // end for 
     
-    gettimeofday(&now,NULL);
-    float since_start = TIMEVAL_DIFF_MILLIS(now,start) / 1000;
-    float finish_rate = ((float)finished/since_start); 
-    float success_rate = ((float)successes/finished); 
-    printf("finish_rate = %0.3f with %0.2f success \n", finish_rate, success_rate); 
 
     // see if a child has reported back, or 
     // if we have received a new probe request
     check_server_sockets(now.tv_sec);
   } // end while
 
+//  printf("WWWWWWWWWWWOOOOOOOOOO  commented out server sock check \n"); 
+
+  close(child_finished_sock);
+  close(new_request_sock); 
   printf("All done with %d probes. %d keys found. \n", total, successes);
   //Destroy_Patricia(not_valid, (void_fn1_t)NULL);
   bdb_close(db);

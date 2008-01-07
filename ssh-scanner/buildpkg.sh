@@ -49,8 +49,8 @@ OPENSSHD=opensshd.init
 OPENSSH_MANIFEST=openssh.xml
 OPENSSH_FMRI=svc:/site/openssh:default
 
-PATH_GROUPADD_PROG=/usr/sbin/groupadd
-PATH_USERADD_PROG=/usr/sbin/useradd
+PATH_GROUPADD_PROG=groupadd
+PATH_USERADD_PROG=useradd
 PATH_PASSWD_PROG=/usr/bin/passwd
 #
 # list of system directories we do NOT want to change owner/group/perms

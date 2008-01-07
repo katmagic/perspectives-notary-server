@@ -29,13 +29,13 @@
 "ls -alTi /var/tmp"			/bin/ls	0.02
 "ls -alTi /usr/tmp"			/bin/ls	0.02
 
-"netstat -an"				/bin/netstat	0.05
-"netstat -in"				/bin/netstat	0.05
-"netstat -rn"				/bin/netstat	0.02
-"netstat -pn"				/bin/netstat	0.02
-"netstat -ia"                           /bin/netstat  0.05
-"netstat -s"				/bin/netstat	0.02
-"netstat -is"				/bin/netstat	0.07
+"netstat -an"				/usr/bin/netstat	0.05
+"netstat -in"				/usr/bin/netstat	0.05
+"netstat -rn"				/usr/bin/netstat	0.02
+"netstat -pn"				/usr/bin/netstat	0.02
+"netstat -ia"                           /usr/bin/netstat  0.05
+"netstat -s"				/usr/bin/netstat	0.02
+"netstat -is"				/usr/bin/netstat	0.07
 
 "arp -n -a"				/usr/sbin/arp	0.02
 
@@ -44,7 +44,7 @@
 "ps laxww"				/bin/ps	0.03
 "ps -al"				/bin/ps	0.03
 "ps -efl"				/bin/ps	0.03
-"jstat"				        undef    0.07
+"jstat"				        /usr/local/bin/jstat    0.07
 
 "w"					/usr/bin/w	0.05
 
@@ -52,7 +52,7 @@
 
 "last"					/usr/bin/last	0.01
 
-"lastlog"				/usr/bin/lastlog	0.01
+"lastlog"				undef	0.01
 
 "df"					/bin/df	0.01
 "df -i"					/bin/df	0.01

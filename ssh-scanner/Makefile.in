@@ -41,7 +41,7 @@ PATHS= -DSSHDIR=\"$(sysconfdir)\" \
 CC=@CC@
 LD=@LD@
 CFLAGS=@CFLAGS@
-CPPFLAGS=-I. -I$(srcdir) @CPPFLAGS@ $(PATHS) @DEFS@
+CPPFLAGS=-I. -I../common -I$(srcdir) @CPPFLAGS@ $(PATHS) @DEFS@
 LIBS=@LIBS@
 LIBSELINUX=@LIBSELINUX@
 SSHDLIBS=@SSHDLIBS@
@@ -76,10 +76,11 @@ LIBSSH_OBJS=acss.o authfd.o authfile.o bufaux.o bufbn.o buffer.o \
 	entropy.o scard-opensc.o gss-genr.o
 
 
-NOTARYOBJS = contact_probe_server.o notary_local.o ssh_notary.o
 
 SSHOBJS= ssh.o readconf.o clientloop.o sshtty.o \
 	sshconnect.o sshconnect1.o sshconnect2.o
+
+COMMONOBJS = ../common/libnotarycommon.a
 
 SSHDOBJS=sshd.o auth-rhosts.o auth-passwd.o auth-rsa.o auth-rh-rsa.o \
 	sshpty.o sshlogin.o servconf.o serverloop.o \
@@ -124,7 +125,6 @@ all: $(CONFIGFILES) ssh_prng_cmds.out $(MANPAGES) $(TARGETS)
 $(LIBSSH_OBJS): Makefile.in config.h
 $(SSHOBJS): Makefile.in config.h
 $(SSHDOBJS): Makefile.in config.h
-$(NOTARYOBJS): Makefile.in config.h
 
 .c.o:
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
@@ -141,11 +141,11 @@ libssh.a: $(LIBSSH_OBJS)
 NOTARYLIBS= -lcrypto -lssl -lssh -lstdc++ -lcrypto -lz -lssl -lcrypto 
 NOTARYLIBS_BINARY= -lstdc++ -lz
 
-ssh-binary$(EXEEXT): $(LIBCOMPAT) $(SSHOBJS) $(NOTARYOBJS)
-	$(LD) -o $@ $(SSHOBJS) $(NOTARYOBJS) $(LDFLAGS) $(NOTARYLIBS_BINARY) -lssh -lopenbsd-compat libssl.a libcrypto.a 
+ssh-binary$(EXEEXT): $(LIBCOMPAT) $(SSHOBJS) 
+	$(LD) -o $@ $(SSHOBJS) $(LDFLAGS) $(NOTARYLIBS_BINARY) -lssh -lopenbsd-compat libssl.a libcrypto.a 
 
-ssh$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHOBJS) $(NOTARYOBJS)
-	$(LD) -o $@ $(SSHOBJS) $(NOTARYOBJS) $(LDFLAGS) $(NOTARYLIBS) -lssh -lopenbsd-compat $(LIBS)
+ssh$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHOBJS) $(COMMONOBJS)
+	$(LD) -o $@ $(SSHOBJS) $(COMMONOBJS) $(LDFLAGS) $(NOTARYLIBS) -lssh -lopenbsd-compat $(LIBS)
 
 sshd$(EXEEXT): libssh.a	$(LIBCOMPAT) $(SSHDOBJS)
 	$(LD) -o $@ $(SSHDOBJS) $(LDFLAGS) -lssh -lopenbsd-compat $(LIBWRAP) $(LIBPAM) $(LIBSELINUX) $(SSHDLIBS) $(LIBS)

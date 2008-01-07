@@ -59,21 +59,23 @@ void close_db(int signal) {
 
 int main(int argc, char** argv) {
                  
-      if(argc != 3) {
-        printf("usage: <db-in> <file-out> \n");
+      if(argc != 4) {
+        printf("usage: <db-env> <db-name> <file-out> \n");
         exit(1);
       }
 
       signal(SIGINT, close_db);
 
-      db = bdb_open(argv[1], DB_CREATE);
+      uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
+      db = bdb_open_env(argv[1], env_flags, argv[2], DB_RDONLY);
+    //  db = bdb_open(argv[1], DB_CREATE);
       if(db == NULL) {
           printf("bdb_open failed \n");
           exit(1);
       }
 
 
-      f = fopen(argv[2], "w");
+      f = fopen(argv[3], "w");
       loop_over();
 
       bdb_close(db);

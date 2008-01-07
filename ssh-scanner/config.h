@@ -70,13 +70,13 @@
 /* #undef CONF_UTMPX_FILE */
 
 /* Define if you want to specify the path to your utmp file */
-/* #undef CONF_UTMP_FILE */
+#define CONF_UTMP_FILE "/var/run/utmp"
 
 /* Define if you want to specify the path to your wtmpx file */
 /* #undef CONF_WTMPX_FILE */
 
 /* Define if you want to specify the path to your wtmp file */
-/* #undef CONF_WTMP_FILE */
+#define CONF_WTMP_FILE "/var/log/wtmp"
 
 /* Define if your platform needs to skip post auth file descriptor passing */
 /* #undef DISABLE_FD_PASSING */
@@ -109,7 +109,7 @@
 #define DISABLE_WTMPX 1
 
 /* Workaround more Linux IPv6 quirks */
-#define DONT_TRY_OTHER_AF 1
+/* #undef DONT_TRY_OTHER_AF */
 
 /* Builtin PRNG command timeout */
 #define ENTROPY_TIMEOUT_MSEC 200
@@ -124,31 +124,31 @@
 #define GLOB_HAS_ALTDIRFUNC 1
 
 /* Define if your system glob() function has gl_matchc options in glob_t */
-/* #undef GLOB_HAS_GL_MATCHC */
+#define GLOB_HAS_GL_MATCHC 1
 
 /* Define this if you want GSSAPI support in the version 2 protocol */
 /* #undef GSSAPI */
 
 /* Define if you want to use shadow password expire field */
-#define HAS_SHADOW_EXPIRE 1
+/* #undef HAS_SHADOW_EXPIRE */
 
 /* Define if your system uses access rights style file descriptor passing */
 /* #undef HAVE_ACCRIGHTS_IN_MSGHDR */
 
 /* Define if you have ut_addr in utmp.h */
-#define HAVE_ADDR_IN_UTMP 1
+/* #undef HAVE_ADDR_IN_UTMP */
 
 /* Define if you have ut_addr in utmpx.h */
-#define HAVE_ADDR_IN_UTMPX 1
+/* #undef HAVE_ADDR_IN_UTMPX */
 
 /* Define if you have ut_addr_v6 in utmp.h */
-#define HAVE_ADDR_V6_IN_UTMP 1
+/* #undef HAVE_ADDR_V6_IN_UTMP */
 
 /* Define if you have ut_addr_v6 in utmpx.h */
-#define HAVE_ADDR_V6_IN_UTMPX 1
+/* #undef HAVE_ADDR_V6_IN_UTMPX */
 
 /* Define to 1 if you have the `arc4random' function. */
-/* #undef HAVE_ARC4RANDOM */
+#define HAVE_ARC4RANDOM 1
 
 /* Define to 1 if you have the `asprintf' function. */
 #define HAVE_ASPRINTF 1
@@ -172,7 +172,7 @@
 #define HAVE_BCOPY 1
 
 /* Define to 1 if you have the `bindresvport_sa' function. */
-/* #undef HAVE_BINDRESVPORT_SA */
+#define HAVE_BINDRESVPORT_SA 1
 
 /* Define to 1 if you have the <bsm/audit.h> header file. */
 /* #undef HAVE_BSM_AUDIT_H */
@@ -199,7 +199,7 @@
 /* #undef HAVE_CRYPTO_SHA2_H */
 
 /* Define to 1 if you have the <crypt.h> header file. */
-#define HAVE_CRYPT_H 1
+/* #undef HAVE_CRYPT_H */
 
 /* Define if you are on Cygwin */
 /* #undef HAVE_CYGWIN */
@@ -269,28 +269,28 @@
 #define HAVE_DIRENT_H 1
 
 /* Define to 1 if you have the `dirfd' function. */
-#define HAVE_DIRFD 1
+/* #undef HAVE_DIRFD */
 
 /* Define to 1 if you have the `dirname' function. */
 #define HAVE_DIRNAME 1
 
 /* Define to 1 if you have the <endian.h> header file. */
-#define HAVE_ENDIAN_H 1
+/* #undef HAVE_ENDIAN_H */
 
 /* Define to 1 if you have the `endutent' function. */
-#define HAVE_ENDUTENT 1
+/* #undef HAVE_ENDUTENT */
 
 /* Define to 1 if you have the `endutxent' function. */
-#define HAVE_ENDUTXENT 1
+/* #undef HAVE_ENDUTXENT */
 
 /* Define if your system has /etc/default/login */
 /* #undef HAVE_ETC_DEFAULT_LOGIN */
 
 /* Define to 1 if you have the `EVP_sha256' function. */
-#define HAVE_EVP_SHA256 1
+/* #undef HAVE_EVP_SHA256 */
 
 /* Define if you have ut_exit in utmp.h */
-#define HAVE_EXIT_IN_UTMP 1
+/* #undef HAVE_EXIT_IN_UTMP */
 
 /* Define to 1 if you have the `fchmod' function. */
 #define HAVE_FCHMOD 1
@@ -305,10 +305,10 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the <features.h> header file. */
-#define HAVE_FEATURES_H 1
+/* #undef HAVE_FEATURES_H */
 
 /* Define to 1 if you have the <floatingpoint.h> header file. */
-/* #undef HAVE_FLOATINGPOINT_H */
+#define HAVE_FLOATINGPOINT_H 1
 
 /* Define to 1 if you have the `freeaddrinfo' function. */
 #define HAVE_FREEADDRINFO 1
@@ -347,13 +347,13 @@
 #define HAVE_GETOPT_H 1
 
 /* Define if your getopt(3) defines and uses optreset */
-/* #undef HAVE_GETOPT_OPTRESET */
+#define HAVE_GETOPT_OPTRESET 1
 
 /* Define if your libraries define getpagesize() */
 #define HAVE_GETPAGESIZE 1
 
 /* Define to 1 if you have the `getpeereid' function. */
-/* #undef HAVE_GETPEEREID */
+#define HAVE_GETPEEREID 1
 
 /* Define to 1 if you have the `getpwanam' function. */
 /* #undef HAVE_GETPWANAM */
@@ -377,22 +377,22 @@
 #define HAVE_GETTTYENT 1
 
 /* Define to 1 if you have the `getutent' function. */
-#define HAVE_GETUTENT 1
+/* #undef HAVE_GETUTENT */
 
 /* Define to 1 if you have the `getutid' function. */
-#define HAVE_GETUTID 1
+/* #undef HAVE_GETUTID */
 
 /* Define to 1 if you have the `getutline' function. */
-#define HAVE_GETUTLINE 1
+/* #undef HAVE_GETUTLINE */
 
 /* Define to 1 if you have the `getutxent' function. */
-#define HAVE_GETUTXENT 1
+/* #undef HAVE_GETUTXENT */
 
 /* Define to 1 if you have the `getutxid' function. */
-#define HAVE_GETUTXID 1
+/* #undef HAVE_GETUTXID */
 
 /* Define to 1 if you have the `getutxline' function. */
-#define HAVE_GETUTXLINE 1
+/* #undef HAVE_GETUTXLINE */
 
 /* Define to 1 if you have the `get_default_context_with_level' function. */
 /* #undef HAVE_GET_DEFAULT_CONTEXT_WITH_LEVEL */
@@ -428,7 +428,7 @@
 #define HAVE_HOST_IN_UTMP 1
 
 /* Define if you have ut_host in utmpx.h */
-#define HAVE_HOST_IN_UTMPX 1
+/* #undef HAVE_HOST_IN_UTMPX */
 
 /* Define to 1 if you have the <iaf.h> header file. */
 /* #undef HAVE_IAF_H */
@@ -437,10 +437,10 @@
 /* #undef HAVE_IA_H */
 
 /* Define if you have ut_id in utmp.h */
-#define HAVE_ID_IN_UTMP 1
+/* #undef HAVE_ID_IN_UTMP */
 
 /* Define if you have ut_id in utmpx.h */
-#define HAVE_ID_IN_UTMPX 1
+/* #undef HAVE_ID_IN_UTMPX */
 
 /* Define to 1 if you have the `inet_aton' function. */
 #define HAVE_INET_ATON 1
@@ -467,7 +467,7 @@
 #define HAVE_IN_ADDR_T 1
 
 /* Define to 1 if you have the <lastlog.h> header file. */
-#define HAVE_LASTLOG_H 1
+/* #undef HAVE_LASTLOG_H */
 
 /* Define to 1 if you have the `bsm' library (-lbsm). */
 /* #undef HAVE_LIBBSM */
@@ -485,7 +485,7 @@
 /* #undef HAVE_LIBIAF */
 
 /* Define to 1 if you have the `nsl' library (-lnsl). */
-#define HAVE_LIBNSL 1
+/* #undef HAVE_LIBNSL */
 
 /* Define to 1 if you have the `pam' library (-lpam). */
 /* #undef HAVE_LIBPAM */
@@ -497,7 +497,7 @@
 /* #undef HAVE_LIBSOCKET */
 
 /* Define to 1 if you have the <libutil.h> header file. */
-/* #undef HAVE_LIBUTIL_H */
+#define HAVE_LIBUTIL_H 1
 
 /* Define to 1 if you have the `xnet' library (-lxnet). */
 /* #undef HAVE_LIBXNET */
@@ -509,16 +509,16 @@
 #define HAVE_LIMITS_H 1
 
 /* Define to 1 if you have the <linux/if_tun.h> header file. */
-#define HAVE_LINUX_IF_TUN_H 1
+/* #undef HAVE_LINUX_IF_TUN_H */
 
 /* Define if your libraries define login() */
 #define HAVE_LOGIN 1
 
 /* Define to 1 if you have the <login_cap.h> header file. */
-/* #undef HAVE_LOGIN_CAP_H */
+#define HAVE_LOGIN_CAP_H 1
 
 /* Define to 1 if you have the `login_getcapbool' function. */
-/* #undef HAVE_LOGIN_GETCAPBOOL */
+#define HAVE_LOGIN_GETCAPBOOL 1
 
 /* Define to 1 if you have the <login.h> header file. */
 /* #undef HAVE_LOGIN_H */
@@ -572,7 +572,7 @@
 /* #undef HAVE_NETGROUP_H */
 
 /* Define to 1 if you have the <net/if_tun.h> header file. */
-/* #undef HAVE_NET_IF_TUN_H */
+#define HAVE_NET_IF_TUN_H 1
 
 /* Define if you are on NeXT */
 /* #undef HAVE_NEXT */
@@ -615,43 +615,43 @@
 #define HAVE_PATHS_H 1
 
 /* Define if you have ut_pid in utmp.h */
-#define HAVE_PID_IN_UTMP 1
+/* #undef HAVE_PID_IN_UTMP */
 
 /* define if you have pid_t data type */
 #define HAVE_PID_T 1
 
 /* Define to 1 if you have the `prctl' function. */
-#define HAVE_PRCTL 1
+/* #undef HAVE_PRCTL */
 
 /* Define if you have /proc/$pid/fd */
-#define HAVE_PROC_PID 1
+/* #undef HAVE_PROC_PID */
 
 /* Define to 1 if you have the `pstat' function. */
 /* #undef HAVE_PSTAT */
 
 /* Define to 1 if you have the <pty.h> header file. */
-#define HAVE_PTY_H 1
+/* #undef HAVE_PTY_H */
 
 /* Define to 1 if you have the `pututline' function. */
-#define HAVE_PUTUTLINE 1
+/* #undef HAVE_PUTUTLINE */
 
 /* Define to 1 if you have the `pututxline' function. */
-#define HAVE_PUTUTXLINE 1
+/* #undef HAVE_PUTUTXLINE */
 
 /* Define if your password has a pw_change field */
-/* #undef HAVE_PW_CHANGE_IN_PASSWD */
+#define HAVE_PW_CHANGE_IN_PASSWD 1
 
 /* Define if your password has a pw_class field */
-/* #undef HAVE_PW_CLASS_IN_PASSWD */
+#define HAVE_PW_CLASS_IN_PASSWD 1
 
 /* Define if your password has a pw_expire field */
-/* #undef HAVE_PW_EXPIRE_IN_PASSWD */
+#define HAVE_PW_EXPIRE_IN_PASSWD 1
 
 /* Define to 1 if you have the `readpassphrase' function. */
-/* #undef HAVE_READPASSPHRASE */
+#define HAVE_READPASSPHRASE 1
 
 /* Define to 1 if you have the <readpassphrase.h> header file. */
-/* #undef HAVE_READPASSPHRASE_H */
+#define HAVE_READPASSPHRASE_H 1
 
 /* Define to 1 if you have the `realpath' function. */
 #define HAVE_REALPATH 1
@@ -699,7 +699,7 @@
 #define HAVE_SETGROUPS 1
 
 /* Define to 1 if you have the `setlogin' function. */
-/* #undef HAVE_SETLOGIN */
+#define HAVE_SETLOGIN 1
 
 /* Define to 1 if you have the `setluid' function. */
 /* #undef HAVE_SETLUID */
@@ -708,7 +708,7 @@
 /* #undef HAVE_SETPCRED */
 
 /* Define to 1 if you have the `setproctitle' function. */
-/* #undef HAVE_SETPROCTITLE */
+#define HAVE_SETPROCTITLE 1
 
 /* Define to 1 if you have the `setregid' function. */
 #define HAVE_SETREGID 1
@@ -729,22 +729,22 @@
 #define HAVE_SETSID 1
 
 /* Define to 1 if you have the `setutent' function. */
-#define HAVE_SETUTENT 1
+/* #undef HAVE_SETUTENT */
 
 /* Define to 1 if you have the `setutxent' function. */
-#define HAVE_SETUTXENT 1
+/* #undef HAVE_SETUTXENT */
 
 /* Define to 1 if you have the `setvbuf' function. */
 #define HAVE_SETVBUF 1
 
 /* Define to 1 if you have the `SHA256_Update' function. */
-#define HAVE_SHA256_UPDATE 1
+/* #undef HAVE_SHA256_UPDATE */
 
 /* Define to 1 if you have the <sha2.h> header file. */
 /* #undef HAVE_SHA2_H */
 
 /* Define to 1 if you have the <shadow.h> header file. */
-#define HAVE_SHADOW_H 1
+/* #undef HAVE_SHADOW_H */
 
 /* Define to 1 if you have the `sigaction' function. */
 #define HAVE_SIGACTION 1
@@ -765,7 +765,7 @@
 #define HAVE_SOCKETPAIR 1
 
 /* Have PEERCRED socket option */
-#define HAVE_SO_PEERCRED 1
+/* #undef HAVE_SO_PEERCRED */
 
 /* define if you have ssize_t data type */
 #define HAVE_SSIZE_T 1
@@ -792,7 +792,7 @@
 #define HAVE_STRFTIME 1
 
 /* Silly mkstemp() */
-#define HAVE_STRICT_MKSTEMP 1
+/* #undef HAVE_STRICT_MKSTEMP */
 
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
@@ -801,13 +801,13 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the `strlcat' function. */
-/* #undef HAVE_STRLCAT */
+#define HAVE_STRLCAT 1
 
 /* Define to 1 if you have the `strlcpy' function. */
-/* #undef HAVE_STRLCPY */
+#define HAVE_STRLCPY 1
 
 /* Define to 1 if you have the `strmode' function. */
-/* #undef HAVE_STRMODE */
+#define HAVE_STRMODE 1
 
 /* Define to 1 if you have the `strnvis' function. */
 /* #undef HAVE_STRNVIS */
@@ -819,7 +819,7 @@
 #define HAVE_STRTOLL 1
 
 /* Define to 1 if you have the `strtonum' function. */
-/* #undef HAVE_STRTONUM */
+#define HAVE_STRTONUM 1
 
 /* Define to 1 if you have the `strtoul' function. */
 #define HAVE_STRTOUL 1
@@ -855,7 +855,7 @@
 /* #undef HAVE_SYS_AUDIT_H */
 
 /* Define to 1 if you have the <sys/bitypes.h> header file. */
-#define HAVE_SYS_BITYPES_H 1
+/* #undef HAVE_SYS_BITYPES_H */
 
 /* Define to 1 if you have the <sys/bsdtty.h> header file. */
 /* #undef HAVE_SYS_BSDTTY_H */
@@ -879,7 +879,7 @@
 #define HAVE_SYS_NERR 1
 
 /* Define to 1 if you have the <sys/prctl.h> header file. */
-#define HAVE_SYS_PRCTL_H 1
+/* #undef HAVE_SYS_PRCTL_H */
 
 /* Define to 1 if you have the <sys/pstat.h> header file. */
 /* #undef HAVE_SYS_PSTAT_H */
@@ -897,7 +897,7 @@
 /* #undef HAVE_SYS_STREAM_H */
 
 /* Define to 1 if you have the <sys/stropts.h> header file. */
-#define HAVE_SYS_STROPTS_H 1
+/* #undef HAVE_SYS_STROPTS_H */
 
 /* Define to 1 if you have the <sys/strtio.h> header file. */
 /* #undef HAVE_SYS_STRTIO_H */
@@ -906,10 +906,10 @@
 /* #undef HAVE_SYS_SYSLOG_H */
 
 /* Define to 1 if you have the <sys/sysmacros.h> header file. */
-#define HAVE_SYS_SYSMACROS_H 1
+/* #undef HAVE_SYS_SYSMACROS_H */
 
 /* Define to 1 if you have the <sys/timers.h> header file. */
-/* #undef HAVE_SYS_TIMERS_H */
+#define HAVE_SYS_TIMERS_H 1
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #define HAVE_SYS_TIME_H 1
@@ -933,7 +933,7 @@
 #define HAVE_TIME_H 1
 
 /* Define if you have ut_time in utmp.h */
-/* #undef HAVE_TIME_IN_UTMP */
+#define HAVE_TIME_IN_UTMP 1
 
 /* Define if you have ut_time in utmpx.h */
 /* #undef HAVE_TIME_IN_UTMPX */
@@ -948,16 +948,16 @@
 #define HAVE_TTYENT_H 1
 
 /* Define if you have ut_tv in utmp.h */
-#define HAVE_TV_IN_UTMP 1
+/* #undef HAVE_TV_IN_UTMP */
 
 /* Define if you have ut_tv in utmpx.h */
-#define HAVE_TV_IN_UTMPX 1
+/* #undef HAVE_TV_IN_UTMPX */
 
 /* Define if you have ut_type in utmp.h */
-#define HAVE_TYPE_IN_UTMP 1
+/* #undef HAVE_TYPE_IN_UTMP */
 
 /* Define if you have ut_type in utmpx.h */
-#define HAVE_TYPE_IN_UTMPX 1
+/* #undef HAVE_TYPE_IN_UTMPX */
 
 /* define if you have uintxx_t data type */
 #define HAVE_UINTXX_T 1
@@ -972,10 +972,10 @@
 #define HAVE_UNSIGNED_LONG_LONG 1
 
 /* Define to 1 if you have the `updwtmp' function. */
-#define HAVE_UPDWTMP 1
+/* #undef HAVE_UPDWTMP */
 
 /* Define to 1 if you have the `updwtmpx' function. */
-#define HAVE_UPDWTMPX 1
+/* #undef HAVE_UPDWTMPX */
 
 /* Define to 1 if you have the <usersec.h> header file. */
 /* #undef HAVE_USERSEC_H */
@@ -990,13 +990,13 @@
 #define HAVE_UTIME_H 1
 
 /* Define to 1 if you have the `utmpname' function. */
-#define HAVE_UTMPNAME 1
+/* #undef HAVE_UTMPNAME */
 
 /* Define to 1 if you have the `utmpxname' function. */
-#define HAVE_UTMPXNAME 1
+/* #undef HAVE_UTMPXNAME */
 
 /* Define to 1 if you have the <utmpx.h> header file. */
-#define HAVE_UTMPX_H 1
+/* #undef HAVE_UTMPX_H */
 
 /* Define to 1 if you have the <utmp.h> header file. */
 #define HAVE_UTMP_H 1
@@ -1020,10 +1020,10 @@
 #define HAVE_VA_COPY 1
 
 /* Define to 1 if you have the `vhangup' function. */
-#define HAVE_VHANGUP 1
+/* #undef HAVE_VHANGUP */
 
 /* Define to 1 if you have the <vis.h> header file. */
-/* #undef HAVE_VIS_H */
+#define HAVE_VIS_H 1
 
 /* Define to 1 if you have the `vsnprintf' function. */
 #define HAVE_VSNPRINTF 1
@@ -1041,10 +1041,10 @@
 #define HAVE__GETSHORT 1
 
 /* Define to 1 if you have the `__b64_ntop' function. */
-/* #undef HAVE___B64_NTOP */
+#define HAVE___B64_NTOP 1
 
 /* Define to 1 if you have the `__b64_pton' function. */
-/* #undef HAVE___B64_PTON */
+#define HAVE___B64_PTON 1
 
 /* Define if compiler implements __FUNCTION__ */
 #define HAVE___FUNCTION__ 1
@@ -1068,7 +1068,7 @@
 /* #undef IPADDR_IN_DISPLAY */
 
 /* Detect IPv4 in IPv6 mapped addresses and treat as IPv4 */
-#define IPV4_IN_IPV6 1
+/* #undef IPV4_IN_IPV6 */
 
 /* Define if your system choked on IP TOS setting */
 /* #undef IP_TOS_IS_BROKEN */
@@ -1081,7 +1081,7 @@
 
 /* Define to whatever link() returns for "not supported" if it doesn't return
    EOPNOTSUPP. */
-#define LINK_OPNOTSUPP_ERRNO EPERM
+/* #undef LINK_OPNOTSUPP_ERRNO */
 
 /* max value of long long calculated by configure */
 /* #undef LLONG_MAX */
@@ -1090,7 +1090,7 @@
 /* #undef LLONG_MIN */
 
 /* Account locked with pw(1) */
-#define LOCKED_PASSWD_PREFIX "!"
+#define LOCKED_PASSWD_PREFIX "*LOCKED*"
 
 /* String used in /etc/passwd to denote locked account */
 /* #undef LOCKED_PASSWD_STRING */
@@ -1109,7 +1109,7 @@
 
 /* If your header files don't define LOGIN_PROGRAM, then use this (detected)
    from environment and PATH */
-#define LOGIN_PROGRAM_FALLBACK "/bin/login"
+#define LOGIN_PROGRAM_FALLBACK "/usr/bin/login"
 
 /* Set this to your mail directory if you don't have maillock.h */
 /* #undef MAIL_DIRECTORY */
@@ -1161,7 +1161,7 @@
 /* #undef PAM_SUN_CODEBASE */
 
 /* Work around problematic Linux PAM modules handling of PAM_TTY */
-#define PAM_TTY_KLUDGE 1
+/* #undef PAM_TTY_KLUDGE */
 
 /* must supply username to passwd */
 /* #undef PASSWD_NEEDS_USERNAME */
@@ -1185,7 +1185,7 @@
 #define SIZEOF_INT 4
 
 /* The size of `long int', as computed by sizeof. */
-#define SIZEOF_LONG_INT 4
+#define SIZEOF_LONG_INT 8
 
 /* The size of `long long int', as computed by sizeof. */
 #define SIZEOF_LONG_LONG_INT 8
@@ -1207,7 +1207,7 @@
 
 /* Define to a Set Process Title type if your system is supported by
    bsd-setproctitle.c */
-#define SPT_TYPE SPT_REUSEARGV
+/* #undef SPT_TYPE */
 
 /* Define if sshd somehow reacquires a controlling TTY after setsid() */
 /* #undef SSHD_ACQUIRES_CTTY */
@@ -1222,13 +1222,13 @@
 #define SSH_PRIVSEP_USER "sshd"
 
 /* Use tunnel device compatibility to OpenBSD */
-#define SSH_TUN_COMPAT_AF 1
+/* #undef SSH_TUN_COMPAT_AF */
 
 /* Open tunnel devices the FreeBSD way */
-/* #undef SSH_TUN_FREEBSD */
+#define SSH_TUN_FREEBSD 1
 
 /* Open tunnel devices the Linux tun/tap way */
-#define SSH_TUN_LINUX 1
+/* #undef SSH_TUN_LINUX */
 
 /* No layer 2 tunnel support */
 /* #undef SSH_TUN_NO_L2 */
@@ -1237,7 +1237,7 @@
 /* #undef SSH_TUN_OPENBSD */
 
 /* Prepend the address family to IP tunnel traffic */
-#define SSH_TUN_PREPEND_AF 1
+/* #undef SSH_TUN_PREPEND_AF */
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -1252,7 +1252,7 @@
 /* #undef UNIXWARE_LONG_PASSWORDS */
 
 /* Specify default $PATH */
-#define USER_PATH "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin"
+/* #undef USER_PATH */
 
 /* Define this if you want to use libkafs' AFS support */
 /* #undef USE_AFS */
@@ -1261,7 +1261,7 @@
 /* #undef USE_BSM_AUDIT */
 
 /* Use btmp to log bad logins */
-#define USE_BTMP 1
+/* #undef USE_BTMP */
 
 /* Use libedit for sftp */
 /* #undef USE_LIBEDIT */
@@ -1311,16 +1311,16 @@
 /* #undef WORDS_BIGENDIAN */
 
 /* Define if xauth is found in your path */
-#define XAUTH_PATH "/usr/bin/xauth"
+#define XAUTH_PATH "/usr/X11R6/bin/xauth"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
-#define _FILE_OFFSET_BITS 64
+/* #undef _FILE_OFFSET_BITS */
 
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
 
 /* log for bad login attempts */
-#define _PATH_BTMP "/var/log/btmp"
+/* #undef _PATH_BTMP */
 
 /* Full path of your "passwd" program */
 #define _PATH_PASSWD_PROG "/usr/bin/passwd"

@@ -21,10 +21,11 @@ int sendToUnixSock(char *name, char *buf, int buf_len){
         perror("socket");
         return -1;
     }
-    
+   
     remote.sun_family = AF_UNIX;
     strcpy(remote.sun_path, name);
-    len = strlen(remote.sun_path) + sizeof(remote.sun_family);
+//    len = SUN_LEN((&remote));
+    len = strlen(remote.sun_path) + sizeof(remote.sun_family) + 1;
     if (connect(s, (struct sockaddr *)&remote, len) == -1) {
         perror("connect");
         return -1;
@@ -39,7 +40,7 @@ int sendToUnixSock(char *name, char *buf, int buf_len){
     return n; 
 }
 
-int openUnixServerSock(char *name) {
+int openUnixServerSock(char *name, int max_queue) {
     int s, len;
     struct sockaddr_un local;
 
@@ -51,13 +52,15 @@ int openUnixServerSock(char *name) {
     local.sun_family = AF_UNIX;
     strcpy(local.sun_path, name);
     unlink(local.sun_path);
-    len = strlen(local.sun_path) + sizeof(local.sun_family);
+
+    //len = SUN_LEN((&local));
+    len = strlen(local.sun_path) + sizeof(local.sun_family) + 1;
     if (bind(s, (struct sockaddr *)&local, len) == -1) {
         perror("unix bind");
         exit(1);
     }
 
-    if (listen(s, 5) == -1) {
+    if (listen(s,max_queue) == -1) {
         perror("unix listen");
         exit(1);
     }
