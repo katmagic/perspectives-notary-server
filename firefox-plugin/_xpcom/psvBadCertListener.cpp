@@ -158,8 +158,7 @@ char *read_file(char *file_name, int *buf_len)
         LL_L2UI(fs, fileSize);  
 
         FILE* openFile; 
-        //rv = localFile->OpenANSIFileDesc("rw", &openFile); 
-        rv = file->OpenANSIFileDesc("rw", &openFile); 
+        rv = file->OpenANSIFileDesc("r", &openFile); 
         if (NS_FAILED(rv)) 
         {
             PR_fprintf(PR_STDERR, "OpenANSIFileDesc failed \n");
@@ -306,7 +305,7 @@ PRBool probe_key( nsIX509Cert *cert,
 
      PR_fprintf(PR_STDERR, "Loaded Notary Servers \n");
 
-     snprintf(buf, 512, "%s:%d", url, SERVICE_TYPE_SSL);
+     snprintf(buf, 512, "%s:443:%d", url, SERVICE_TYPE_SSL);
      fetch_notary_observations(notary, buf, TIMEOUT, NUM_RETRIES);
 
      print_notary_reply(stderr, notary);
@@ -368,6 +367,13 @@ NS_IMETHODIMP psvBadCertListener::ConfirmUnknownIssuer(nsIInterfaceRequestor *so
      PRBool mask_dialog = PR_FALSE;
     
      *_retval = PR_FALSE;
+#if 0
+    nsCOMPtr<nsISocketTransport> sock = socketInfo->getInterface("@mozilla.org/network/socket-transport:1");
+
+    printf("Socket is %p \n", sock);
+#endif
+
+
      url = get_url(cert);
      
      if(url == NULL)
