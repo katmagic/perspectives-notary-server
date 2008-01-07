@@ -119,10 +119,12 @@
 
 using namespace std;
 
+#define SRC_PORT 2222
+#define DST_PORT 443
+#define MYSQL_TABLE "https_scan"
 
 
-
-void send_probe(int raw_sd, u32 src_addr, u32 dst_addr, u8 flags) {
+void send_probe(int raw_sd, u32 src_addr, u16 src_port, u32 dst_addr, u16 dst_port, u8 flags) {
   u8 *packet = NULL;
   u32 packetlen = 0;
   u16 ipid = get_random_u16();
@@ -139,7 +141,7 @@ void send_probe(int raw_sd, u32 src_addr, u32 dst_addr, u8 flags) {
       packet = build_tcp_raw(src, dst,
       			     30, ipid, IP_TOS_DEFAULT, false, // ttl, ipid, etc.
       			     NULL, 0, //ip options 
-      			     2222 , 22,  // ports
+      			     src_port , dst_port,  // ports
       			     rand(), rand(), // syn / ack 
                              0, flags, 0, 0, // tcp params
       			     tcpops, tcpopslen, NULL, 0, // tcp opts
@@ -202,7 +204,8 @@ int read_reply(pcap_t *pd, struct timeval *stime, int rawsd, u32 src_addr){
 	  /* Now that response has been matched to a probe, I interpret it */
 	  if (tcp->th_flags == (TH_SYN|TH_ACK)) {
 	    /* Yeah!  An open port */
-//	    printf("port opened for %s \n", ip_str);
+	    printf("%s:443,2\n", ip_str);
+          //  send_probe(rawsd, src_addr, SRC_PORT, ip->ip_src.s_addr, DST_PORT, TH_RST);
             return *(int*)&ip->ip_src.s_addr;
 	  } else if (tcp->th_flags & TH_RST ||
                     tcp->th_flags & TH_FIN) {
@@ -212,7 +215,7 @@ int read_reply(pcap_t *pd, struct timeval *stime, int rawsd, u32 src_addr){
                 printf("Sent curtesy reset to %s (unexpected TCP flags: %d)\n", 
                   ip_str, tcp->th_flags);
              }
-            send_probe(rawsd, src_addr, ip->ip_src.s_addr, TH_RST);
+         //   send_probe(rawsd, src_addr, SRC_PORT, ip->ip_src.s_addr, DST_PORT, TH_RST);
 	  }
     }
   
@@ -242,7 +245,7 @@ static MYSQL * init_sql_conn() {
 void store_ip(MYSQL* mysql, u32 ip_addr) {
 
     char buf[64];
-   snprintf(buf, 64, "REPLACE into quick_scan(ip_addr) values (%d)", ip_addr);
+   snprintf(buf, 64, "REPLACE into %s(ip_addr) values (%d)", MYSQL_TABLE, ip_addr);
 
     if(mysql_real_query(mysql, buf,strlen(buf)) !=0){
                 printf( "Error inserting into quick_scan DB: %s \n", mysql_error(mysql));
@@ -294,7 +297,9 @@ int dan_main(int argc, char** argv) {
 
   char* dev_name = "eth0";
   pcap_t *pd = my_pcap_open_live(dev_name, 100, 0, pcap_selectable_fd_valid()? 200 : 2);
-  set_pcap_filter(dev_name, pd, "tcp and dst port 2222");
+  char filter[500];
+  snprintf(filter, 500, "tcp and dst port %d", SRC_PORT); 
+  set_pcap_filter(dev_name, pd, filter);
 
   u32 src_addr, start_addr;
   inet_aton(argv[1], (struct in_addr*)&start_addr);
@@ -304,10 +309,10 @@ int dan_main(int argc, char** argv) {
   exception_ips = probed_ips = observed_ips = nonrouteable_ips = 0;
 
   u32 start = ntohl(start_addr);
-  start = start & ~(0xffff);
+ // start = start & ~(0xffff); this assumes that we are scanning at least a /16
   
   u8 net_bits = atoi(argv[2]); 
-  u8 batch_bits = 14; // 16,000 in a batch
+  u8 batch_bits = 6; // 2^batch_bits hosts in a batch
   u8 tail_bits = 32 - net_bits - batch_bits;
 
   u16 batch_val = 0;
@@ -337,7 +342,7 @@ int dan_main(int argc, char** argv) {
           continue;
        }
        ++probed_ips;
-       send_probe(rawsd, src_addr, net_ip, TH_SYN);
+       send_probe(rawsd, src_addr, SRC_PORT, net_ip, DST_PORT, TH_SYN);
 //       printf("IP = %s \n", inet_ntoa(*(struct in_addr*)&(net_ip)));
   
        if(probed_ips % 10000 == 0) {

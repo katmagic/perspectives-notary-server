@@ -9,6 +9,9 @@ CFLAGS=-g -O2 -I. -Wall -Wpointer-arith -Wuninitialized -Wsign-compare -std=gnu9
 notary_scanner: notary_scanner.o
 	gcc $(LDFLAGS) $? $(LIBS) -o $@
 
+empty: empty.o
+	gcc $(LDFLAGS) $? $(LIBS) -o $@
+
 .c.o:
 	gcc $(CFLAGS) $(CPPFLAGS) -c $<
 

@@ -81,7 +81,7 @@ unsigned int get_data(DB* db, char* host_and_port, char* buf,
             
             if ((ret = db->get(db, NULL, &key, &data, 0)) != 0){
                 if(ret == DB_NOTFOUND) {
-                  DPRINTF(DEBUG_ERROR, "No service-entry for: '%s' (len = %d ) \n",
+                  DPRINTF(DEBUG_INFO, "No service-entry for: '%s' (len = %d ) \n",
                       (char*)key.data, key.size);
                 }else {
                   db->err(db, ret, "DB->get");
@@ -170,7 +170,8 @@ void warm_db(DB* db) {
 void record_observation(DB* db, RSA *priv_key,
                                   char* service_id, char *digest, 
                                   int digest_len,
-                                  int key_type, int timestamp) {
+                                  int key_type, int timestamp,
+                                  BOOL do_signature) {
       char buf[MAX_PACKET_LEN];
       ssh_key_info_list *info_list = NULL;
 
@@ -202,17 +203,22 @@ void record_observation(DB* db, RSA *priv_key,
 
       data_len = data_from_list(info_list, buf + name_len, 
                                       MAX_PACKET_LEN - name_len);
-      unsigned int sig_len = -1;
       unsigned char sig_buf[SIGNATURE_LEN];
-      int ret = get_signature(buf, name_len + data_len, priv_key,
-                                  sig_buf, &sig_len);
 
-      if(ret) {
+      unsigned int sig_len = SIGNATURE_LEN;
+      int ret; 
+
+      if(do_signature) { 
+        sig_len = -1; 
+        ret = get_signature(buf, name_len + data_len, priv_key,
+                                  sig_buf, &sig_len);
+        if(ret) {
           DPRINTF(DEBUG_ERROR,
               "error calculating signature for: %s \n", service_id);
           return;
+        }
+        assert(SIGNATURE_LEN == sig_len);
       }
-      assert(SIGNATURE_LEN == sig_len);
 
       if((sig_len + name_len + data_len) > MAX_PACKET_LEN){
           DPRINTF(DEBUG_ERROR,"Max record size cannot fit signature\n");

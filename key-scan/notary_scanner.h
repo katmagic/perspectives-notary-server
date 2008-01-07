@@ -11,6 +11,7 @@ typedef struct {
 	char *db_fname;
 	char *exceptions_fname;
         char *private_key_fname;
+        int max_simultaneous; 
 } scanner_config;
 
 

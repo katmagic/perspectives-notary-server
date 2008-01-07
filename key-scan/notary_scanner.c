@@ -13,9 +13,8 @@
 #include "keyscan_util.h"
 #include "net_util.h"
 
-unsigned int notary_debug = DEBUG_ALL;
-
-
+unsigned int notary_debug = DEBUG_ERROR;
+//unsigned int notary_debug = DEBUG_INFO | DEBUG_ERROR;
 
 // read in name-value pairs from file to specify config
 // parameters for the scanner 
@@ -59,6 +58,8 @@ void parse_config_file(scanner_config *conf, char* fname){
 			conf->db_fname = strdup(value);
 		} else if(strcmp(buf, "exceptions_fname") == 0) {
 			conf->exceptions_fname = strdup(value);
+		} else if(strcmp(buf, "max_simultaneous") == 0) {
+			conf->max_simultaneous = atoi(value);
 		} else {
 			DPRINTF(DEBUG_ERROR, "Unknown config value %s : %s \n",
 					buf, value);
@@ -67,14 +68,13 @@ void parse_config_file(scanner_config *conf, char* fname){
 }
 
 #define TIMEOUT 3
-#define MAX_SIMULTANEOUS 256
-
+#define DO_SIGNATURE TRUE
 
 int finished = 0;
 int total = 0;
 int successes = 0;
 
-probe_info all_probes[MAX_SIMULTANEOUS];
+probe_info *all_probes;
 //patricia_tree_t *not_valid;
 DB* db;
 RSA *priv_key;
@@ -98,7 +98,7 @@ void handle_finished_client(int cur_time) {
         int version_len = strlen(version_str);
         char *ptr = buf + name_len + version_len + 2;
         //uint32_t ip_addr = *(uint32_t*)ptr;
-        unsigned short port = *(unsigned short*) (ptr + 4);
+        //unsigned short port = *(unsigned short*) (ptr + 4);
         int key_type = *(int*) (ptr + 6);
         int key_len = data_len - name_len - version_len - 12;
         if(key_len != KEY_LEN) {
@@ -108,18 +108,14 @@ void handle_finished_client(int cur_time) {
         }
         char *key_ptr = ptr + 10;
     
-        char name_buf[256];
-        snprintf(name_buf,256,"%s:%d",buf, port);
-
         char *str = buf_2_hexstr((char*)key_ptr, key_len);
-        DPRINTF(DEBUG_INFO, "'%s' has %s key: '%s' \n", name_buf, 
+        DPRINTF(DEBUG_INFO, "'%s' has %s key: '%s' \n", buf, 
             keytype_2_str(key_type), str); 
         free(str);
-/*
-        record_observation(db, priv_key, name_buf, key_ptr, key_len,
-                              key_type, cur_time);
-*/
-
+        
+        record_observation(db, priv_key, buf, key_ptr, key_len,
+                              key_type, cur_time, DO_SIGNATURE);
+    
 }
 
 
@@ -172,7 +168,7 @@ void spawn_probe(int index, flex_queue *queue, uint32_t now) {
         int service_type = atoi(comma + 1); 
         if(service_type == SERVICE_TYPE_SSH) {
           ssh_args[1] = host_and_port;
-          execv("../ssh-scanner/ssh", ssh_args); 
+          execv(/*"./empty"*/"../ssh-scanner/ssh"/**/, ssh_args); 
         } else if(service_type == SERVICE_TYPE_SSL) {
           ssl_args[3] = host_and_port;
           execv("../ssl-scanner/apps/openssl", ssl_args); 
@@ -223,7 +219,8 @@ void check_probe_progress(probe_info *probe, uint32_t now) {
           free(probe->dns_name);
           return;
       }else if(p < 0) {
-        printf("error on wait for %d \n", probe->pid);
+        printf("error on wait for %d (waitpid returned %d) \n", 
+            probe->pid, p);
       }
 
       // check if we should timeout this child 
@@ -279,10 +276,13 @@ int main(int argc, char** argv) {
       exit(1);
   }
 
+  
   scanner_config config;
   parse_config_file(&config, argv[1]);
 
   priv_key = load_private_key(config.private_key_fname);
+
+  all_probes = (probe_info*)calloc(config.max_simultaneous, sizeof(probe_info)); 
 
   //not_valid = New_Patricia(32);
   //load_file_to_trie(not_valid, config.exceptions_fname);
@@ -302,26 +302,27 @@ int main(int argc, char** argv) {
   if(argc == 3) 
     load_from_file(to_probe, argv[2]);
 
-  struct timeval now;
-  gettimeofday(&now,NULL);
+  struct timeval start;
+  gettimeofday(&start,NULL);
   BOOL is_done = FALSE;
     
   printf("spawning initial probes \n");
   // spawn initial probes
-  for(int i = 0; i < MAX_SIMULTANEOUS; i++) {
+  for(int i = 0; i < config.max_simultaneous; i++) {
       if(queue_size(to_probe) == 0) {
         is_done = TRUE;
         break;
       }
-      spawn_probe(i, to_probe, now.tv_sec);
+      spawn_probe(i, to_probe, start.tv_sec);
       ++total;
   }
   printf("done spawning initial probes \n");
 
+  struct timeval now;
   while(finished < total || !is_done){
     gettimeofday(&now,NULL);
       
-    for(int i = 0; i < MAX_SIMULTANEOUS; i++) {
+    for(int i = 0; i < config.max_simultaneous; i++) {
       probe_info *probe = &all_probes[i];
       if(probe->pid == 0) continue;
 
@@ -343,6 +344,12 @@ int main(int argc, char** argv) {
 
       }
     } // end for 
+    
+    gettimeofday(&now,NULL);
+    float since_start = TIMEVAL_DIFF_MILLIS(now,start) / 1000;
+    float finish_rate = ((float)finished/since_start); 
+    float success_rate = ((float)successes/finished); 
+    printf("finish_rate = %0.3f with %0.2f success \n", finish_rate, success_rate); 
 
     // see if a child has reported back, or 
     // if we have received a new probe request

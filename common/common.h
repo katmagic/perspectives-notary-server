@@ -29,6 +29,7 @@
 
 #define BOOL uint8_t
 
+#define MAX_NAME_LEN 128
 #define SIGNATURE_LEN 172
 #define MAX_PACKET_LEN 4000
 #define KEY_LEN 16

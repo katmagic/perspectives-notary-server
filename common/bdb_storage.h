@@ -3,6 +3,7 @@
 
 #include "db.h"
 #include <openssl/rsa.h>
+#include "common.h"
 
 DB * bdb_open(char *filename, uint32_t open_flags);
 DB * bdb_open_env(char *evn_file, uint32_t evn_flags, 
@@ -22,7 +23,8 @@ void warm_db(DB* db);
 void record_observation(DB* db, RSA *priv_key,
                                   char* service_id, char *digest, 
                                   int digest_len,
-                                  int key_type, int timestamp);
+                                  int key_type, int timestamp,
+                                  BOOL do_signature);
 
 
 #endif

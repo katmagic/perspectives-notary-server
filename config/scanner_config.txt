@@ -2,3 +2,4 @@ db_env_fname=/notary
 db_fname=small.db
 private_key_fname=../keys/private.pem
 exceptions_fname=../config/probing_blacklist
+max_simultaneous=128

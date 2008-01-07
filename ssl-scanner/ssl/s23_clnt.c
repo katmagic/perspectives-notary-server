@@ -564,8 +564,9 @@ static int ssl23_get_server_hello(SSL *s)
 		}
 	else
 		{
-		SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_UNKNOWN_PROTOCOL);
-		goto err;
+		// SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_UNKNOWN_PROTOCOL);
+                  exit(30); 
+                  goto err;
 		}
 	s->init_num=0;
 
