@@ -41,7 +41,6 @@
 
 unsigned int notary_debug;
 
-PRBool mask_dialog = PR_FALSE;
 
 char *get_ext_dir()
 {
@@ -254,10 +253,10 @@ PRBool verify_key(SSHNotary *notary, nsIX509Cert *cert, PRInt32 pref )
     switch(pref)
     {
         case SECPREF_HIGH: 
-                threshold = 10.0;
+                threshold = 3.0;
                 break;
         case SECPREF_MID:        
-                threshold = 1.0;
+                threshold = 0.0;
                 break;
         case SECPREF_LOW:
         default:
@@ -334,50 +333,10 @@ NS_IMETHODIMP psvBadCertListener::ConfirmMismatchDomain(nsIInterfaceRequestor *s
 							const nsACString & targetURL, 
 							nsIX509Cert *cert, 
 							PRBool *_retval) {
-    *_retval = PR_FALSE;
-     PRInt32 pref;
-     PRBool result = false;
+    //nsCOMPtr<psvIBadCertHandler> psv = do_GetService("@cmu.edu/psvBadCertHandler;1");
+    //psv->ConfirmMismatchDomain(socketInfo, targetURL, cert, _retval);
 
-    PR_fprintf(PR_STDERR,"Confirm Mismatch Domain\n");
-
-    nsresult rv;
-    char *url = NULL;
-    mask_dialog = PR_FALSE;
-
-    int url_len = NS_CStringGetData(targetURL, (const char **) (&url));
-
-    PR_fprintf(PR_STDERR," URL (len %d) %s \n", url_len, url);
-    pref = get_sec_pref();
-
-    result = probe_key(cert, url, pref);
-
-    if(!result)
-    {
-        // Failed.
-        if(pref == SECPREF_HIGH )
-        {
-            printf("High Sec Pref Failure \n");
-            *_retval = PR_FALSE;
-            mask_dialog = PR_TRUE;
-        }
-        else
-        {
-            goto non_psv;
-        }    
-    }
-    else
-    {
-        //printf("Bypassing the popups.. \n");
-        *_retval = PR_TRUE;
-        mask_dialog = PR_TRUE;
-    }
-
-    return NS_OK;
-
-non_psv:
-    nsCOMPtr<psvIBadCertHandler> psv = do_GetService("@cmu.edu/psvBadCertHandler;1");
-    psv->ConfirmMismatchDomain(socketInfo, targetURL, cert, _retval);
-
+     *_retval = PR_TRUE;
     return NS_OK;
 }
 
@@ -387,14 +346,28 @@ NS_IMETHODIMP psvBadCertListener::ConfirmCertExpired(nsIInterfaceRequestor *sock
         nsIX509Cert *cert, 
         PRBool *_retval) {
 
+     //nsCOMPtr<psvIBadCertHandler> psv = do_GetService("@cmu.edu/psvBadCertHandler;1");
+    // psv->ConfirmCertExpired(socketInfo, cert, _retval);
+     *_retval = PR_TRUE;
+     return NS_OK;
+}
+
+/* boolean confirmUnknownIssuer (in nsIInterfaceRequestor socketInfo, in nsIX509Cert cert, out short certAddType); */
+NS_IMETHODIMP psvBadCertListener::ConfirmUnknownIssuer(nsIInterfaceRequestor *socketInfo, 
+        nsIX509Cert *cert, 
+        PRInt16 *certAddType, 
+        PRBool *_retval) {
+
+    PR_fprintf(PR_STDERR,"Confirm Unknown User\n");
+
      PRInt32 pref;
      char *url = NULL;
      char url_buf[512] = {0};
      nsresult rv;
-     *_retval = PR_FALSE;
-     mask_dialog = PR_FALSE;
      PRBool result = false;
+     PRBool mask_dialog = PR_FALSE;
     
+     *_retval = PR_FALSE;
      url = get_url(cert);
      
      if(url == NULL)
@@ -409,50 +382,24 @@ NS_IMETHODIMP psvBadCertListener::ConfirmCertExpired(nsIInterfaceRequestor *sock
      if(!result)
      {
          // Failed.
-         if(pref == SECPREF_HIGH )
+         if(pref == SECPREF_HIGH || pref == SECPREF_MID)
          {
-            printf("High Sec Pref Failure \n");
+             printf("High/Mid Sec Pref Failure \n");
              *_retval = PR_FALSE;
              mask_dialog = PR_TRUE;
          }
-         else
-         {
-             goto non_psv;
-         }    
      }
      else
      {
-        //printf("Bypassing the popups.. \n");
+        printf("Bypassing the popups.. \n");
         *_retval = PR_TRUE;
+        *certAddType =  ADD_TRUSTED_PERMANENTLY;// ADD_TRUSTED_FOR_SESSION ;
         mask_dialog = PR_TRUE;
      }
      
-     return NS_OK;
 
 non_psv:
-     nsCOMPtr<psvIBadCertHandler> psv = do_GetService("@cmu.edu/psvBadCertHandler;1");
-     psv->ConfirmCertExpired(socketInfo, cert, _retval);
-     return NS_OK;
-}
-
-/* boolean confirmUnknownIssuer (in nsIInterfaceRequestor socketInfo, in nsIX509Cert cert, out short certAddType); */
-NS_IMETHODIMP psvBadCertListener::ConfirmUnknownIssuer(nsIInterfaceRequestor *socketInfo, 
-        nsIX509Cert *cert, 
-        PRInt16 *certAddType, 
-        PRBool *_retval) {
-
-    *_retval = PR_FALSE;
-
-    PR_fprintf(PR_STDERR,"Confirm Unknown User\n");
-
-    // ConfirmUnknownIssuer
-    if(mask_dialog)
-    {
-        *certAddType =  ADD_TRUSTED_PERMANENTLY;// ADD_TRUSTED_FOR_SESSION ;
-        *_retval = PR_TRUE;
-        mask_dialog = PR_FALSE;
-    }
-    else
+    if(!mask_dialog)
     {
         nsCOMPtr<psvIBadCertHandler> psv = do_GetService("@cmu.edu/psvBadCertHandler;1");
         psv->ConfirmUnknownIssuer(socketInfo, cert, certAddType, _retval);

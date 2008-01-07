@@ -32,6 +32,14 @@
 			</popupset>
 
 			<hbox>
+                                <vbox flex="1" pack="center">
+                                     <image id="perspective-status-image"
+                                            hidden="true"
+                                            src="chrome://perspectives/content/good.png" 
+                                            style="width:16px ; height:16px;"
+                                            context="perspective-contextmenu"
+                                     />
+                                </vbox>
 				<label id="perspective-statusbar-label" value="Default" onclick="if(event.button == 0) ShowInfo()"/>
 			</hbox>
 		</statusbarpanel>

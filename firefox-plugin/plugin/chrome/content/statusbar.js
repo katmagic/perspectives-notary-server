@@ -82,6 +82,7 @@ function StatusDisplay(label, tooltip) {
         node = document.createElement("label");
         node.setAttribute("value", tooltip);
         tt.appendChild(node);
+        
         return;
 }
 
@@ -156,26 +157,46 @@ var myPrefObserver =
       case "perspectives.info":
         
             
-        dump("Info Changed: "  + "\n");        
+      dump("Info Changed: "  + "\n");        
+      var image = document.getElementById("perspective-status-image");
       if(this._branch.getCharPref("perspectives.info") !=  "N/A")
       {
 
           try{
               if(root_prefs.getBoolPref("perspectives.status") == true )
+              {
+                  image.setAttribute("hidden", "false");
+                  image.setAttribute("src", "chrome://perspectives/content/bad.png");
                   StatusDisplay("Notarized", "Perspectives Notarized");
+              }    
               else
+              {
+                  if(root_prefs.getIntPref("perspectives.secpref") != 2 )
+                  {
+                    alert("Notaries donot agree to this Key. Denied Access");
+                  }
+                  else
+                  {
+                    alert("Notaries donot agree to this Key. It is advisable to verify the key manually");
+                  }
+                  image.setAttribute("hidden", "false");
+                  image.setAttribute("src", "chrome://perspectives/content/bad.png");
                   StatusDisplay("Veto-ed", "Perspectives Veto-ed");
+              }    
           }
           catch(ex)
           {
+              image.setAttribute("hidden", "true");
               StatusDisplay("N/A", "Not Applicable");
           }
           valid_state = true;
       }    
       else
+      {
+          image.setAttribute("hidden", "true");
           StatusDisplay("N/A", "Not Applicable");
-
-        break;
+      }
+      break;
     }
   }
 }

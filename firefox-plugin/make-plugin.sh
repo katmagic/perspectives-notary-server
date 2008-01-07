@@ -10,9 +10,11 @@ cleanup()
     make clean 2> /dev/null 1>&2 
     if [ $? != 0 ]; then 
         echo "Cleaning _xpcom failed"; 
-    fi    
-    cd $dir/plugin/chrome
-    rm -rf perspectives.jar
+    fi
+    rm -rf $dir/plugin/chrome/perspectives.jar
+    rm -rf $dir/plugin/platform/Linux_x86-gcc3/components/Perspectives.so  
+    rm -rf $dir/plugin/platform/linux-gnu_x86-gcc3/components/Perspectives.so 
+    cd $dir
 }
 
 create_plugin()
@@ -27,7 +29,7 @@ create_plugin()
     fi  
 
     cd $dir/plugin/chrome
-    jar cf perspectives.jar content/ locale/ 
+    zip -r0 perspectives.jar content/ locale/ -x "*.svn/*"
 
     if [ $? != 0 ]; then 
         echo "Making Chrome jar failed";
@@ -35,7 +37,7 @@ create_plugin()
     fi  
 
     cp $dir/_xpcom/Perspectives.so $dir/plugin/platform/Linux_x86-gcc3/components  &&
-                cp $dir/_xpcom/Perspectives.so $dir/plugin/platform/linux-gnu_x86-gcc3/components 
+    cp $dir/_xpcom/Perspectives.so $dir/plugin/platform/linux-gnu_x86-gcc3/components 
     
     if [ $? != 0 ]; then 
         echo "Copy of Component Library failed"; 
@@ -45,7 +47,7 @@ create_plugin()
     mv $dir/plugin/chrome/content $dir
     mv $dir/plugin/chrome/locale  $dir
     cd $dir/plugin
-    zip -qr $dir/Perspectives_1.0.0.xpi * 
+    zip -r $dir/Perspectives_1.0.0.xpi *  -x "*.svn/*"
     
     if [ $? != 0 ]; then 
         echo "Zipping Plugin failed"; 

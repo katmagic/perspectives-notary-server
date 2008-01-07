@@ -14,19 +14,32 @@ persist="width height screenX screenY">
 
 
 <groupbox>
-<caption label="Security Preference"/>
-<box orient="horizontal">
-<radiogroup id="perspective-secpref-radiogroup">
-<radio id="high" label="High" accesskey="H" oncommand="chooseType(0);"/>
-<radio id="medium" label="Medium"  accesskey="M" selected="true"
-oncommand="chooseType(1);"/>
-<radio id="low" label="Low"  accesskey="L" oncommand="chooseType(2);"/>
-</radiogroup>
-<spacer flex="1"/>
-<description id="perspective-secpref-description">
-This is the description of the radio Button
-</description>
-</box>
+    <caption label="Security Preference"/>
+    <!-- <box orient="horizontal"> -->
+    <hbox>
+        <radiogroup id="perspective-secpref-radiogroup" style="width:300px">
+            <radio id="high" label="High" accesskey="H" oncommand="chooseType(0);"/>
+            <radio id="medium" label="Medium"  accesskey="M" selected="true" oncommand="chooseType(1);"/>
+            <radio id="low" label="Low"  accesskey="L" oncommand="chooseType(2);"/>
+        </radiogroup>
+        <vbox>
+        <box>
+            <label id="perspective-secpref-description1"
+            style="font-weight: bold;" value = "This is the description of the radio Button" />
+        </box>
+        <spacer flex="1"/>
+        <box>
+            <label id="perspective-secpref-description2"
+            value = "This is the description of the radio Button" />
+        </box>
+        <spacer flex="1"/>
+        <box>
+            <description id="perspective-secpref-description3">
+                This is the description of the radio Button
+            </description>
+        </box>
+        </vbox>
+    </hbox>
 </groupbox>
 <groupbox>
 <caption label="Config File Path"/>

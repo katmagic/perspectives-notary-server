@@ -20,8 +20,10 @@ function displayInfo()
 
 function chooseType(index)
 {
-    var display = document.getElementById("perspective-secpref-description");
-    if (!display)
+    var display1 = document.getElementById("perspective-secpref-description1");
+    var display2 = document.getElementById("perspective-secpref-description2");
+    var display3 = document.getElementById("perspective-secpref-description3");
+    if (!display1 || !display2 || !display3)
     {
         dump("Null Display \n");
         return;
@@ -31,17 +33,23 @@ function chooseType(index)
     {
         case 0:
                  dump("High\n");
-                 display.setAttribute("value", "High Security Preference -Expects all notary servers to agree");
+                 display1.setAttribute("value", "High Security Preference");
+                 display2.setAttribute("value", "-Expects 75% of notary server to agree.");
+                 display3.setAttribute("value", "-Expects a quorum duration of 3 days.");
 
                  break;
         case 1:
                  dump("Medium\n");       
-                 display.setAttribute("value", "Medium Security Preference - Warns you before allowing you to connect.");
+                 display1.setAttribute("value", "Medium Security Preference");
+                 display2.setAttribute("value", "-Expects 75% of notary server to agree.");
+                 display3.setAttribute("value", "-Expects the keys to be currently consistent.");
                  break;
 
         case 2:
                  dump("Low\n");       
-                 display.setAttribute("value", "Low Security Preference - Allows to connect if notaries agree recent key");
+                 display1.setAttribute("value", "Low Security Preference");
+                 display2.setAttribute("value", "-This is High Availability Profile.");
+                 display3.setAttribute("value", "-To be used by expert users only.");
                  break;
     }
     root_prefs.setIntPref("perspectives.secpref", index);
