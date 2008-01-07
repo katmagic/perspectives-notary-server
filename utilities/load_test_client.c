@@ -46,22 +46,23 @@ notary_header ** load_requests(char* fname, int count){
 
 
 
-unsigned int notary_debug = DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO;
+unsigned int notary_debug = DEBUG_ERROR;// | DEBUG_SOCKET | DEBUG_INFO;
 
 int main(int argc, char *argv[])
 {
    int sock;
    struct sockaddr_in reply_addr;
 
-   if (argc != 4) { printf("Usage: server port num-hosts \n");
+   if (argc != 5) { printf("Usage: server port num-hosts target-rate \n");
                     exit(1);
    }
 
-   RSA *pub_key = load_public_key("../keys/public.pem");
+   //RSA *pub_key = load_public_key("../keys/public.pem");
 
    char fname_buf[256];
    snprintf(fname_buf, 256, "%s_hosts.txt", argv[3]);
    int count = atoi(argv[3]);
+   float target_rate = atof(argv[4]);
 
    printf("starting header loading \n");
    notary_header **all_hosts = load_requests(fname_buf, count);
@@ -77,7 +78,7 @@ int main(int argc, char *argv[])
    server.ip_addr = str_2_ip(argv[1]);
    server.port = atoi(argv[2]);
 
-   struct timeval start, end;
+   struct timeval start, now;
    gettimeofday(&start,NULL);
 
    int sent_total = 0, recv_total = 0;
@@ -87,36 +88,57 @@ int main(int argc, char *argv[])
    select_timeout.tv_usec = 0;
    select_timeout.tv_sec = 0;
    fd_set readfds;
-   int next_wait = 100; // prevent overrunning server buffers
+   //int wait_step = 150;  // prevent overrunning server buffers
+   //int next_wait = wait_step;   
    while(recv_total < count) {
+            
+        gettimeofday(&now,NULL);
+        double since_start = TIMEVAL_DIFF_MILLIS(now,start) / 1000;
+        float sent_goal = (target_rate * since_start); 
 
-        if(sent_total < count) {
+   //     printf("sent_goal = %0.2f  t-rate = %02.f  time = %02.f sent = %d \n",
+     //       sent_goal, target_rate, since_start, sent_total); 
+        while(sent_total < count && sent_total < sent_goal) {
             send_single_query(&server, sock, all_hosts[sent_total]);
             ++sent_total;
-            printf("sent: %d \n", sent_total);
+            //printf("sent: %d \n", sent_total);
         }
 
         FD_ZERO(&readfds);
         FD_SET(sock, &readfds);
         int num_fds = select(sock + 1, &readfds, NULL, NULL, &select_timeout);
-        if(num_fds || (next_wait == sent_total)) {
+   
+        if(num_fds) {
           recv_len = recv_single_reply(sock, recv_buf, MAX_PACKET_LEN, &reply_addr);
+          /*
           ssh_key_info_list* list = parse_message(recv_buf, recv_len, pub_key);
           print_key_info_list(stdout, list);
           printf("\n");
           free_key_info_list(list);
+          */ 
           ++recv_total;
+          if((recv_total % 50) == 0) {
+            float finish_rate = (((float)recv_total)/since_start); 
+            float success_rate = (((float)recv_total)/((float)sent_total)); 
+            printf("finish_rate = %0.3f with %0.2f success (%0.3f sec) \n", 
+              finish_rate, success_rate, since_start); 
+          }
+        } else { 
+        //if(next_wait == sent_total){
+       //   printf("sleeping\n"); 
+          usleep(2000); 
         }
 
-        if(sent_total == next_wait) next_wait += 100;
+        //if(sent_total == next_wait) next_wait += wait_step;
    }
-   gettimeofday(&end,NULL);
-   float sec_diff = (float) (end.tv_sec - start.tv_sec);
-   int usec_diff = end.tv_usec - start.tv_usec;
-   float usec_fraction = ((float)(usec_diff))/(1000000.0);
-   float time_result = sec_diff + usec_fraction;
-   printf("Recv %d, %f seconds \n",
-            recv_total, time_result);
+   printf("finished! \n"); 
+   gettimeofday(&now,NULL);
+   double since_start = TIMEVAL_DIFF_MILLIS(now,start) / 1000;
+   float finish_rate = (((float)recv_total)/since_start); 
+   float success_rate = (((float)recv_total)/((float)sent_total)); 
+   printf("finish_rate = %0.3f with %0.2f success (%0.3f sec) \n", 
+       finish_rate, success_rate, since_start); 
+
    int i;
    for(i = 0; i < count; i++) {
     free(all_hosts[i]);
