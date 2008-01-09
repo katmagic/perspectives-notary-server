@@ -6,8 +6,7 @@
 #db_env_fname=/notary
 #db_fname=ssh.db
 
-port=22222
+port=15217
 ip_addr=0.0.0.0
 db_env_fname=../db_env
 db_fname=starter.db
-

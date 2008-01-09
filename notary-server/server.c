@@ -176,7 +176,7 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port) {
  }
 
 
-unsigned int notary_debug = DEBUG_ERROR | DEBUG_DATABASE | DEBUG_INFO;
+unsigned int notary_debug = DEBUG_ERROR; // | DEBUG_DATABASE | DEBUG_INFO;
 
 int main(int argc, char** argv) {
 
