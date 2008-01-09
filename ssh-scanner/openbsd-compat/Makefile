@@ -8,9 +8,9 @@ top_srcdir=..
 
 CC=gcc
 LD=gcc
-CFLAGS=-g -O2 -Wall -Wpointer-arith -Wuninitialized -Wsign-compare -Wno-pointer-sign -std=gnu99 
+CFLAGS=-g -O2 -Wall -Wpointer-arith -Wuninitialized -Wsign-compare 
 CPPFLAGS=-I. -I.. -I$(srcdir) -I$(srcdir)/..  -DHAVE_CONFIG_H
-LIBS=-lresolv -lcrypto -lutil -lz -lnsl  -lcrypt
+LIBS=-lcrypto -lutil -lz  -lcrypt
 AR=/usr/bin/ar
 RANLIB=ranlib
 INSTALL=/usr/bin/install -c

@@ -943,7 +943,7 @@ void ssh_record_key(char *dns_name, uint32_t ip_addr, uint16_t port, Key *key,
         exit(29); // special exit code
     }
     int key_type = key->type; 
-    
+   
    record_key(dns_name, ip_addr, port, digest, digest_len, key_type, 
 			server_version_string, SERVICE_TYPE_SSH); 
    free(digest);

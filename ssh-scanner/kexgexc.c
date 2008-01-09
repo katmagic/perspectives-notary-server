@@ -44,11 +44,6 @@
 #include "ssh2.h"
 #include "compat.h"
 
-// dw: b/c we are not actually setting up a secure connection, we can just use a
-// static value for our DH public key, which saves us some non-trival
-// computation
-char *static_pub_key = "013BB649C7CD28C01C72197AF3730F11A0BFE70AB55399111BD0F596EAFEDBF8F0FFC525E40245E1AF8DCD7B763D831D0B7A1E20A55B49AA9F6B2FDD0CF8CA213ECBB78136B913F3A807A3F9D6D08D2A87A51FC364CBB61CC358948AAF65E72D31E44854D853E621747F18619698D36A1157EBC138C4A3C88B97BB136940FADD";
-
 void
 kexgex_client(Kex *kex)
 {
@@ -103,12 +98,8 @@ kexgex_client(Kex *kex)
 		fatal("DH_GEX group out of range: %d !< %d !< %d",
 		    min, BN_num_bits(p), max);
 
-        // dw: if we don't care about security, we
-        // should be able to skip this and just use
-        // some static group member as the key
-//	dh = dh_new_group(g, p);
-//	dh_gen_key(dh, kex->we_need * 8);
-
+	dh = dh_new_group(g, p);
+	dh_gen_key(dh, kex->we_need * 8);
 
 #ifdef DEBUG_KEXDH
 	DHparams_print_fp(stderr, dh);
@@ -117,19 +108,10 @@ kexgex_client(Kex *kex)
 	fprintf(stderr, "\n");
 #endif
 
-  //      char *pub = BN_bn2hex(dh->pub_key);
-    //    printf("key: %s \n", pub);
-      //  free(pub);
-
-        BIGNUM *fake_pub_key;
-        BN_hex2bn(&fake_pub_key, static_pub_key);
-
 	debug("SSH2_MSG_KEX_DH_GEX_INIT sent");
 	/* generate and send 'e', client DH public key */
 	packet_start(SSH2_MSG_KEX_DH_GEX_INIT);
-        // dw: I would send it here. 
-	//packet_put_bignum2(dh->pub_key);
-	packet_put_bignum2(fake_pub_key);
+	packet_put_bignum2(dh->pub_key);
 	packet_send();
 
 	debug("expecting SSH2_MSG_KEX_DH_GEX_REPLY");
