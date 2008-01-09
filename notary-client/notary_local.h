@@ -54,5 +54,19 @@ server_list * find_server(SSHNotary* notary, uint32_t server_ip, uint16_t server
 char *get_notary_reply(SSHNotary *notary);
 int get_number_of_notaries(SSHNotary *notary);
 
+// an optional struct that can represent values 
+// often used by notary files. the function below automatically
+// reads a config file and returns an instance of this struct
+typedef struct {
+  BOOL debug;
+  float timeout_secs;
+  int num_notaries; // if -1, then use all possible notaries
+  float quorum; // as a fraction of num_notaries
+  float quorum_duration_days; 
+  float max_stale_days; 
+} client_config;
+
+void parse_client_config(client_config *conf, char *fname);  
+
 
 #endif

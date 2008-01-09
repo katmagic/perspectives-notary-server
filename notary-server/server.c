@@ -145,16 +145,20 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port) {
            host, type, n,
            ip_2_str(*(uint32_t*)&from.sin_addr.s_addr));
 
-       unsigned int data_len = get_data(db,host,buf + hdr_len, 
+       int data_len = get_data(db,host,buf + hdr_len, 
                                          MAX_PACKET_LEN - hdr_len);
-       if(data_len < 0) 
-         continue;
-      
-       int total_len = data_len + hdr_len;
-       hdr->msg_type = TYPE_FETCH_REPLY_FINAL;
-       hdr->total_len = htons(total_len);
-       hdr->sig_len = htons(SIGNATURE_LEN);
-
+       int total_len = hdr_len; 
+       if(data_len < 0) {  
+          // no entry found
+          hdr->msg_type = TYPE_FETCH_REPLY_EMPTY; 
+          hdr->sig_len = 0; 
+       } else { 
+         // entry found 
+        total_len += data_len;
+        hdr->msg_type = TYPE_FETCH_REPLY_FINAL;
+        hdr->sig_len = htons(SIGNATURE_LEN);
+       }
+       hdr->total_len = htons(total_len); 
        n = sendto(sock, buf , total_len, 
             0 ,(struct sockaddr *)&from,fromlen);
        if (n  < 0) sock_error("sendto");

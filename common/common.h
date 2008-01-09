@@ -37,8 +37,9 @@
 #define TYPE_FETCH_REQ 0x01
 #define TYPE_FETCH_REPLY_PARTIAL 0x02
 #define TYPE_FETCH_REPLY_FINAL 0x03
-#define TYPE_PROBE_REQ 0x04
-#define TYPE_PROBE_REPLY 0x05
+#define TYPE_FETCH_REPLY_EMPTY 0x04
+#define TYPE_PROBE_REQ 0x05
+#define TYPE_PROBE_REPLY 0x06
 
 // all fields should be in network byte order 
 

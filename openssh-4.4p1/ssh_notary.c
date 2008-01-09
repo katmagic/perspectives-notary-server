@@ -1,12 +1,15 @@
 #include "includes.h"
-#include "../common.h"
 #include "xmalloc.h"
 #include <stdlib.h>
-#include "ssh_notary.h"
 #include "pathnames.h"
-#include "notary_local.h"
 #include "key.h"
 
+#include "notary_util.h"
+#include "notary_local.h"
+#include "ssh_notary.h"
+#include "common.h"
+#include "client_policy.h"
+#include "contact_notary.h" 
 
 // this is cruft from 'misc.h', as there seem
 // to be problems #include-ing it
@@ -18,30 +21,17 @@
 char    *read_passphrase(const char *, int);
 char     *tilde_expand_filename(const char *, uid_t);
 
+#define _PATH_NOTARY_LIST	"~/.ssh/notary_list.txt"
+#define _PATH_NOTARY_CLIENT_CONFIG	"~/.ssh/client_params.txt"
+#define NUM_RETRIES 3
 
-#define STALE_THRESHOLD_SEC (60 * 10) // ten minutes
+unsigned int notary_debug = DEBUG_ERROR; 
 
-/*
-
-int continue_prompt()
-{
-	const char *msg = "Do you wish to connect? 'no' (default), 'yes':";
-	char *p;
-	int ret = FALSE;
-
-	p = read_passphrase(msg, RP_ECHO);
-	if (p && (p[0] == 'y' || p[0] == 'Y'))
-		ret = TRUE;
-	if (p)
-		xfree(p);
-
-	return ret;
-}
-*/
-
+// if there is a security error, or the user has requested to always be
+// prompted, we ask the user whether they want to see Notary details 
 int view_prompt()
 {
-	const char *msg = "View Probing Details? 'no' (default), 'yes', or 'abort':";
+	const char *msg = "View detailed notary results? 'no' (default), 'yes', or 'abort':";
 	char *p;
 	int ret = - 1;
 
@@ -61,69 +51,84 @@ int view_prompt()
 
 void do_probe_check(char* hostname, int port, 
 		Key* host_key, int original_real_uid, int needsPrompt) {
-	struct timeval start, end;
-	char *cert_file = tilde_expand_filename(_PATH_NOTARY_PROBE_SERVER_CERT,
-		 original_real_uid);
-	char* server_file = tilde_expand_filename(_PATH_NOTARY_PROBE_SERVERS,
-		 original_real_uid);
-	SSHNotary *notary = init_ssh_notary(cert_file);
-	load_probe_servers(notary, server_file);
-	DPRINTF(DEBUG_INFO, "checking key of type %d \n", host_key->type);
+        uint8_t *digest;
+        uint32_t digest_len;
 
-	printf("contacting probing servers.... ");
-	gettimeofday(&start, NULL);
-	fflush(stdout);
-	probe_for_key(notary, 0, hostname, host_key->type, port);
-	gettimeofday(&end, NULL);
-	printf("Probe Results: \n");
+        digest = key_fingerprint_raw(host_key, SSH_FP_MD5,&digest_len);
+        if(digest == NULL) {
+          DPRINTF(DEBUG_ERROR,"Notary client could not parse key\n"); 
+          exit(1);
+        }
+        uint8_t key_type = host_key->type; 
 
-	int last_conflict = getMostRecentConflict(notary, host_key);
-	int oldest_correct = getOldestCorrectSighting(notary,host_key);
-	int most_stale = getMostStaleProbe(notary);
-
-
-	BOOL warn = FALSE;
-	if(last_conflict == -1 && oldest_correct == -1) {
-		printf("No probe server returned useful results\n");
-		warn = TRUE;
-		return;
-	}
+	DPRINTF(DEBUG_INFO, "checking key of type: %s \n", 
+            keytype_2_str(key_type));
 	
-	struct timeval t;
-	gettimeofday(&t,NULL);
-	int cur_secs = t.tv_sec;
-//	BOOL connect = TRUE;
+	char *notary_list_fname = tilde_expand_filename(
+                       _PATH_NOTARY_LIST,original_real_uid);
+	char* client_config_fname = tilde_expand_filename(
+                    _PATH_NOTARY_CLIENT_CONFIG,original_real_uid);
+	
+        client_config conf;
+        parse_client_config(&conf, client_config_fname);
+        if(conf.debug) {
+          printf("turning on debug output from config option \n"); 
+          notary_debug = DEBUG_ERROR | DEBUG_INFO; 
+        }
 
-	int stale_diff = cur_secs - most_stale;
-	if(stale_diff > STALE_THRESHOLD_SEC) {
-		printf("********* Stale Probe Warning ******* \n");
-		printf("At least one server has not probed '%s' in %.1f minutes \n",
-				hostname, SEC2MIN(stale_diff));
-		warn = TRUE;
-	}
+        Notary *notary = init_ssh_notary();
+	load_notary_server_file(notary, notary_list_fname);
 
-	if(last_conflict == -1) {
-		int first_diff = cur_secs - oldest_correct;
-		printf("All current and past keys are consistent (oldest probe from %.1f days ago)\n"
-			, SEC2DAY(first_diff));
-	}else {
-		int conflict_diff = cur_secs - last_conflict;
-		if(conflict_diff < STALE_THRESHOLD_SEC) {
-			printf("******* Warning ***********\n");
-			printf("Inconsisent keys observed within last %.1f minutes \n",
-				SEC2MIN(conflict_diff));	
-			warn = TRUE;
-		} else {
-			printf("The key is consistent across all current probes\n");
-			printf("Last inconsistent keys seen %0.1f days ago\n", SEC2DAY(conflict_diff));
-		}
-	}
+	printf("contacting notaries....\n");
+	fflush(stdout);
+	
+        //TODO: fix, for really long dns-names, we should actually 
+        //be truncating the dns-name, not the port + service-type. 
+        char service_info[MAX_NAME_LEN];
+        snprintf(service_info,MAX_NAME_LEN,"%s:%d,%d", 
+                            hostname, port, SERVICE_TYPE_SSH); 
+
+        fetch_notary_observations(notary, service_info, 
+                      (int)conf.timeout_secs, NUM_RETRIES); 
+
+        int status;
+        int max_stale_sec = (int)DAY2SEC(conf.max_stale_days); 
+        uint32_t quorum_duration = get_quorum_duration(notary, 
+                                       (char*)digest, (int)digest_len, 
+                                       key_type, conf.quorum,
+                                       max_stale_sec, &status); 
+
+        float qd_days = SEC2DAY(quorum_duration); 
+	BOOL warn = FALSE;
+        if(status) {
+          printf("WARNGING: Your key cannot be authenticated because \n"
+                 "no Notary replies were received.\n"
+                 "This may be because you do not have full Internet \n"
+                 "connectivity or because all notaries are down.\n"
+                 "It could also be an attacker preventing you from \n"
+                 "reaching the Notaries.  Proceed with caution. \n"); 
+        }else if(qd_days > conf.quorum_duration_days) {
+          // key satisfies quorum duration.  it should be safe
+          printf("This key has been consistently seen for the past %.1f days\n", qd_days); 
+        }else if(quorum_duration > 0) {
+          warn = TRUE; 
+          // key has quorum, but not sufficient duration 
+          printf("WARNING: Server key has been seen consistently for only the past %.1f days \n", qd_days); 
+        } else {
+          warn = TRUE; 
+          // key does not even achieve quorum
+          printf("SUSPECTED ATTACK: The offered key is NOT consistent.\n"); 
+          // TODO: print out how many notaries do see it
+        }
+	
 	if(needsPrompt || warn) { 
 		int result = view_prompt();
 		if(result == NOTARY_PROMPT_VIEW) {
-			printf("Probe used certificate file '%s'\n", cert_file);
-			printf("Probe used server-info file '%s'\n", server_file);
-			print_probe_info2(notary);
+                  char* hex = buf_2_hexstr((char*)digest,(int)digest_len); 
+                  printf("Offered Key = %s '%s' \n", 
+                      keytype_2_str(key_type) , hex); 
+                  print_notary_reply(stdout, notary) ;
+                  free(hex); 
 		}
 	}
 

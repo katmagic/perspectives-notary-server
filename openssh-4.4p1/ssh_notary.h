@@ -1,5 +1,5 @@
-#ifndef _NOTARY_UTIL_H_
-#define _NOTARY_UTIL_H_
+#ifndef _SSH_NOTARY_H_
+#define _SSH_NOTARY_H_
 
 #define NOTARY_PROMPT_VIEW 0
 #define NOTARY_PROMPT_SKIP 1

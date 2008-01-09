@@ -27,6 +27,10 @@ ssh_key_info_list* parse_message(char *buf, int msg_len, RSA* pub_key) {
                               total_len, msg_len);
       return NULL;
    }
+   if(hdr->msg_type == TYPE_FETCH_REPLY_EMPTY) {
+      DPRINTF(DEBUG_INFO, "Server found no service-record \n"); 
+      return NULL; 
+   }
    int data_len = total_len - hdr_len;
    if(!verify_message_signature(hdr, pub_key)) {
       DPRINTF(DEBUG_ERROR, "**** Signature is invalid **** \n");
@@ -314,7 +318,7 @@ void load_notary_server_file(SSHNotary *notary, char *fname) {
 	FILE *f = fopen(fname, "r");
 	if(f == NULL) {
 		DPRINTF(DEBUG_ERROR, 
-		"Notary Error: Invalid client config file %s \n", fname);
+		"Notary Error: Invalid notar-list file %s \n", fname);
 		return;
 	}
         
@@ -360,20 +364,51 @@ void load_notary_servers(SSHNotary *notary, char* data, int buf_len){
 		add_notary_server(notary, ip_addr, port, pub_key);
 	}
 }
+  
+void parse_client_config(client_config *conf, char *fname){ 
+	char buf[1024];
+	FILE *f;
+	assert(fname);
 
-/*  debug main
- *
-unsigned int notary_debug = DEBUG_ERROR;
+	f = fopen(fname, "r");
+	if(f == NULL) {
+		DPRINTF(DEBUG_ERROR,
+		"Notary Error: Invalid conf file %s \n", fname);
+		return;
+	}
 
-int main(int argc, char **argv) {
-
-  SSHNotary *notary = init_ssh_notary();
-  load_notary_servers(notary, "notary_list.txt");
-  printf("notary results: \n");
-  print_notary_reply(notary);
-  free_ssh_notary(notary);
-  return 0;
+	while(fgets(buf, 1023,f) != NULL) {
+		if(*buf == '\n') continue;
+		if(*buf == '#') continue;
+		int size = strlen(buf);
+		buf[size - 1] = 0x0; // replace '\n' with NULL
+		char *delim = strchr(buf,'=');
+		if(delim == NULL) {
+			DPRINTF(DEBUG_ERROR, 
+				"Ignoring malformed line: %s \n", buf);
+			continue;
+		}
+		*delim = 0x0;
+	 
+		char *value = delim + 1;
+		DPRINTF(DEBUG_INFO, "key = '%s' value = '%s' \n", 
+				buf, value);
+		if(strcmp(buf,"debug") == 0) { 
+			conf->debug = atoi(value);
+		} else if(strcmp(buf, "timeout_secs") == 0) {
+			conf->timeout_secs = atof(value);
+		} else if(strcmp(buf, "num_notaries") == 0){
+			conf->num_notaries = atoi(value);
+		} else if(strcmp(buf, "quorum") == 0) {
+			conf->quorum = atof(value);
+		} else if(strcmp(buf, "quorum_duration_days") == 0) {
+			conf->quorum_duration_days = atof(value);
+		} else if(strcmp(buf, "max_stale_days") == 0) {
+			conf->max_stale_days = atof(value);
+		} else {
+			DPRINTF(DEBUG_ERROR, "Unknown config value %s : %s \n",
+					buf, value);
+		}
+	}		
 }
-
-*/
 

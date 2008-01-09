@@ -76,8 +76,6 @@
 #define _PATH_SSH_CLIENT_ID_DSA		".ssh/id_dsa"
 #define _PATH_SSH_CLIENT_ID_RSA		".ssh/id_rsa"
 
-#define _PATH_NOTARY_PROBE_SERVERS	"~/.ssh/probe_servers.txt"
-#define _PATH_NOTARY_PROBE_SERVER_CERT	"~/.ssh/probe_server.cert"
 
 /*
  * Configuration file in user\'s home directory.  This file need not be

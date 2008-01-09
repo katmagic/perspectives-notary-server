@@ -101,6 +101,8 @@ void fetch_notary_observations(SSHNotary *notary,
         if(server == NULL) {
           DPRINTF(DEBUG_ERROR, "Could not find server state for reply message\n");  
         }else {
+         // TODO: change parse_message API to verify that reply is
+         // for the same service-id for which we queried
           DPRINTF(DEBUG_INFO, "Parsing message from: %s : %d \n", 
               ip_2_str(server->ip_addr), server->port);
           server->received_reply = 1; // got something, even if its invalid

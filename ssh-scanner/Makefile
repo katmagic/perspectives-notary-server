@@ -40,22 +40,22 @@ PATHS= -DSSHDIR=\"$(sysconfdir)\" \
 
 CC=gcc
 LD=gcc
-CFLAGS=-g -O2 -Wall -Wpointer-arith -Wuninitialized -Wsign-compare 
+CFLAGS=-g -O2 -Wall -Wpointer-arith -Wuninitialized -Wsign-compare -Wno-pointer-sign -std=gnu99 
 CPPFLAGS=-I. -I../common -I$(srcdir)  $(PATHS) -DHAVE_CONFIG_H
-LIBS=-lcrypto -lutil -lz  -lcrypt
+LIBS=-lresolv -lcrypto -lutil -lz -lnsl  -lcrypt
 LIBSELINUX=
 SSHDLIBS=
 LIBEDIT=
 LIBPAM=
 LIBWRAP=
 AR=/usr/bin/ar
-AWK=nawk
+AWK=gawk
 RANLIB=ranlib
 INSTALL=/usr/bin/install -c
-PERL=/usr/bin/perl5
+PERL=/usr/bin/perl
 SED=/bin/sed
 ENT=
-XAUTH_PATH=/usr/X11R6/bin/xauth
+XAUTH_PATH=/usr/bin/xauth
 LDFLAGS=-L. -Lopenbsd-compat/ 
 EXEEXT=
 
@@ -116,7 +116,7 @@ PATHSUBS	= \
 	-e 's|/etc/ssh/sshrc|$(sysconfdir)/sshrc|g' \
 	-e 's|/usr/X11R6/bin/xauth|$(XAUTH_PATH)|g' \
 	-e 's|/var/empty|$(PRIVSEP_PATH)|g' \
-	-e 's|/usr/bin:/bin:/usr/sbin:/sbin||g'
+	-e 's|/usr/bin:/bin:/usr/sbin:/sbin|/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin|g'
 
 FIXPATHSCMD	= $(SED) $(PATHSUBS)
 
@@ -138,12 +138,14 @@ libssh.a: $(LIBSSH_OBJS)
 	$(AR) rv $@ $(LIBSSH_OBJS)
 	$(RANLIB) $@
 
+NOTARYLIBS= -lcrypto -lssl -lssh -lstdc++ -lcrypto -lz -lssl -lcrypto 
+NOTARYLIBS_BINARY= -lstdc++ -lz
 
 ssh-binary$(EXEEXT): $(LIBCOMPAT) $(SSHOBJS) 
-	$(LD) -o $@ $(SSHOBJS) $(LDFLAGS) -lssh -lopenbsd-compat libssl.a libcrypto.a 
+	$(LD) -o $@ $(SSHOBJS) $(LDFLAGS) $(NOTARYLIBS_BINARY) -lssh -lopenbsd-compat libssl.a libcrypto.a 
 
 ssh$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHOBJS) $(COMMONOBJS)
-	$(LD) -o $@ $(SSHOBJS) $(COMMONOBJS) $(LDFLAGS) -lssh -lopenbsd-compat $(LIBS)
+	$(LD) -o $@ $(SSHOBJS) $(COMMONOBJS) $(LDFLAGS) $(NOTARYLIBS) -lssh -lopenbsd-compat $(LIBS)
 
 sshd$(EXEEXT): libssh.a	$(LIBCOMPAT) $(SSHDOBJS)
 	$(LD) -o $@ $(SSHDOBJS) $(LDFLAGS) -lssh -lopenbsd-compat $(LIBWRAP) $(LIBPAM) $(LIBSELINUX) $(SSHDLIBS) $(LIBS)
