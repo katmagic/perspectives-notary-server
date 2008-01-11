@@ -230,7 +230,14 @@ int main(int Argc, char *Argv[])
 	char **argv,*p;
 	LHASH *prog=NULL;
 	long errline;
- 
+
+        // added by dan, to limit functionality to the single use
+        if(Argc != 4) {
+           printf("argc = %d \n", Argc); 
+           printf("usage: ./ssl_scan s_client -connect <host:port>\n"); 
+           exit(1); 
+        }
+
 	arg.data=NULL;
 	arg.count=0;
 

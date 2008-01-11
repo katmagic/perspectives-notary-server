@@ -1,0 +1,189 @@
+
+Thank-you for downloading the Perspectives software.
+
+If you have problems building or running this software, don't 
+hesitate to contact Dan Wendlandt (dwendlan@cs.cmu.edu) 
+
+
+******************   Files ********************************
+
+Here is an overview of what the directories contain (note: 
+depending on what source package you downloaded, you may not
+have or need all directories).  
+
+scripts : bash scripts to build, run, and package perpsectives.
+          Note: you may need to change the location of bash at
+          the top of these files (or add a sym-link on your system).
+          Also, all of these scripts should be run from the 
+          base-directory of the code, not sub-directories. 
+
+common : source for libraries common to all notary code.
+
+notary-client : source for libraries specific to notary clients.
+
+notary-server : source for server 'notary_server' 
+
+key-scan : source for main key scanning binary 'notary_scanner'
+
+ssh-scanner : source for binary invoked by 'notary_scanner' to 
+              retrieve SSH keys (modified OpenSSH code). 
+
+ssl-scanner : source for binary invoked by 'notary_scanner' to 
+              retrieve SSL keys (modified OpenSSL code). 
+
+utilities : many simple binaries to help with notary tasks, largely
+            utilities to deal with notary databases, as well as 
+            some basic programs to test client functionality. 
+
+config : example configuration files for server and scanner.  
+
+openssh-4.4p1 : modified OpenSSH client that contacts notaries
+                when a key does not match the cache (or no cached
+                key exists).  
+
+bin : created by the build process, holds the resulting binaries
+
+log :  created when server/scanner is run, holds output dumps that
+       may be useful for debugging.  
+
+********************** Building SSH client *******************
+
+You can build the SSH client by invoking:
+./scripts/build_ssh_client.sh
+
+This will create an 'ssh' binary in your 'bin' directory,
+which is just like your normal openssh client, but with 
+notary functionality added.  
+(on BSD platforms, you may need to remove the -ldl flag from makefiles 
+in 'common', 'notary-client' and 'openssh-4.4p1'). 
+
+In order to use this ssh client, you need to add two files to you
+~/.ssh directory:
+
+notary_list.txt : contains the addresses and public keys of the
+                  current set of notary servers.
+client_params.txt : contains configuration for client, including
+                    key-trust policy thresholds.  
+
+You should download recent versions of these files from the 
+website.  
+
+When used normally, your modified SSH client will only contact
+notaries when there it receives a key that is not already cached.
+We have added two command-line flags to you let contact notaries
+regardless:
+
+-d always-probe   : always contact notaries and print 
+                    quorum-duration info, but only ask me if I 
+                    want to see the detailed results if the 
+                    key fails quorum-duration. 
+
+-d always-prompt  : always contact notaries and print quorum-
+                    duration info, and also always prompt to
+                    see if i want to see detailed results.  
+
+********************* Building Notary Server *****************
+
+The server is built by invoking:
+./scripts/build_server.sh
+
+Building the server has a dependancy on Berkeley DB 4.6 (yes it
+has to be 4.6, sorry), so you will either need to install the 
+library via an automated tool like apt-get, or download the source
+at http://www.oracle.com/technology/software/products/berkeley-db/index.html .  Untar the file, cd to the 'build_unix' directory and 
+type:
+
+../dist/configure
+make
+make install
+
+if you cannot install Berkeley DB on each host you want to run
+a server on, you can instead just build it on one machine and 
+the copy the file 'build_unix/db.h and 
+'build_uinx/.libs/libdb-4.6.a' into the 'common' of the notary
+code and link Berkeley DB statically using:
+
+./scripts/build_server.sh static
+
+(Note: on BSD platforms, you may need to remove the -ldl flag from makefiles 
+in 'common', 'notary-client', 'notary-server', 'key-scan', 'ssl-scanner',
+'ssh-scanner', and 'utilities'). 
+
+Once you have the code built, look at 'config/server_config.txt'
+and 'config/scanner_config.txt'.  Both files reference a database
+environment directory (default: db_env) and a database filename.
+You should create the database environment directory before 
+starting either the server or the scanner, but the database file
+will be automatically created when you start the server or the
+scanner.  The scanner also needs
+its own private key to sign observed key data.  The code uses
+a hard-coded value of 1369 bits (172 bytes).  Assuming you have
+openssl installed, you can generate a pair key pair using:
+
+./scripts/gen_key_pair.sh private_key.pem public_key.pem 
+
+Remember to modify the scanner config to point to this private
+key.  
+
+Finally, you are ready to fire-up your server and scanner.  
+Use the following scripts, pointing them to the config files:
+
+./scripts/start_server.sh config/server_config.txt
+./scripts/start_scanner.sh config/scanner_config.txt
+
+Both files will output to files in the 'log' directory.  
+
+Test out your server.  Create a notary_list.txt file similar to 
+one you can download from our site.  the format is simple:
+
+<notary ip address> <notary port> 
+<pasted public key>
+
+Because sure the include the "begin.." and "end.." parts of the 
+PEM key.  The 'bin/full_client' binary will contact your notary
+server to test.  For example: 
+
+bin/full_client notary_list.txt www.google.com:443,2
+
+Note that the service you want information on is specified in the
+following format: 
+
+<dns-name>:<port>:<service-type>
+
+Right now there are two service-types.  ssh=1 anFor example: 
+
+As long as both your server and your scanner is running properly,
+this should do an ``on-demand'' probe and print results.  
+
+Key Monitoring:  
+
+One last script bears mentioning: ./scripts/run_scan.sh
+
+This allows you to explicitly ask for the scanner to perform a
+large number of probes.  You can tell the scanner what services
+to monitor by giving it a file of services (same format as above)
+one per line:
+
+./scripts/run_scan.sh f my_services.txt
+
+Or you can ask it to scan every service that currently exists in
+the database.  when doing this, you need to specify the scanner's
+config file, so we know which database to use:
+
+./scripts/run_scan.sh db config/scanner_config.txt
+
+This second option is how we implement periodic key monitoring.
+We have a cron job that scans each service in the database 
+twice a day. 
+
+***********************  Common Problems ************************
+
+Sometimes when building SSH, either as a client or as part of the scanner,
+the ./configure file does not find SSL headers and libraries that match.
+If you have installed SSL to a particular location (e.g., /usr/local/ssl ),
+run ./configure --with-ssl-dir=/usr/local/ssl  . 
+
+
+
+That's all for now.  Please let us know if you have questions or
+suggestions for improving the code, software, or documentation.

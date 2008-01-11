@@ -1,12 +1,8 @@
 # server config files take name value pairs, for the values shown below
 # blank lines or lines starting with '#' are ignored.  all other lines must
-# be <key>#<value>, like the examples below
-#port=2222
-#ip_addr=0.0.0.0
-#db_env_fname=/notary
-#db_fname=ssh.db
+# be <key>#<value>
 
 port=15217
 ip_addr=0.0.0.0
-db_env_fname=../db_env
+db_env_fname=db_env
 db_fname=starter.db

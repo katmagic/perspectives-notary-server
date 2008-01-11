@@ -1,4 +1,4 @@
-
+#include "signal.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
@@ -14,66 +14,21 @@
 #include "keyscan_util.h"
 #include "net_util.h"
 
-unsigned int notary_debug = DEBUG_ERROR;
-//unsigned int notary_debug = DEBUG_INFO | DEBUG_ERROR;
 
-// read in name-value pairs from file to specify config
-// parameters for the scanner 
-void parse_config_file(scanner_config *conf, char* fname){
-	char buf[1024];
-	FILE *f;
-	assert(fname);
+void parse_config_file(scanner_config *conf, char* fname);
 
-	f = fopen(fname, "r");
-	if(f == NULL) {
-		fprintf(stderr,
-		"Notary Error: Invalid conf file %s \n", fname);
-		return;
-	}
+scanner_config config; // global config
+//unsigned int notary_debug = DEBUG_ERROR;
+unsigned int notary_debug = DEBUG_INFO | DEBUG_ERROR;
 
-	while(fgets(buf, 1023,f) != NULL) {
-		if(*buf == '\n') continue;
-		if(*buf == '#') continue;
-		int size = strlen(buf);
-		buf[size - 1] = 0x0; // replace '\n' with NULL
-		char *delim = strchr(buf,'=');
-		if(delim == NULL) {
-			DPRINTF(DEBUG_ERROR, 
-				"Ignoring malformed line: %s \n", buf);
-			continue;
-		}
-		*delim = 0x0;
-	 
-		char *value = delim + 1;
-		DPRINTF(DEBUG_INFO, "key = '%s' value = '%s' \n", 
-				buf, value);
-		if(strcmp(buf,"input_fname") == 0) { 
-			conf->input_fname = strdup(value);
-		} else if(strcmp(buf, "output_fname") == 0) {
-			conf->output_fname = strdup(value);
-		} else if(strcmp(buf, "db_env_fname") == 0){
-			conf->db_env_fname = strdup(value);
-		} else if(strcmp(buf, "private_key_fname") == 0){
-			conf->private_key_fname = strdup(value);
-		} else if(strcmp(buf, "db_fname") == 0) {
-			conf->db_fname = strdup(value);
-		} else if(strcmp(buf, "exceptions_fname") == 0) {
-			conf->exceptions_fname = strdup(value);
-		} else if(strcmp(buf, "max_simultaneous") == 0) {
-			conf->max_simultaneous = atoi(value);
-		} else {
-			DPRINTF(DEBUG_ERROR, "Unknown config value %s : %s \n",
-					buf, value);
-		}
-	}		
-}
 
-#define TIMEOUT 3
+#define TIMEOUT 6
 #define DO_SIGNATURE TRUE
 
 int finished = 0;
 int total = 0;
 int successes = 0;
+int active = 0; 
 
 probe_info *all_probes;
 //patricia_tree_t *not_valid;
@@ -83,6 +38,13 @@ RSA *priv_key;
 int child_finished_sock;
 int new_request_sock;
 flex_queue *to_probe; 
+
+void close_db(int signal) {
+  printf("Closing BDB database \n");
+  if(db != NULL)
+     bdb_close(db);
+  exit(1);
+}
 
 
 void handle_finished_client(int cur_time) {
@@ -168,10 +130,10 @@ void spawn_probe(int index, flex_queue *queue, uint32_t now) {
         int service_type = atoi(comma + 1); 
         if(service_type == SERVICE_TYPE_SSH) {
           ssh_args[1] = host_and_port;
-          execv("../ssh-scanner/ssh", ssh_args); 
+          execv(config.ssh_scan_fname, ssh_args); 
         } else if(service_type == SERVICE_TYPE_SSL) {
           ssl_args[3] = host_and_port;
-          execv("../ssl-scanner/apps/openssl", ssl_args); 
+          execv(config.ssl_scan_fname, ssl_args); 
         }else {
           DPRINTF(DEBUG_ERROR, "Invalid service-type: %d \n", 
               service_type);
@@ -179,7 +141,7 @@ void spawn_probe(int index, flex_queue *queue, uint32_t now) {
         }
         // no return
         // child exits within function
-        printf("********** shouldn't happen ************* \n");
+        printf("**** execv failed: should not be reached  ****** \n");
         exit(25);
     }
     // parent continues here
@@ -203,6 +165,7 @@ void check_probe_progress(probe_info *probe, uint32_t now) {
                 DPRINTF(DEBUG_INFO, "Child Error: exit code = %d for '%s'\n",
                     code, probe->dns_name);
               }
+              --active; 
           } else if(WIFSIGNALED(status)) {
               int signal = WTERMSIG(status);
               if(signal == SIGKILL){ 
@@ -234,12 +197,24 @@ void check_probe_progress(probe_info *probe, uint32_t now) {
       }
 }
 
+// called when select() learns of an incoming connection 
+// on the probe request socket 
 void add_probe_request() {
+  struct timeval now;
+  gettimeofday(&now,NULL); 
+  char buf[MAX_NAME_LEN]; 
+  readUnixClientData(new_request_sock,buf,MAX_NAME_LEN); 
+  buf[MAX_NAME_LEN - 1] = 0; // just in case
 
+  char *copy = strdup(buf);
+  DPRINTF(DEBUG_INFO, "service-id from socket = '%s' (t = %d) \n",
+      copy, now.tv_sec);
+  queue_pushback(to_probe,(char*)&copy);
+  ++active; 
 }
 
 
-void check_server_sockets(uint32_t now) {
+int check_server_sockets(uint32_t now) {
 
     fd_set readset;
     int result;
@@ -249,11 +224,13 @@ void check_server_sockets(uint32_t now) {
     int i = 0; 
     while(1) { 
       ++i;
-      if(i == 1)
+      if(i == 1 && !active) { // sleep here unless we're active
         t.tv_sec = 1;
-      else 
+        t.tv_usec = 0; 
+      } else { 
         t.tv_sec = 0;
-      t.tv_usec = 0;
+        t.tv_usec = 5000;
+      }
 
       FD_ZERO(&readset);
       FD_SET(child_finished_sock, &readset);
@@ -271,48 +248,17 @@ void check_server_sockets(uint32_t now) {
         perror("select error: ");
         break; 
       } else {
-        DPRINTF(DEBUG_ERROR, "select exits after %d iterations \n", i); 
+        DPRINTF(DEBUG_SOCKET, "select exits after %d iterations \n", i); 
         // select returned nothing  
         break; 
       }
     }
+    return i; 
 }
 
+void scan_from_file(char *fname) {
 
-int main(int argc, char** argv) {
-
-
-  if(argc != 3 && argc != 2) {
-      printf("usage: <conf-file> [probe-file] \n");
-      exit(1);
-  }
-
-  
-  scanner_config config;
-  parse_config_file(&config, argv[1]);
-
-  priv_key = load_private_key(config.private_key_fname);
-
-  all_probes = (probe_info*)calloc(config.max_simultaneous, sizeof(probe_info)); 
-
-  //not_valid = New_Patricia(32);
-  //load_file_to_trie(not_valid, config.exceptions_fname);
-
-  uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
-  uint32_t db_flags = DB_CREATE;
-  db = bdb_open_env(config.db_env_fname, env_flags,
-                    config.db_fname, db_flags);
-  warm_db(db);
-
-   // create global UNIX domain server sockets
-   // to get replies from other threads
-  child_finished_sock = openUnixServerSock(FINISHED_CHILD_SOCK_NAME,
-                                    config.max_simultaneous);
-  new_request_sock = openUnixServerSock(NEW_REQUEST_SOCK_NAME, 100);  
- 
-  to_probe = queue_init(30, sizeof(char*));
-  if(argc == 3) 
-    load_from_file(to_probe, argv[2]);
+  load_from_file(to_probe, fname);
 
   struct timeval start;
   gettimeofday(&start,NULL);
@@ -375,13 +321,133 @@ int main(int argc, char** argv) {
     // if we have received a new probe request
     check_server_sockets(now.tv_sec);
   } // end while
+  printf("All done with %d probes. %d keys found. \n", total, successes);
 
-//  printf("WWWWWWWWWWWOOOOOOOOOO  commented out server sock check \n"); 
+}
+
+void scan_from_socket() {
+
+  struct timeval now;
+  while(1){
+      
+    gettimeofday(&now,NULL); 
+    for(int i = 0; i < config.max_simultaneous; i++) {
+      probe_info *probe = &all_probes[i];
+      if(probe->pid == 0)  {
+        // open slot, spawn if we have something
+        if(queue_size(to_probe) > 0) {
+          spawn_probe(i, to_probe, now.tv_sec);
+          ++total;
+        }
+        continue;
+      }
+      
+      check_probe_progress(probe, now.tv_sec); 
+    } // end for 
+    
+    // see if a child has reported back, or 
+    // if we have received a new probe request
+    check_server_sockets(now.tv_sec);
+  } // end while
+}
+
+
+int main(int argc, char** argv) {
+
+
+  if(argc != 3 && argc != 2) {
+      printf("usage: <conf-file> [probe-file] \n");
+      exit(1);
+  }
+
+  signal(SIGINT, close_db);
+  
+  parse_config_file(&config, argv[1]);
+
+  priv_key = load_private_key(config.private_key_fname);
+
+  all_probes = (probe_info*)calloc(config.max_simultaneous, sizeof(probe_info)); 
+
+  //not_valid = New_Patricia(32);
+  //load_file_to_trie(not_valid, config.exceptions_fname);
+
+  uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
+  uint32_t db_flags = DB_CREATE;
+  db = bdb_open_env(config.db_env_fname, env_flags,
+                    config.db_fname, db_flags);
+  warm_db(db);
+
+   // create global UNIX domain server sockets
+   // to get replies from other threads
+  child_finished_sock = openUnixServerSock(FINISHED_CHILD_SOCK_NAME,
+                                    config.max_simultaneous);
+  new_request_sock = openUnixServerSock(NEW_REQUEST_SOCK_NAME, 100);  
+ 
+  to_probe = queue_init(30, sizeof(char*));
+  if(argc == 3) 
+    scan_from_file(argv[2]); // scan file of service-ids, then exit
+  else
+    scan_from_socket(); // infinite loop, recv service-ids on unix domain sock
 
   close(child_finished_sock);
   close(new_request_sock); 
-  printf("All done with %d probes. %d keys found. \n", total, successes);
   //Destroy_Patricia(not_valid, (void_fn1_t)NULL);
   bdb_close(db);
   return 0;
+}
+
+
+// read in name-value pairs from file to specify config
+// parameters for the scanner 
+void parse_config_file(scanner_config *conf, char* fname){
+	char buf[1024];
+	FILE *f;
+	assert(fname);
+
+	f = fopen(fname, "r");
+	if(f == NULL) {
+		fprintf(stderr,
+		"Notary Error: Invalid conf file %s \n", fname);
+		return;
+	}
+
+	while(fgets(buf, 1023,f) != NULL) {
+		if(*buf == '\n') continue;
+		if(*buf == '#') continue;
+		int size = strlen(buf);
+		buf[size - 1] = 0x0; // replace '\n' with NULL
+		char *delim = strchr(buf,'=');
+		if(delim == NULL) {
+			DPRINTF(DEBUG_ERROR, 
+				"Ignoring malformed line: %s \n", buf);
+			continue;
+		}
+		*delim = 0x0;
+	 
+		char *value = delim + 1;
+		DPRINTF(DEBUG_INFO, "key = '%s' value = '%s' \n", 
+				buf, value);
+		if(strcmp(buf,"input_fname") == 0) { 
+			conf->input_fname = strdup(value);
+		} else if(strcmp(buf, "output_fname") == 0) {
+			conf->output_fname = strdup(value);
+		} else if(strcmp(buf, "db_env_fname") == 0){
+			conf->db_env_fname = strdup(value);
+		} else if(strcmp(buf, "private_key_fname") == 0){
+			conf->private_key_fname = strdup(value);
+		} else if(strcmp(buf, "db_fname") == 0) {
+			conf->db_fname = strdup(value);
+		} else if(strcmp(buf, "ssh_scan_fname") == 0) {
+			conf->ssh_scan_fname = strdup(value);
+		} else if(strcmp(buf, "ssl_scan_fname") == 0) {
+			conf->ssl_scan_fname = strdup(value);
+		} else if(strcmp(buf, "exceptions_fname") == 0) {
+			conf->exceptions_fname = strdup(value);
+		} else if(strcmp(buf, "max_simultaneous") == 0) {
+			conf->max_simultaneous = atoi(value);
+		} else {
+			DPRINTF(DEBUG_ERROR, "Unknown config value %s : %s \n",
+					buf, value);
+		}
+	}		
 }

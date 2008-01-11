@@ -1,5 +1,7 @@
-db_env_fname=/notary
-db_fname=small.db
-private_key_fname=../keys/private.pem
-exceptions_fname=../config/probing_blacklist
+db_env_fname=db_env
+db_fname=starter.db
+private_key_fname=keys/private.pem
+exceptions_fname=config/probing_blacklist
 max_simultaneous=350
+ssh_scan_fname=bin/ssh_scan
+ssl_scan_fname=bin/ssl_scan

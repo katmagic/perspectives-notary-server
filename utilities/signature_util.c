@@ -106,8 +106,8 @@ int
 main(int argc, char** argv)
 {
 
-      if(argc != 3) {
-        printf("usage: <c|v> <db-filename>\n");
+      if(argc != 5) {
+        printf("usage: <c|v> <db-env> <db-file> <key>\n");
         exit(1);
       }
 
@@ -117,11 +117,14 @@ main(int argc, char** argv)
       BOOL create_keys = FALSE;
       if((argv[1][0] == 'c')) {
         create_keys = TRUE;
-        key = load_private_key("../keys/private.pem");
+        key = load_private_key(argv[4]);
       } else 
-        key = load_public_key("../keys/public.pem");
+        key = load_public_key(argv[4]);
       
-      db = bdb_open(argv[2], DB_CREATE);
+      uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
+      uint32_t db_flags = DB_CREATE;
+      db = bdb_open_env(argv[2], env_flags,
+                    argv[3], db_flags);
       if(db == NULL) {
           printf("bdb_open failed \n");
           exit(1);

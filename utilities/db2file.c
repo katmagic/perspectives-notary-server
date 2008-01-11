@@ -59,8 +59,8 @@ void close_db(int signal) {
 
 int main(int argc, char** argv) {
                  
-      if(argc != 4) {
-        printf("usage: <db-env> <db-name> <file-out> \n");
+      if(argc !=3 && argc != 4) {
+        printf("usage: <db-env> <db-name> [file-out] \n");
         exit(1);
       }
 
@@ -74,8 +74,11 @@ int main(int argc, char** argv) {
           exit(1);
       }
 
+      if(argc == 4) 
+        f = fopen(argv[3], "w");
+      else 
+        f = stdout; 
 
-      f = fopen(argv[3], "w");
       loop_over();
 
       bdb_close(db);

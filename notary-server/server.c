@@ -12,6 +12,7 @@
 #include "notary_util.h"
 #include "bdb_storage.h"
 #include "net_util.h"
+#include "keyscan_util.h"
 
 typedef struct {
 	uint16_t port;
@@ -100,6 +101,19 @@ BOOL parse_header(notary_header *hdr, int recv_len, char** hostname_out,
   return TRUE;
 }
 
+// in the future, this will build a data structure so we
+// can do this ``on demand'' probes asynchronously, but for
+// now we just sleep, which is a horrible hack for a single
+// threaded server. shhhhhhhhhh, don't tell anyone
+void request_probe(char *service) {
+
+    int len = strlen(service) + 1; // send NULL terminator 
+    DPRINTF(DEBUG_INFO,"Requesting on-demand probe for: '%s'\n", 
+        service); 
+    sendToUnixSock(NEW_REQUEST_SOCK_NAME, service, len);
+    usleep(1500000); 
+}
+
 
 void sock_error(char *msg)
 {
@@ -145,19 +159,31 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port) {
            host, type, n,
            ip_2_str(*(uint32_t*)&from.sin_addr.s_addr));
 
-       int data_len = get_data(db,host,buf + hdr_len, 
+       BOOL first_request = TRUE; 
+       int data_len = -1; 
+       while(1) { 
+
+        data_len = get_data(db,host,buf + hdr_len, 
                                          MAX_PACKET_LEN - hdr_len);
+        if(data_len >= 0) break;
+        if(!first_request) break; 
+
+        first_request = FALSE; 
+        request_probe(host);
+        printf("Done sleeping \n"); 
+       }
+
        int total_len = hdr_len; 
-       if(data_len < 0) {  
-          // no entry found
+       if(data_len < 0) { 
           hdr->msg_type = TYPE_FETCH_REPLY_EMPTY; 
-          hdr->sig_len = 0; 
+          hdr->sig_len = 0;
        } else { 
          // entry found 
         total_len += data_len;
         hdr->msg_type = TYPE_FETCH_REPLY_FINAL;
         hdr->sig_len = htons(SIGNATURE_LEN);
        }
+
        hdr->total_len = htons(total_len); 
        n = sendto(sock, buf , total_len, 
             0 ,(struct sockaddr *)&from,fromlen);
@@ -172,11 +198,12 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port) {
       print_key_info_list(list);
       free_key_info_list(list);
       */
+       fflush(stderr); 
    }
  }
 
 
-unsigned int notary_debug = DEBUG_ERROR; // | DEBUG_DATABASE | DEBUG_INFO;
+unsigned int notary_debug = DEBUG_ERROR  | DEBUG_DATABASE | DEBUG_INFO;
 
 int main(int argc, char** argv) {
 
@@ -196,6 +223,7 @@ int main(int argc, char** argv) {
       exit(1);
     }
     warm_db(db);
+    fflush(stderr); 
 
     server_loop(db, conf.ip_addr, conf.port);
     

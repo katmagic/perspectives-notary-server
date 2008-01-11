@@ -142,8 +142,8 @@ void close_db(int signal) {
 
 int main(int argc, char** argv) {
                  
-      if(argc != 4 && argc != 3) {
-        printf("usage:<file-in>  <db-out> <priv-key> \n");
+      if(argc != 5 && argc != 4) {
+        printf("usage:<file-in>  <db-env> <db-filename> <priv-key> \n");
         printf("if no private key is given, DB signatures will be invalid\n");
         exit(1);
       }
@@ -156,15 +156,19 @@ int main(int argc, char** argv) {
         exit(1); 
       }
 
-      db = bdb_open(argv[2], DB_CREATE);
+      uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
+      uint32_t db_flags = DB_CREATE;
+      db = bdb_open_env(argv[2], env_flags,
+                    argv[3], db_flags);
+      
       if(db == NULL) {
           DPRINTF(DEBUG_ERROR, "bdb_open failed for '%s' \n", argv[2]);
           exit(1);
       }
 
       RSA *priv_key = NULL;
-      if(argc == 4) {  
-        priv_key = load_private_key(argv[3]);
+      if(argc == 5) {  
+        priv_key = load_private_key(argv[4]);
         if(priv_key == NULL) {
           DPRINTF(DEBUG_ERROR, "failed to load private key '%s' \n", argv[3]);
           exit(1);
