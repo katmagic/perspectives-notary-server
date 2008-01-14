@@ -73,7 +73,7 @@ function onload(){
     if (config_path.length == 0)
         return;
    
-    config_path = config_path + "/client_config.txt";
+    config_path = config_path + "/notary_list.txt";
     var display = document.getElementById("perspective-confpath-label");
     if (!display)
     {

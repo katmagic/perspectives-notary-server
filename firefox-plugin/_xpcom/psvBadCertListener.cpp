@@ -293,11 +293,11 @@ PRBool probe_key( nsIX509Cert *cert,
 
      SSHNotary *notary = init_ssh_notary();
 
-     file_buf = read_file("client_config.txt", &file_buf_len);       
+     file_buf = read_file("notary_list.txt", &file_buf_len);       
     
      if(file_buf == NULL)
      {
-         printf("Cannot Open client_config.txt from Profile Folder \n");
+         printf("Cannot Open notary_list.txt from Profile Folder \n");
          return result;
      }
      PR_fprintf(PR_STDERR, "Read the config File \n");

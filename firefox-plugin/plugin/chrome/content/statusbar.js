@@ -118,7 +118,7 @@ function ViewConfig() {
         psv.setExtDir();                  
         config_path = root_prefs.getCharPref("perspectives.ext_dir");
     }    
-    var config = "file://" + config_path + "/" + "client_config.txt";
+    var config = "file://" + config_path + "/" + "notary_list.txt";
     dialog = window.openDialog(config, "perspectiveConfig", "centerscreen,modal", config).focus();
 }
 
