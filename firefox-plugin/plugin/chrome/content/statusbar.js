@@ -166,7 +166,7 @@ var myPrefObserver =
               if(root_prefs.getBoolPref("perspectives.status") == true )
               {
                   image.setAttribute("hidden", "false");
-                  image.setAttribute("src", "chrome://perspectives/content/bad.png");
+                  image.setAttribute("src", "chrome://perspectives/content/good.png");
                   StatusDisplay("Notarized", "Perspectives Notarized");
               }    
               else

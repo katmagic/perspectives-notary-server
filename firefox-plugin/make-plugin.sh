@@ -29,7 +29,7 @@ create_plugin()
     fi  
 
     cd $dir/plugin/chrome
-    zip -r0 perspectives.jar content/ locale/ -x "*.svn/*"
+    zip -qr0 perspectives.jar content/ locale/ -x "*.svn/*"
 
     if [ $? != 0 ]; then 
         echo "Making Chrome jar failed";
@@ -47,7 +47,7 @@ create_plugin()
     mv $dir/plugin/chrome/content $dir
     mv $dir/plugin/chrome/locale  $dir
     cd $dir/plugin
-    zip -r $dir/Perspectives_1.0.0.xpi *  -x "*.svn/*"
+    zip -qr $dir/Perspectives_1.0.0.xpi *  -x "*.svn/*"
     
     if [ $? != 0 ]; then 
         echo "Zipping Plugin failed"; 
