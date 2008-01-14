@@ -28,10 +28,10 @@
 #include "client_policy.h"
 
 
-#define TIMEOUT 1
+#define TIMEOUT 5
 #define NUM_RETRIES 2
 
-#define MAX_STALE_SEC INT_MAX
+#define MAX_STALE_SEC (DAY2SEC(5))  
 #define KEY_LEN 16
 
 #define SECPREF_HIGH    0
@@ -39,7 +39,8 @@
 #define SECPREF_LOW     2
 
 
-unsigned int notary_debug;
+// note: this value is ignored in the Firefox extension code
+unsigned int notary_debug;//
 
 
 char *get_ext_dir()
@@ -266,14 +267,14 @@ PRBool verify_key(SSHNotary *notary, nsIX509Cert *cert, PRInt32 pref )
     return (SEC2DAY(diff) >= threshold);
 }
 
-char *get_url(nsIX509Cert *cert)
+void get_url(nsIX509Cert *cert, char* url_buf, int max_len)
 {
      nsEmbedString commonName;
      cert->GetCommonName (commonName);
      PRUnichar *unichar_cname = (PRUnichar *) commonName.get();
      char *char_cname = (char*) NS_LossyConvertUTF16toASCII(unichar_cname).get();
-     PR_fprintf(PR_STDERR," Common Name %s \n", char_cname);
-     return char_cname;
+     strncpy(url_buf, char_cname, max_len); 
+     PR_fprintf(PR_STDERR," Common Name : '%s' \n", url_buf);
 }
 
 PRBool probe_key( nsIX509Cert *cert,
@@ -287,8 +288,8 @@ PRBool probe_key( nsIX509Cert *cert,
      PRBool result = false;
      char *response = NULL;
 
-
-     PR_fprintf(PR_STDERR,"Confirm Certificate Expired\n");
+     PR_fprintf(PR_STDERR, "probing for url = '%s' \n", url); 
+     //PR_fprintf(PR_STDERR,"Confirm Certificate Expired\n");
 
      SSHNotary *notary = init_ssh_notary();
 
@@ -305,7 +306,7 @@ PRBool probe_key( nsIX509Cert *cert,
 
      PR_fprintf(PR_STDERR, "Loaded Notary Servers \n");
 
-     snprintf(buf, 512, "%s:443:%d", url, SERVICE_TYPE_SSL);
+     snprintf(buf, 512, "%s:443,%d", url, SERVICE_TYPE_SSL);
      fetch_notary_observations(notary, buf, TIMEOUT, NUM_RETRIES);
 
      print_notary_reply(stderr, notary);
@@ -360,7 +361,6 @@ NS_IMETHODIMP psvBadCertListener::ConfirmUnknownIssuer(nsIInterfaceRequestor *so
     PR_fprintf(PR_STDERR,"Confirm Unknown User\n");
 
      PRInt32 pref;
-     char *url = NULL;
      char url_buf[512] = {0};
      nsresult rv;
      PRBool result = false;
@@ -374,13 +374,12 @@ NS_IMETHODIMP psvBadCertListener::ConfirmUnknownIssuer(nsIInterfaceRequestor *so
 #endif
 
 
-     url = get_url(cert);
+     get_url(cert, url_buf, 512);
      
-     if(url == NULL)
+     if(url_buf[0] == 0)
      {
          goto non_psv;
      }
-     strcpy(url_buf, url);
      pref = get_sec_pref();
      
      result = probe_key(cert, url_buf, pref);

@@ -167,21 +167,21 @@ var myPrefObserver =
               {
                   image.setAttribute("hidden", "false");
                   image.setAttribute("src", "chrome://perspectives/content/good.png");
-                  StatusDisplay("Notarized", "Perspectives Notarized");
+                  StatusDisplay("Key Verified", "Perspectives Notarized");
               }    
               else
               {
                   if(root_prefs.getIntPref("perspectives.secpref") != 2 )
                   {
-                    alert("Notaries donot agree to this Key. Denied Access");
+                    alert("Notaries do not agree to this Key. Denied Access");
                   }
                   else
                   {
-                    alert("Notaries donot agree to this Key. It is advisable to verify the key manually");
+                    alert("Notaries do not agree to this Key. It is advisable to verify the key manually");
                   }
                   image.setAttribute("hidden", "false");
                   image.setAttribute("src", "chrome://perspectives/content/bad.png");
-                  StatusDisplay("Veto-ed", "Perspectives Veto-ed");
+                  StatusDisplay("Key Unverified", "Perspectives Veto-ed");
               }    
           }
           catch(ex)

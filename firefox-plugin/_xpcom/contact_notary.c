@@ -69,6 +69,8 @@ void fetch_notary_observations(SSHNotary *notary,
 
    PRIntervalTime start = PR_IntervalNow(); 
 
+
+   PR_fprintf(PR_STDERR,"creating request for '%s'\n", service_id);
    notary_header* hdr = create_request(service_id, 9 /*ignore*/);
 
    // loop through each server, send each a request
