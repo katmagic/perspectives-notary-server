@@ -7,6 +7,7 @@
 // each server (when in fact, quorum could be preserved by a less than most
 // recent timespan).   
 // INSTEAD USE: get_quorum_duration 
+/*
 BOOL check_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len, uint8_t key_type,  
                                     int quorum_size, uint32_t duration_sec, 
                                     uint32_t stale_limit_sec) {
@@ -68,7 +69,7 @@ BOOL check_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len, 
 	}
         return (total_valid >= quorum_size);
 }
-
+*/
 
 int uint_compare(const void *a, const void *b) {
   return *(uint32_t*)b - *(uint32_t*)a;
@@ -109,7 +110,7 @@ uint32_t find_oldest_most_recent_timestamp(SSHNotary *notary,
                                   uint32_t cur_time, uint32_t max_stale_time) {
   
   uint32_t stale_limit = cur_time - max_stale_time; 
-  uint32_t oldest_recent = cur_time; // default to current time 
+  uint32_t oldest_recent = 0; // default to current time 
 
   struct list_head *outer_pos;
   server_list *server;
@@ -124,7 +125,7 @@ uint32_t find_oldest_most_recent_timestamp(SSHNotary *notary,
     struct list_head *inner_pos;
     ssh_key_info_list *elem;
 
-    uint32_t most_recent = cur_time; // find the most recent probe from this server
+    uint32_t most_recent = 0; // find the most recent probe from this server
     list_for_each(inner_pos,&(server->notary_results->list)) {
       elem = list_entry(inner_pos, ssh_key_info_list, list);
       ssh_key_info *info = elem->info;
@@ -134,15 +135,19 @@ uint32_t find_oldest_most_recent_timestamp(SSHNotary *notary,
 
       for(int i = 0; i < num_spans * 2; i = i + 2) {
         uint32_t end = ntohl(timespans[i + 1]);
-        if(end < most_recent) most_recent = end; 
+        if(end > most_recent) most_recent = end; 
       }
     } // end for-each key 
 
-    if(most_recent) {
-      if((most_recent < oldest_recent)
-          && (most_recent >= stale_limit)) {
-        oldest_recent = most_recent; 
-      }
+    if(most_recent && (most_recent > oldest_recent)) {
+        
+	if(most_recent >= stale_limit) {
+        	oldest_recent = most_recent; 
+      	}else {
+		DPRINTF(DEBUG_POLICY,"Ignoring most recent time %d is older "
+		"than stale limit  %d for server %s \n", most_recent, 
+		stale_limit, ip_2_str(server->ip_addr)); 
+	}
     }
   } // end for-each server 
   return oldest_recent; 
@@ -267,7 +272,7 @@ uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len
         }
     
         *status = 0; 
-        if(oldest_recent == (uint32_t)now.tv_sec) { 
+        if(oldest_recent == 0) { 
           DPRINTF(DEBUG_POLICY, "No quorum because all most-recent timespans are stale \n"); 
           return 0; 
         }
