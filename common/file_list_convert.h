@@ -7,7 +7,7 @@
 
 ssh_key_info_list *read_key_info_from_file(FILE *f);
 
-void read_key_data_from_file(FILE *f, char *buf_out, int *data_len);
+BOOL read_key_data_from_file(FILE *f, char *buf_out, int *data_len);
 
 
 #endif

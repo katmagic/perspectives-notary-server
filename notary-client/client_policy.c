@@ -189,7 +189,9 @@ uint32_t find_oldest_most_recent(SSHNotary *notary,
                                   uint32_t cur_time, uint32_t max_stale_time) {
   
   uint32_t stale_limit = cur_time - max_stale_time; 
-  uint32_t oldest_most_recent = cur_time; // default to current time 
+  // most recent could be in the ''future'' if the client's clock is slow
+  // this is a hack to let it be at most a little bit ahead of the client
+  uint32_t oldest_most_recent = cur_time + max_stale_time; 
 
   struct list_head *outer_pos;
   server_list *server;
@@ -328,11 +330,6 @@ uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len
                                     "(cur = %d) \n", oldest_most_recent, (uint32_t)now.tv_sec); 
         int size = queue_size(time_changes); 
         
-        if(oldest_most_recent == (uint32_t)now.tv_sec) { 
-          DPRINTF(DEBUG_ERROR, "ERROR:oldest-most-recent is stale, but keys are cur-consistent?? \n"); 
-          return 0; 
-        }
-
         BOOL nonzero_duration = FALSE; 
         int i;
         queue_sort(time_changes, uint_compare); 

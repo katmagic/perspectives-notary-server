@@ -60,7 +60,7 @@ int get_number_of_notaries(SSHNotary *notary);
 typedef struct {
   BOOL debug;
   float timeout_secs;
-  int num_notaries; // if -1, then use all possible notaries
+  int num_notaries; // how many to query.  if -1, then use all notaries
   float quorum; // as a fraction of num_notaries
   float quorum_duration_days; 
   float max_stale_days; 

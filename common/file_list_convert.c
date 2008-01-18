@@ -20,9 +20,9 @@
 ssh_key_info_list *read_key_info_from_file(FILE *f){
   char data[MAX_DATA_SIZE]; 
   int data_len = MAX_DATA_SIZE;
-  read_key_data_from_file(f, data, &data_len); 
+  BOOL valid = read_key_data_from_file(f, data, &data_len); 
     
-  if(data_len == 0) return NULL; 
+  if(!valid) return NULL; 
 
   // there's not signature on this data
   ssh_key_info_list *info_list = list_from_data(data, data_len, 0);
@@ -32,7 +32,7 @@ ssh_key_info_list *read_key_info_from_file(FILE *f){
 
 // when calling, data_len should describe max-size of buf_out
 // on return, data_len indicates actual number of useful bytes in buf_out
-void read_key_data_from_file(FILE *f, char *buf_out, int *data_len) { 
+BOOL read_key_data_from_file(FILE *f, char *buf_out, int *data_len) { 
 
   char data[MAX_DATA_SIZE]; 
   char buf[1024];
@@ -124,10 +124,10 @@ void read_key_data_from_file(FILE *f, char *buf_out, int *data_len) {
     char *data_start = (data + hostname_len + 1);
     memcpy(buf_out, data_start, total_len);
     *data_len = total_len; 
-    return; 
+    return TRUE; 
 
   } 
   *data_len = 0; 
-  return; 
+  return FALSE; 
 }
 

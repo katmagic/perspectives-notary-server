@@ -1,6 +1,7 @@
 #include "includes.h"
 #include "xmalloc.h"
 #include <stdlib.h>
+#include <math.h> 
 #include "pathnames.h"
 #include "key.h"
 
@@ -73,7 +74,7 @@ void do_probe_check(char* hostname, int port,
         parse_client_config(&conf, client_config_fname);
         if(conf.debug) {
           printf("turning on debug output from config option \n"); 
-          notary_debug = DEBUG_ERROR | DEBUG_INFO; 
+          notary_debug = DEBUG_ERROR | DEBUG_INFO | DEBUG_POLICY; 
         }
 
         Notary *notary = init_ssh_notary();
@@ -92,26 +93,38 @@ void do_probe_check(char* hostname, int port,
                       (int)conf.timeout_secs, NUM_RETRIES); 
 
         BOOL is_cur_consistent;
-        int max_stale_sec = (int)DAY2SEC(conf.max_stale_days); 
+        int max_stale_sec = (int)DAY2SEC(conf.max_stale_days);
+
+        // how many notaries do we need for quorum? 
+        int notaries_contacted = (conf.num_notaries == -1) ?  
+                        get_number_of_notaries(notary) : conf.num_notaries; 
+        int notaries_required = (int)ceil(conf.quorum * ((float)notaries_contacted));
+          
         uint32_t quorum_duration = get_quorum_duration(notary, 
                                        (char*)digest, (int)digest_len, 
-                                       key_type, conf.quorum,
+                                       key_type, notaries_required,
                                        max_stale_sec, &is_cur_consistent); 
 
-        float qd_days = SEC2DAY(quorum_duration); 
+        float qd_days = SEC2DAY(quorum_duration);
+        DPRINTF(DEBUG_POLICY,"quorum-duration = %f days (consistent = %d )\n", 
+                                                    qd_days, is_cur_consistent); 
 	BOOL warn = FALSE;
         if(!is_cur_consistent) {
           warn = TRUE; 
           // key does not even achieve quorum
-          printf("SUSPECTED ATTACK: The offered key is NOT consistent.\n"); 
+          fprintf(stderr,"SUSPECTED ATTACK: The offered key is NOT consistent.\n"); 
           // TODO: print out how many notaries do see it
         }else if(qd_days > conf.quorum_duration_days) {
           // key satisfies quorum duration.  it should be safe
-          printf("This key has been consistently seen for the past %.1f days\n", qd_days); 
-        }else  {
+          fprintf(stderr,"This key has been consistently seen for the past %.1f days\n", qd_days); 
+        }else if (qd_days < 0.1) {
+          warn = TRUE; 
+          // key has quorum, but is brand new 
+          fprintf(stderr,"WARNING: Key is currently consistent, but has no key history \n"); 
+        } else  {
           warn = TRUE; 
           // key has quorum, but not sufficient duration 
-          printf("WARNING: Server key has been seen consistently for only the past %.1f days \n", qd_days); 
+          fprintf(stderr,"WARNING: Key is consistent, but has been seen only for the past %.1f days \n", qd_days); 
         } 
 	
 	if(needsPrompt || warn) { 

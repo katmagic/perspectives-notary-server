@@ -1,11 +1,12 @@
 #!/bin/bash
 
 dir=$PWD
+version=1.1.0
 
 cleanup()
 {
     echo "Cleaning.. "
-    rm -rf Perspectives_1.0.0.xpi
+    rm -rf Perspectives_$version.xpi
     cd $dir/_xpcom
     make clean 2> /dev/null 1>&2 
     if [ $? != 0 ]; then 
@@ -47,7 +48,7 @@ create_plugin()
     mv $dir/plugin/chrome/content $dir
     mv $dir/plugin/chrome/locale  $dir
     cd $dir/plugin
-    zip -qr $dir/Perspectives_1.0.0.xpi *  -x "*.svn/*"
+    zip -qr $dir/Perspectives_$version.xpi *  -x "*.svn/*"
     
     if [ $? != 0 ]; then 
         echo "Zipping Plugin failed"; 
