@@ -13,10 +13,6 @@
 #include "file_list_convert.h"
 #include "notary_util.h"
 #include "client_test.h"
-#include "contact_notary.h" 
-
-#define TIMEOUT 4
-#define NUM_RETRIES 3
 
 unsigned int notary_debug = DEBUG_ERROR | DEBUG_POLICY;
 //unsigned int notary_debug = DEBUG_ERROR;
@@ -24,30 +20,27 @@ unsigned int notary_debug = DEBUG_ERROR | DEBUG_POLICY;
 int main(int argc, char **argv)
 {
    
-  if (argc != 7) { 
-      printf("Usage: <service> <notary-list> <test-key> <key-type> <quorum-thresh> <max-stale-days>\n");
+  if (argc != 6) { 
+      printf("Usage: <obs-file> <test-key> <key-type> <quorum-thresh> <max-stale-days>\n");
       exit(1);
    }
 
-  int key_type = str_2_keytype(argv[4]); 
+  int key_type = str_2_keytype(argv[3]); 
   printf("using %s test key = '%s' \n\n", keytype_2_str(key_type), argv[2]);
   char * key_buf = (char*)malloc(KEY_LEN); 
-  int len_out = hexstr_2_buf(argv[3], key_buf, KEY_LEN); 
+  int len_out = hexstr_2_buf(argv[2], key_buf, KEY_LEN); 
   if(len_out != KEY_LEN) {
      printf("error, only read %d key bytes, expected %d \n",
               len_out, KEY_LEN);
       exit(1);
   }
   
-  int quorum_thresh = atoi(argv[5]); 
-  int max_stale_days = atoi(argv[6]); 
+  int quorum_thresh = atoi(argv[4]); 
+  int max_stale_days = atoi(argv[5]); 
   printf("using Q = %d  max-stale-days = %d\n", quorum_thresh, max_stale_days); 
   int max_stale_secs = DAY2SEC(max_stale_days); 
 
-   SSHNotary *notary = init_ssh_notary();
-   load_notary_server_file(notary, argv[2]); 
-   fetch_notary_observations(notary, argv[1], 
-            TIMEOUT, NUM_RETRIES);
+  Notary *notary = load_fake_replies_from_file(argv[1]); 
   
   print_notary_reply(stdout, notary); 
   printf("\n"); 

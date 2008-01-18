@@ -32,24 +32,25 @@ function chooseType(index)
     switch(index)
     {
         case 0:
-                 dump("High\n");
+                 dump("High Security\n");
                  display1.setAttribute("value", "High Security Preference");
-                 display2.setAttribute("value", "-Expects 75% of notary server to agree.");
-                 display3.setAttribute("value", "-Expects a quorum duration of 3 days.");
+                 display2.setAttribute("value", "Accept a key when 75% of all notary servers have");
+                 display3.setAttribute("value", "seen only that key for the past 3 days.");
 
                  break;
         case 1:
-                 dump("Medium\n");       
-                 display1.setAttribute("value", "Medium Security Preference");
-                 display2.setAttribute("value", "-Expects 75% of notary server to agree.");
-                 display3.setAttribute("value", "-Expects the keys to be currently consistent.");
+                 dump("Moderate Security\n");       
+                 display1.setAttribute("value", "Moderate Security Preference");
+                 display2.setAttribute("value", "Accept a key when 75% of all notary servers"); 
+                 display3.setAttribute("value", "report that key as the current key.");
+
                  break;
 
         case 2:
-                 dump("Low\n");       
-                 display1.setAttribute("value", "Low Security Preference");
-                 display2.setAttribute("value", "-This is High Availability Profile.");
-                 display3.setAttribute("value", "-To be used by expert users only.");
+                 dump("High Availability\n");       
+                 display1.setAttribute("value", "High Availability Preference (experts only)");
+                 display2.setAttribute("value", "Same as moderate security, but user will be able to");
+                 display3.setAttribute("value", "override key-trust decision manually.");
                  break;
     }
     root_prefs.setIntPref("perspectives.secpref", index);

@@ -91,35 +91,28 @@ void do_probe_check(char* hostname, int port,
         fetch_notary_observations(notary, service_info, 
                       (int)conf.timeout_secs, NUM_RETRIES); 
 
-        int status;
+        BOOL is_cur_consistent;
         int max_stale_sec = (int)DAY2SEC(conf.max_stale_days); 
         uint32_t quorum_duration = get_quorum_duration(notary, 
                                        (char*)digest, (int)digest_len, 
                                        key_type, conf.quorum,
-                                       max_stale_sec, &status); 
+                                       max_stale_sec, &is_cur_consistent); 
 
         float qd_days = SEC2DAY(quorum_duration); 
 	BOOL warn = FALSE;
-        if(status) {
-          printf("WARNGING: Your key cannot be authenticated because \n"
-                 "no Notary replies were received.\n"
-                 "This may be because you do not have full Internet \n"
-                 "connectivity or because all notaries are down.\n"
-                 "It could also be an attacker preventing you from \n"
-                 "reaching the Notaries.  Proceed with caution. \n"); 
-        }else if(qd_days > conf.quorum_duration_days) {
-          // key satisfies quorum duration.  it should be safe
-          printf("This key has been consistently seen for the past %.1f days\n", qd_days); 
-        }else if(quorum_duration > 0) {
-          warn = TRUE; 
-          // key has quorum, but not sufficient duration 
-          printf("WARNING: Server key has been seen consistently for only the past %.1f days \n", qd_days); 
-        } else {
+        if(!is_cur_consistent) {
           warn = TRUE; 
           // key does not even achieve quorum
           printf("SUSPECTED ATTACK: The offered key is NOT consistent.\n"); 
           // TODO: print out how many notaries do see it
-        }
+        }else if(qd_days > conf.quorum_duration_days) {
+          // key satisfies quorum duration.  it should be safe
+          printf("This key has been consistently seen for the past %.1f days\n", qd_days); 
+        }else  {
+          warn = TRUE; 
+          // key has quorum, but not sufficient duration 
+          printf("WARNING: Server key has been seen consistently for only the past %.1f days \n", qd_days); 
+        } 
 	
 	if(needsPrompt || warn) { 
 		int result = view_prompt();

@@ -75,7 +75,7 @@ void read_key_data_from_file(FILE *f, char *buf_out, int *data_len) {
       k_info->key_len_bytes = htons(KEY_DATA_SIZE);
       k_info->key_type = str_2_keytype(key_type);
       if(k_info->key_type == 255) {
-        printf("error, bad key-type (%s) for %s \n", 
+        printf("error, bad key-type '%s' for %s \n", 
             key_type, hostname);
       }
       int num_bytes = hexstr_2_buf(key, data + offset, KEY_DATA_SIZE);

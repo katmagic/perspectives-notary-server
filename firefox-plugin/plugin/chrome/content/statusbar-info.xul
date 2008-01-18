@@ -31,6 +31,7 @@
 
                                     <spacer flex="1"/>
                                     <label value="Detailed Information:" style="font-weight: bold"/>
+                                    <label id="perspective-quorum-duration" value="Quorum Duration Unknown" />
                                     <spacer flex="1"/>
                                     <textbox
                                     id="perspective-statusinfo-description"

@@ -64,9 +64,6 @@ function StatusDisplay(label, tooltip) {
 	if (!display)
             return;
 
-	if (label.length == 0)
-            label = "N/A";
-
 	display.setAttribute("value", label);
 
 	var tt = document.getElementById("perspective-status-tooltip");
@@ -76,8 +73,6 @@ function StatusDisplay(label, tooltip) {
 	}
 
 	var node = null;
-        if (tooltip.length == 0)
-            tooltip = "N/A";
 
         node = document.createElement("label");
         node.setAttribute("value", tooltip);
@@ -155,19 +150,27 @@ var myPrefObserver =
     // aData is the name of the pref that's been changed (relative to aSubject)
     switch (aData) {
       case "perspectives.info":
-        
             
-      dump("Info Changed: "  + "\n");        
+      dump("Info/QD Changed: "  + "\n");        
       var image = document.getElementById("perspective-status-image");
+
       if(this._branch.getCharPref("perspectives.info") !=  "N/A")
       {
+            var qd_days = this._branch.getCharPref("perspectives.quorum_duration"); 
+            var is_consistent = this._branch.getBoolPref("perspectives.is_consistent");
+            var mouseover_text = ""; 
+            if(is_consistent) { 
+              mouseover_text = "Key is consistent (quorum-duration = " + qd_days + " days)."; 
+            } else { 
+              mouseover_text = "Key is NOT consistently seen by notary."; 
+            }
 
           try{
               if(root_prefs.getBoolPref("perspectives.status") == true )
               {
                   image.setAttribute("hidden", "false");
                   image.setAttribute("src", "chrome://perspectives/content/good.png");
-                  StatusDisplay("Key Verified", "Perspectives Notarized");
+                  StatusDisplay("Key Verified", mouseover_text);
               }    
               else
               {
@@ -181,20 +184,20 @@ var myPrefObserver =
                   }
                   image.setAttribute("hidden", "false");
                   image.setAttribute("src", "chrome://perspectives/content/bad.png");
-                  StatusDisplay("Key Unverified", "Perspectives Veto-ed");
+                  StatusDisplay("Key Unverified", mouseover_text);
               }    
           }
           catch(ex)
           {
               image.setAttribute("hidden", "true");
-              StatusDisplay("N/A", "Not Applicable");
+              StatusDisplay("", "No notaries were contacted for this site.");
           }
           valid_state = true;
       }    
       else
       {
           image.setAttribute("hidden", "true");
-          StatusDisplay("N/A", "Not Applicable");
+          StatusDisplay("", "No notaries were contacted for this site");
       }
       break;
     }
@@ -206,8 +209,6 @@ window.addEventListener('unload',evtUnload,false);
 
 function evtLoad(evt)
 {
-
-
     myPrefObserver.register();
     /* Progress Listener */
     window.getBrowser().addProgressListener(ProgressListener, Components.interfaces.nsIWebProgress.NOTIFY_LOCATION | Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);

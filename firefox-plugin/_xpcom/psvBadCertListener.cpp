@@ -40,7 +40,7 @@
 
 
 // note: this value is ignored in the Firefox extension code
-unsigned int notary_debug;//
+unsigned int notary_debug = DEBUG_ERROR | DEBUG_POLICY;//
 
 
 char *get_ext_dir()
@@ -132,8 +132,6 @@ char *read_file(char *file_name, int *buf_len)
 
     PR_fprintf(PR_STDERR, "File Path %s \n", path.get());
 
-
-
     PRBool exists; 
     rv = file->Exists(&exists); 
     if (NS_FAILED(rv)) 
@@ -190,7 +188,7 @@ char *read_file(char *file_name, int *buf_len)
 }
 
 
-int set_status(char *info, PRBool status)
+int set_status(char *info, PRBool status, float qd_days, BOOL is_cur_consistent)
 {
 
      nsresult rv;
@@ -210,13 +208,21 @@ int set_status(char *info, PRBool status)
      if (NS_FAILED(rv))
          return rv;
 
+    char buf[32];
+    snprintf(buf,32,"%.2f", qd_days);
+    printf("setting qd in c: %f '%s' \n", qd_days, buf); 
+    prefBranch->SetCharPref("perspectives.quorum_duration", buf); 
+    prefBranch->SetBoolPref("perspectives.is_consistent", is_cur_consistent); 
     prefBranch->SetBoolPref("perspectives.status", status); 
     prefBranch->SetCharPref("perspectives.info", info); 
     
+    // javascript gets notified here, because 'perspectives.info' changed
+
     return 0;
 }
 
-PRBool verify_key(SSHNotary *notary, nsIX509Cert *cert, PRInt32 pref )
+PRBool verify_key(SSHNotary *notary, nsIX509Cert *cert, PRInt32 pref,
+      PRUint32 *quorum_duration, BOOL *is_cur_consistent) 
 							
 {
     nsString fingerprint;
@@ -238,33 +244,20 @@ PRBool verify_key(SSHNotary *notary, nsIX509Cert *cert, PRInt32 pref )
 
     quorum_size = (int ) (((float) (0.75 * quorum_size))  + 0.5);
 
-    int status = 0;
-    uint32_t diff = get_quorum_duration(notary, binary_key, KEY_LEN, SSH_RSA, 
-             quorum_size, MAX_STALE_SEC, &status);
+    uint32_t diff = get_quorum_duration(notary, binary_key, KEY_LEN, SSL_ANY,
+             quorum_size, MAX_STALE_SEC, is_cur_consistent);
+    *quorum_duration = diff; 
 
     free(binary_key);
     
-    if(status == -1)
-    {
-        return PR_FALSE;
-    }
-
-
-    switch(pref)
-    {
-        case SECPREF_HIGH: 
-                threshold = 3.0;
-                break;
-        case SECPREF_MID:        
-                threshold = 0.0;
-                break;
-        case SECPREF_LOW:
-        default:
-                threshold = 0.0;
-                break;
-            
-    }
-    return (SEC2DAY(diff) >= threshold);
+    float qd_days = SEC2DAY(diff); 
+    PR_fprintf(PR_STDERR, "QD-thresh = %f  QD = %f \n",
+        threshold, qd_days);
+    
+    if(pref == SECPREF_HIGH) 
+      return (qd_days >= 3.0); 
+    else
+      return (*is_cur_consistent);
 }
 
 void get_url(nsIX509Cert *cert, char* url_buf, int max_len)
@@ -311,9 +304,12 @@ PRBool probe_key( nsIX509Cert *cert,
 
      print_notary_reply(stderr, notary);
 
-     result = verify_key(notary, cert, pref);
+     BOOL is_cur_consistent; 
+     PRUint32 quorum_duration; 
+     result = verify_key(notary, cert, pref, &quorum_duration, &is_cur_consistent);
      response = get_notary_reply(notary);
-     set_status(response, result);
+     float qd_days = SEC2DAY(quorum_duration); 
+     set_status(response, result, qd_days, is_cur_consistent);
      free(response);
      free(file_buf); 
    
