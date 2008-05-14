@@ -74,7 +74,10 @@ been tested only on Linux and BSD. \\
 OpenSSL and Berkeley DB, both of which can be somewhat troublesome.   
 For Berkeley DB, you need 4.6, which is the latest version.  You can 
 download it at http://www.oracle.com/technology/software/products/berkeley-db/db/index.html and build it yourself or install the \emph{development} package
-via a package manager like apt-get.  Any recent SSL version will work, and
+via a package manager like apt-get.  Also note, for the notary server to
+run properly libdb-4.6.so must be copied to /usr/local/lib on linux
+systems.
+Any recent SSL version will work, and
 you can download it at http://www.openssl.org/source/ or just install 
 libssl-dev from a package manager.  However, a build
 can fail if it uses header files and libraries with conflicting version 
