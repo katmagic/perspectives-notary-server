@@ -219,10 +219,13 @@ void print_key_info_timespans(FILE *f, ssh_key_info* info) {
   int num_spans = ntohs(info->num_timespans);
   int i;
   for(i = 0; i < num_spans; i++){
-    int t_start = ntohl(timespans[0]);
-    int t_end = ntohl(timespans[1]);
-    fprintf(f, "start:\t %d - %s", t_start, ctime((const time_t*)&t_start));
-    fprintf(f, "end:\t %d - %s", t_end, ctime((const time_t*)&t_end));
+    uint32_t t_start = ntohl(timespans[0]);
+    uint32_t t_end = ntohl(timespans[1]);
+    //bug fix:  ctime requires time_t, which may be 64-bit
+    time_t start_time = (time_t) t_start;
+    time_t end_time = (time_t) t_end; 
+    fprintf(f, "start:\t %d - %s", t_start, ctime((const time_t*)&start_time));
+    fprintf(f, "end:\t %d - %s", t_end, ctime((const time_t*)&end_time));
     timespans += 2;
   }
 
