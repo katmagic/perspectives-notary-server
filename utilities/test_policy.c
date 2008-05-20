@@ -21,16 +21,15 @@
 unsigned int notary_debug = DEBUG_ERROR | DEBUG_POLICY;
 //unsigned int notary_debug = DEBUG_ERROR;
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
    
   if (argc != 7) { 
-      printf("Usage: <service> <notary-list> <test-key> <key-type> <quorum-thresh> <max-stale-days>\n");
+      printf("Usage: <service> <notary-list>"
+          " <test-key> <key-type> <quorum-thresh> <max-stale-days>\n");
       exit(1);
    }
 
   int key_type = str_2_keytype(argv[4]); 
-  printf("using %s test key = '%s' \n\n", keytype_2_str(key_type), argv[2]);
   char * key_buf = (char*)malloc(KEY_LEN); 
   int len_out = hexstr_2_buf(argv[3], key_buf, KEY_LEN); 
   if(len_out != KEY_LEN) {
@@ -41,8 +40,16 @@ int main(int argc, char **argv)
   
   int quorum_thresh = atoi(argv[5]); 
   int max_stale_days = atoi(argv[6]); 
-  printf("using Q = %d  max-stale-days = %d\n", quorum_thresh, max_stale_days); 
   int max_stale_secs = DAY2SEC(max_stale_days); 
+
+  printf("service: %s\n"
+      "notary list: %s\n"
+      "test key: %s\n"
+      "key type: %s\n"
+      "Q: %d\n" 
+      "max stale days %d\n", 
+      argv[1], argv[2], argv[3], keytype_2_str(key_type), 
+      quorum_thresh, max_stale_days);
 
    SSHNotary *notary = init_ssh_notary();
    load_notary_server_file(notary, argv[2]); 
