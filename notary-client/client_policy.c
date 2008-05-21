@@ -216,12 +216,12 @@ uint32_t find_oldest_most_recent(SSHNotary *notary,
   return oldest_most_recent; 
 }
 
+//determines how many notaries matche the latest key
+//helper function
+int get_num_valid_notaries (SSHNotary *notary, uint32_t cur_time, 
+    uint32_t max_stale_time, char* key_data, 
+    uint16_t key_len, uint8_t key_type){
 
-// determines if the latest key seen by each of the servers matches 
-BOOL check_current_consistency(SSHNotary *notary, int quorum_size,  
-                       uint32_t cur_time, uint32_t max_stale_time, 
-                        char* key_data, uint16_t key_len, uint8_t key_type) {
-  
   uint32_t stale_limit = cur_time - max_stale_time; 
   int num_valid = 0; 
 
@@ -244,11 +244,18 @@ BOOL check_current_consistency(SSHNotary *notary, int quorum_size,
     }
    
   } // end for-each server 
-
-  return (num_valid >= quorum_size); 
+  return num_valid;
 }
 
-
+// determines if the latest key seen by each of the servers matches 
+BOOL check_current_consistency(SSHNotary *notary, int quorum_size,  
+    uint32_t cur_time, uint32_t max_stale_time, 
+    char* key_data, uint16_t key_len, uint8_t key_type) {
+  
+  int num_valid = get_num_valid_notaries(notary, cur_time, max_stale_time,
+      key_data, key_len, key_type);
+  return (num_valid >= quorum_size); 
+}
 
 // for a given key, check whether it has quorum at this specific time.
 // To do so, check what key each of the notaries report at this time,
@@ -304,8 +311,9 @@ BOOL has_quorum_at_time(SSHNotary *notary, char *key_data, uint16_t key_len,
 // 'stale_limit_sec' is the max amount of time (in seconds) between now and a
 // a notary's most recent probe that we will 'forgive' and not count the lack of a probe
 // against quorum.  
-uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len, 
-      uint8_t key_type, int quorum_size, uint32_t stale_limit_sec, BOOL *is_cur_consistent) {
+uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, 
+    uint16_t key_len, uint8_t key_type, int quorum_size, 
+    uint32_t stale_limit_sec, BOOL *is_cur_consistent) {
 
         struct timeval now;
         gettimeofday(&now, NULL);
@@ -327,7 +335,7 @@ uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len
                                               now.tv_sec, stale_limit_sec); 
 
         DPRINTF(DEBUG_POLICY, "Key is currently consistent: oldest_most_recent = %d "
-                                    "(cur = %d) \n", oldest_most_recent, (uint32_t)now.tv_sec); 
+            "(cur = %d) \n", oldest_most_recent, (uint32_t)now.tv_sec); 
         int size = queue_size(time_changes); 
         
         BOOL nonzero_duration = FALSE; 
@@ -356,6 +364,43 @@ uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len
           return diff;
 
         return 0; 
-
 }
+
+void print_policy_results(SSHNotary *notary, 
+    char *key_data, uint16_t key_len,
+    uint8_t key_type, int quorum_thresh,
+    uint32_t stale_limit_sec, 
+    BOOL is_cur_consistent, uint32_t duration){
+
+  int num_valid;
+  struct timeval now;
+  gettimeofday(&now, NULL);
+
+  if (!is_cur_consistent){
+    puts("Policy Failed: Offered key is NOT consistent"); 
+    if(quorum_thresh > notary->num_servers){
+      puts("Warning: Quorum requires more notaries than were queried."
+           "  Quorum cannot be achieved");
+      return;
+    }
+
+    num_valid = get_num_valid_notaries(notary, now.tv_sec, 
+        stale_limit_sec, key_data, key_len, key_type);
+    if(quorum_thresh < num_valid){
+      printf("Only %d of %d notaries have seen the key", 
+          num_valid, notary->num_servers);
+      return;
+    }
+
+    return;
+  }
+
+  printf("Policy Success: Quorum achieved for %f days\n", SEC2DAY(duration));
+}
+
+
+
+
+
+
 
