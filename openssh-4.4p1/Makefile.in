@@ -80,7 +80,8 @@ LIBSSH_OBJS=acss.o authfd.o authfile.o bufaux.o bufbn.o buffer.o \
 SSHOBJS= ssh.o readconf.o clientloop.o sshtty.o \
 	sshconnect.o sshconnect1.o sshconnect2.o
 
-NOTARYOBJS= ssh_notary.o ../notary-client/libnotaryclient.a ../common/libnotarycommon.a 
+OPENSSL_DIR=../../openssl-0.9.8d/
+NOTARYOBJS= ssh_notary.o ../notary-client/libnotaryclient.a ../common/libnotarycommon.a $(OPENSSL_DIR)/libcrypto.a $(OPENSSL_DIR)/libssl.a  
 
 SSHDOBJS=sshd.o auth-rhosts.o auth-passwd.o auth-rsa.o auth-rh-rsa.o \
 	sshpty.o sshlogin.o servconf.o serverloop.o \
@@ -140,13 +141,17 @@ libssh.a: $(LIBSSH_OBJS)
 	$(RANLIB) $@
 
 NOTARYLIBS= -lcrypto -lssl -lssh -lstdc++ -lcrypto -lz -lssl -lcrypto 
+STATIC_NOTARYLIBS= -lssh -lstdc++ -lz  $(OPENSSL_DIR)/libcrypto.a
 NOTARYLIBS_BINARY= -lstdc++ -lz
 
 ssh-binary$(EXEEXT): $(LIBCOMPAT) $(SSHOBJS) $(NOTARYOBJS)
-	$(LD) -o $@ $(SSHOBJS) $(NOTARYOBJS) $(LDFLAGS) $(NOTARYLIBS_BINARY) -lssh -lopenbsd-compat libssl.a libcrypto.a 
+	$(LD) -o $@ $(SSHOBJS) $(NOTARYOBJS) $(LDFLAGS) $(NOTARYLIBS_BINARY) -lssh -lopenbsd-compat 
 
 ssh$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHOBJS) $(NOTARYOBJS)
 	$(LD) -o $@ $(SSHOBJS) $(NOTARYOBJS) $(LDFLAGS) $(NOTARYLIBS) -lssh -lopenbsd-compat $(LIBS)
+
+ssh-static$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHOBJS) $(NOTARYOBJS)
+	$(LD) -o ssh $(SSHOBJS) $(NOTARYOBJS) $(LDFLAGS) $(STATIC_NOTARYLIBS) -lssh -lopenbsd-compat -lz
 
 sshd$(EXEEXT): libssh.a	$(LIBCOMPAT) $(SSHDOBJS)
 	$(LD) -o $@ $(SSHDOBJS) $(LDFLAGS) -lssh -lopenbsd-compat $(LIBWRAP) $(LIBPAM) $(LIBSELINUX) $(SSHDLIBS) $(LIBS)
