@@ -16,7 +16,7 @@ uint32_t get_quorum_duration(SSHNotary *notary, char *key_data, uint16_t key_len
 void print_policy_results(SSHNotary *notary, 
     char *key_data, uint16_t key_len,
     uint8_t key_type, int quorum_thresh,
-    uint32_t stale_limit_sec, 
-    BOOL is_cur_consistent, uint32_t duration);
+    uint32_t required_duration, uint32_t stale_limit_sec, 
+    BOOL is_cur_consistent, uint32_t quorum_duration);
 
 #endif

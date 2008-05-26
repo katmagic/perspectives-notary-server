@@ -369,18 +369,19 @@ uint32_t get_quorum_duration(SSHNotary *notary, char *key_data,
 void print_policy_results(SSHNotary *notary, 
     char *key_data, uint16_t key_len,
     uint8_t key_type, int quorum_thresh,
-    uint32_t stale_limit_sec, 
-    BOOL is_cur_consistent, uint32_t duration){
+    uint32_t required_duration, uint32_t stale_limit_sec, 
+    BOOL is_cur_consistent, uint32_t quorum_duration){
 
   int num_valid;
   struct timeval now;
   gettimeofday(&now, NULL);
 
   if (!is_cur_consistent){
+    puts("Regected\n");
     puts("Policy Failed: Offered key is NOT consistent"); 
     if(quorum_thresh > notary->num_servers){
       puts("Warning: Quorum requires more notaries than were queried."
-           "  Quorum cannot be achieved");
+          "  Quorum cannot be achieved");
       return;
     }
 
@@ -395,7 +396,15 @@ void print_policy_results(SSHNotary *notary,
     return;
   }
 
-  printf("Policy Success: Quorum achieved for %f days\n", SEC2DAY(duration));
+  if(quorum_duration < required_duration) {
+    puts("Regected\n");
+    puts("Policy Failed: Quorum duration too short");
+    printf("Quorum duration: %f days,  Expected duration %f\n", 
+        SEC2DAY(quorum_duration), SEC2DAY(required_duration));
+  }
+
+  printf("Policy Success: Quorum achieved for %f days\n", 
+      SEC2DAY(quorum_duration));
 }
 
 

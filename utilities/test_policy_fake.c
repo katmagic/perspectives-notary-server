@@ -21,7 +21,7 @@ int main(int argc, char **argv){
 
   if (argc != 6) { 
     printf("Usage: <obs-file> <test-key> <key-type>"
-        " <quorum-thresh> <max-stale-days>\n");
+        " <quorum-thresh> <quorum-duration> <max-stale-days>\n");
     exit(1);
   }
 
@@ -34,8 +34,9 @@ int main(int argc, char **argv){
     exit(1);
   }
 
-  int quorum_thresh = atoi(argv[4]); 
-  int max_stale_days = atoi(argv[5]); 
+  int quorum_thresh  = atoi(argv[4]); 
+  int q_duration     = atoi(argv[5]);
+  int max_stale_days = atoi(argv[6]); 
   int max_stale_secs = DAY2SEC(max_stale_days); 
 
   Notary *notary = load_fake_replies_from_file(argv[1]); 
@@ -45,7 +46,7 @@ int main(int argc, char **argv){
       quorum_thresh, max_stale_secs, &is_cur_consistent);
 
   print_policy_results(notary, key_buf, KEY_LEN, key_type, quorum_thresh, 
-      max_stale_secs, is_cur_consistent, duration);
+      q_duration, max_stale_secs, is_cur_consistent, duration);
   print_notary_reply(stdout, notary); 
   printf("\n"); 
 
