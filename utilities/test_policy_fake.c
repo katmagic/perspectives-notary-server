@@ -35,7 +35,7 @@ int main(int argc, char **argv){
   }
 
   int quorum_thresh  = atoi(argv[4]); 
-  int q_duration     = atoi(argv[5]);
+  int q_duration     = DAY2SEC(atoi(argv[5]));
   int max_stale_days = atoi(argv[6]); 
   int max_stale_secs = DAY2SEC(max_stale_days); 
 

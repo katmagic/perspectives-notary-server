@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
   }
 
   int quorum_thresh   = atoi(argv[5]); 
-  uint32_t q_duration = atoi(argv[6]);
+  uint32_t q_duration = DAY2SEC(atoi(argv[6]));
   int max_stale_days  = atoi(argv[7]); 
   int max_stale_secs  = DAY2SEC(max_stale_days); 
   SSHNotary *notary   = init_ssh_notary();
