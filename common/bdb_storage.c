@@ -81,8 +81,8 @@ unsigned int get_data(DB* db, char* host_and_port, char* buf,
             
             if ((ret = db->get(db, NULL, &key, &data, 0)) != 0){
                 if(ret == DB_NOTFOUND) {
-                  DPRINTF(DEBUG_INFO, "No service-entry for: '%s' (len = %d ) \n",
-                      (char*)key.data, key.size);
+              //    DPRINTF(DEBUG_INFO, "No service-entry for: '%s' (len = %d ) \n",
+                //      (char*)key.data, key.size);
                 }else {
                   db->err(db, ret, "DB->get");
                 }

@@ -13,6 +13,10 @@
 #include "bdb_storage.h"
 #include "net_util.h"
 #include "keyscan_util.h"
+#include "list.h" 
+
+#define MAX_ONDEMAND_WAIT_SEC 3
+#define ONDEMAND_CHECK_INTERVAL_SEC 1
 
 typedef struct {
 	uint16_t port;
@@ -21,49 +25,55 @@ typedef struct {
 	char *db_fname;
 } server_config;
 
-
+typedef struct {
+  notary_header *hdr;
+  uint32_t hdr_len; 
+  uint32_t req_time;
+  struct sockaddr_in *addr; 
+  int addr_len; 
+  struct list_head list; // for linked-list
+} ondemand_probe; 
 
 void parse_config_file(server_config *conf, char* fname){
-	char buf[1024];
-	FILE *f;
-	assert(fname);
+  char buf[1024];
+  FILE *f;
+  assert(fname);
 
-	f = fopen(fname, "r");
-	if(f == NULL) {
-		fprintf(stderr,
-		"Notary Error: Invalid conf file %s \n", fname);
-		return;
-	}
+  f = fopen(fname, "r");
+  if(f == NULL) {
+    fprintf(stderr,"Notary Error: Invalid conf file %s \n", fname);
+    return;
+  }
 
-	while(fgets(buf, 1023,f) != NULL) {
-		if(*buf == '\n') continue;
-		if(*buf == '#') continue;
-		int size = strlen(buf);
-		buf[size - 1] = 0x0; // replace '\n' with NULL
-		char *delim = strchr(buf,'=');
-		if(delim == NULL) {
-			DPRINTF(DEBUG_ERROR, 
-				"Ignoring malformed line: %s \n", buf);
-			continue;
-		}
-		*delim = 0x0;
-	 
-		char *value = delim + 1;
-		DPRINTF(DEBUG_INFO, "key = '%s' value = '%s' \n", 
-				buf, value);
-		if(strcmp(buf,"ip_addr") == 0) { 
-			conf->ip_addr = str_2_ip(value);
-		} else if(strcmp(buf, "port") == 0) {
-			conf->port = atoi(value);
-		} else if(strcmp(buf, "db_env_fname") == 0){
-			conf->db_env_fname = strdup(value);
-		} else if(strcmp(buf, "db_fname") == 0) {
-			conf->db_fname = strdup(value);
-		} else {
-			DPRINTF(DEBUG_ERROR, "Unknown config value %s : %s \n",
-					buf, value);
-		}
-	}		
+  while(fgets(buf, 1023,f) != NULL) {
+    if(*buf == '\n') continue;
+    if(*buf == '#') continue;
+    int size = strlen(buf);
+    buf[size - 1] = 0x0; // replace '\n' with NULL
+    char *delim = strchr(buf,'=');
+    if(delim == NULL) {
+      DPRINTF(DEBUG_ERROR, 
+          "Ignoring malformed line: %s \n", buf);
+      continue;
+    }
+    *delim = 0x0;
+
+    char *value = delim + 1;
+    DPRINTF(DEBUG_INFO, "key = '%s' value = '%s' \n", 
+        buf, value);
+    if(strcmp(buf,"ip_addr") == 0) { 
+      conf->ip_addr = str_2_ip(value);
+    } else if(strcmp(buf, "port") == 0) {
+      conf->port = atoi(value);
+    } else if(strcmp(buf, "db_env_fname") == 0){
+      conf->db_env_fname = strdup(value);
+    } else if(strcmp(buf, "db_fname") == 0) {
+      conf->db_fname = strdup(value);
+    } else {
+      DPRINTF(DEBUG_ERROR, "Unknown config value %s : %s \n",
+          buf, value);
+    }
+  }		
 }
 
 
@@ -105,13 +115,31 @@ BOOL parse_header(notary_header *hdr, int recv_len, char** hostname_out,
 // can do this ``on demand'' probes asynchronously, but for
 // now we just sleep, which is a horrible hack for a single
 // threaded server. shhhhhhhhhh, don't tell anyone
-void request_probe(char *service) {
+void request_probe(notary_header *hdr, struct sockaddr_in *addr, int addr_len, 
+                         ondemand_probe *ondemand_list) {
 
-    int len = strlen(service) + 1; // send NULL terminator 
+    int hdr_len = HEADER_SIZE(hdr);
+    ondemand_probe *tmp = (ondemand_probe*)malloc(sizeof(ondemand_probe));
+    tmp->hdr = (notary_header*) malloc(hdr_len);
+    memcpy(tmp->hdr,hdr,hdr_len); 
+    tmp->hdr_len = hdr_len; 
+    struct timeval tv; 
+    gettimeofday(&tv,NULL); 
+    tmp->req_time = tv.tv_sec;
+    tmp->addr = (struct sockaddr_in*) malloc(addr_len); 
+    memcpy(tmp->addr,addr,addr_len); 
+    tmp->addr_len = addr_len; 
+     
+    __list_add(&tmp->list, &(ondemand_list->list), 
+                  (ondemand_list->list.next)); 
+
+    // we need to actually tell the scanning process to 
+    // probe this service_id 
+    char *service_id = (char*)(tmp->hdr + 1);
+    int len = strlen(service_id) + 1; // send NULL terminator 
     DPRINTF(DEBUG_INFO,"Requesting on-demand probe for: '%s'\n", 
-        service); 
-    sendToUnixSock(NEW_REQUEST_SOCK_NAME, service, len);
-    usleep(1500000); 
+        service_id); 
+    sendToUnixSock(NEW_REQUEST_SOCK_NAME, service_id, len);
 }
 
 
@@ -121,6 +149,80 @@ void sock_error(char *msg)
     exit(1);
 }
 
+int attempt_lookup_and_reply(DB *db, int sock, notary_header *hdr, 
+        struct sockaddr_in *remote_addr, unsigned int addr_len, 
+        BOOL send_on_miss) { 
+  char buf[MAX_PACKET_LEN];
+
+  int hdr_len = HEADER_SIZE(hdr);
+  char *service_id = (char*)(hdr + 1); 
+
+  int data_len = get_data(db,service_id, buf + hdr_len, 
+      MAX_PACKET_LEN - hdr_len);
+  if(data_len < 0 && !send_on_miss)
+    return 0; 
+
+  int total_len = hdr_len; 
+  if(data_len > 0) { 
+    total_len += data_len;
+    hdr->msg_type = TYPE_FETCH_REPLY_FINAL;
+    hdr->sig_len = htons(SIGNATURE_LEN);
+  } else {
+    hdr->msg_type = TYPE_FETCH_REPLY_EMPTY; 
+    hdr->sig_len = 0;
+  } 
+  hdr->total_len = htons(total_len); 
+  memcpy(buf,hdr,hdr_len); 
+  int n = sendto(sock, buf , total_len, 
+      0 ,(struct sockaddr *)remote_addr,addr_len);
+  if (n  < 0) 
+    sock_error("sendto");
+  else     
+    DPRINTF(DEBUG_INFO,"Replied to %s with %d bytes \n",
+            ip_2_str(*(uint32_t*)&remote_addr->sin_addr.s_addr),n);
+
+  /* 
+     printf("server sent: \n");
+     ssh_key_info_list *list = list_from_data(buf + hdr_len, data_len,
+     SIGNATURE_LEN);
+     print_key_info_list(list);
+     free_key_info_list(list);
+     */
+  fflush(stderr); 
+  return n; 
+} 
+
+
+void check_ondemand_list(DB *db, ondemand_probe *ondemand_list, 
+                                 int sock, uint32_t cur_time) { 
+
+    ondemand_probe *entry; 
+    struct list_head *pos, *q; 
+    list_for_each_safe(pos,q,&(ondemand_list->list)) { 
+      entry = list_entry(pos, ondemand_probe, list);
+      char *service_id = (char*)(entry->hdr + 1); 
+      DPRINTF(DEBUG_INFO, "OD-entry: %s \n", service_id);
+    
+      BOOL send_on_miss = (entry->req_time + MAX_ONDEMAND_WAIT_SEC
+                             < cur_time); 
+      int bytes = attempt_lookup_and_reply(db,sock,entry->hdr, 
+                          entry->addr, entry->addr_len, send_on_miss); 
+
+      if(bytes > 0 || send_on_miss) { 
+        // transmitted packet.  remove it from list and free it
+        DPRINTF(DEBUG_INFO,"Sent %d bytes for ondemand probe for %s \n",
+                        bytes, service_id); 
+        list_del(&entry->list); 
+        free(entry->hdr);
+        free(entry->addr);
+        free(entry); 
+      } 
+    } 
+
+} 
+
+
+
 void server_loop(DB *db, uint32_t ip_addr, uint16_t port) {
 
    unsigned int fromlen;
@@ -128,7 +230,11 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port) {
    struct sockaddr_in server;
    struct sockaddr_in from;
    char buf[MAX_PACKET_LEN];
-   
+   uint32_t last_ondemand_check = 0; // never
+
+   ondemand_probe ondemand_list; 
+   INIT_LIST_HEAD(&ondemand_list.list); 
+
    sock=socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) sock_error("Opening socket");
    length = sizeof(server);
@@ -140,66 +246,47 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port) {
        sock_error("binding");
    fromlen = sizeof(struct sockaddr_in);
 
-   int count = 0;
+   fd_set readset; 
+   struct timeval timeout,now;
    while (1) {
+      timeout.tv_sec = 1; 
+      timeout.tv_usec = 0; 
 
-       n = recvfrom(sock,buf,MAX_PACKET_LEN,
+      FD_ZERO(&readset); 
+      FD_SET(sock, &readset);
+      int result = select(sock+1,&readset,NULL,NULL,&timeout); 
+      if(result < 0) { 
+        perror("select"); 
+      } else if(result > 0) {
+        // socket is ready 
+        assert(FD_ISSET(sock,&readset)); 
+        n = recvfrom(sock,buf,MAX_PACKET_LEN,
            0,(struct sockaddr *)&from,&fromlen);
-       if (n < 0) sock_error("recvfrom");
+        if (n < 0) sock_error("recvfrom");
        
+        char *host;
+        uint16_t type;
+        notary_header* hdr = (notary_header*)buf;
+        if(! parse_header(hdr, n, &host,&type))
+          continue;
 
-       char *host;
-       uint16_t type;
-       notary_header* hdr = (notary_header*)buf;
-       if(! parse_header(hdr, n, &host,&type))
-         continue;
-       int hdr_len = HEADER_SIZE(hdr);
-
-       DPRINTF(DEBUG_INFO,"Request for: %s (%d) len = %d from %s \n",
+        DPRINTF(DEBUG_INFO,"Request for: %s (%d) len = %d from %s \n",
            host, type, n,
            ip_2_str(*(uint32_t*)&from.sin_addr.s_addr));
 
-       BOOL first_request = TRUE; 
-       int data_len = -1; 
-       while(1) { 
+        int bytes = attempt_lookup_and_reply(db,sock,hdr,&from,fromlen,FALSE); 
+  
+        // if database did not contain an entry for service-id, request probe 
+        if(bytes == 0) 
+         request_probe(hdr,&from,fromlen,&ondemand_list);
+      }
 
-        data_len = get_data(db,host,buf + hdr_len, 
-                                         MAX_PACKET_LEN - hdr_len);
-        if(data_len >= 0) break;
-        if(!first_request) break; 
-
-        first_request = FALSE; 
-        request_probe(host);
-        printf("Done sleeping \n"); 
-       }
-
-       int total_len = hdr_len; 
-       if(data_len < 0) { 
-          hdr->msg_type = TYPE_FETCH_REPLY_EMPTY; 
-          hdr->sig_len = 0;
-       } else { 
-         // entry found 
-        total_len += data_len;
-        hdr->msg_type = TYPE_FETCH_REPLY_FINAL;
-        hdr->sig_len = htons(SIGNATURE_LEN);
-       }
-
-       hdr->total_len = htons(total_len); 
-       n = sendto(sock, buf , total_len, 
-            0 ,(struct sockaddr *)&from,fromlen);
-       if (n  < 0) sock_error("sendto");
-
-       ++count;
-       DPRINTF(DEBUG_INFO,"Replied with %d bytes (client # %d )\n", n, count);
-   /* 
-      printf("server sent: \n");
-      ssh_key_info_list *list = list_from_data(buf + hdr_len, data_len,
-                                                       SIGNATURE_LEN);
-      print_key_info_list(list);
-      free_key_info_list(list);
-      */
-       fflush(stderr); 
-   }
+      gettimeofday(&now,NULL); 
+      if(last_ondemand_check + ONDEMAND_CHECK_INTERVAL_SEC < now.tv_sec){
+        last_ondemand_check = now.tv_sec;
+        check_ondemand_list(db, &ondemand_list, sock, now.tv_sec);  
+      } 
+   } // end while 
  }
 
 
