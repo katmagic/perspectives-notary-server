@@ -1,0 +1,3 @@
+content perspectives chrome/content/
+
+overlay	chrome://browser/content/browser.xul                chrome://perspectives/content/statusbar.xul

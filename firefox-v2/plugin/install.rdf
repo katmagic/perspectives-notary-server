@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+
+	<Description about="urn:mozilla:install-manifest">
+
+<!--		<em:id>{78ecbcad-4fdb-63cc-5571-7bd38d536d18}</em:id>
+-->
+-		<em:id>perspectives@cmu.edu</em:id>
+		<em:name>perspectives</em:name>
+		<em:version>1.1</em:version>
+		<em:description>An Implementation of Perspectives </em:description>
+		<em:creator>Ramu Panayappan</em:creator>
+		<em:homepageURL>http://andrew.cmu.edu/~rpanayap</em:homepageURL>
+		<em:aboutURL>chrome://perspectives/content/about.xul</em:aboutURL>
+        	<em:optionsURL>chrome://perspectives/content/options.xul</em:optionsURL>
+
+		<em:file>
+			<Description
+                        about="urn:mozilla:extension:file:perspectives.jar">
+				<em:package>content/perspectives/</em:package>
+			</Description>
+		</em:file>
+
+		<em:targetApplication>        <!-- Firefox -->
+			<Description>
+				<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+				<em:minVersion>2.0.0.*</em:minVersion>
+				<em:maxVersion>3.0.0.*</em:maxVersion>
+			</Description>
+		</em:targetApplication>
+
+	</Description>
+
+</RDF>

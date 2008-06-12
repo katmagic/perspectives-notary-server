@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+
+<overlay id="persp-statusbar"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+<script type="application/x-javascript" src="notaries.js" />
+<script type="application/x-javascript" src="statusbar.js"/>
+<script type="application/x-javascript" src="statusbar-info.js"/>
+
+	<statusbar id="status-bar">
+		<statusbarpanel
+			id="perspective-status"
+			insertafter="statusbarpanel-updates"
+			oncontextmenu="ShowContextMenu(event)"
+			collapsed="false"
+			persist="collapsed"
+			tooltip="perspective-status-tooltip">
+
+			<popup id="perspective-contextmenu" position="before_end">
+				<menuitem id="perspective-more-details" label="More Details" oncommand="ShowInfo(ssl_cache)"/>
+				<menuseparator/>
+        <menuitem id="perspective-preferences" label="Preferences" oncommand="ViewPreferences()"/>
+				<menuitem id="perspective-view-config" label="View Config" oncommand="ViewConfig()"/>
+      </popup>
+
+			<popupset id="perspective-dummy-popup">
+				<tooltip id="perspective-status-tooltip" noautohide="true" orient="horizontal">
+					<vbox id="perspective-status-tooltipcontent"></vbox>
+				</tooltip>
+			</popupset>
+
+			<hbox>
+        <vbox flex="1" pack="center">
+          <image id="perspective-status-image" hidden="false"
+          src="chrome://perspectives/content/good.png" 
+          style="width:16px ; height:16px;" 
+          context="perspective-contextmenu" onclick="if(event.button == 0) ShowInfo(ssl_cache)"/>
+        </vbox>
+				<label id="perspective-statusbar-label" value="Default" hidden="true"
+          onclick="if(event.button == 0) ShowInfo(ssl_cache)"/>
+			</hbox>
+		</statusbarpanel>
+	</statusbar>
+
+</overlay>
+
+
