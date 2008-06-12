@@ -137,6 +137,7 @@ function updateStatus(location){
 
   var md5 = getFingerprint();
   if(!md5){
+    dump("Couldn't find md5 the page hasn't finished loading\n");
     return;
   }
 
@@ -173,6 +174,10 @@ var notaryListener = {
 
 	onProgressChange: function(webProgress, request, curSelfProgress, 
     maxSelfProgress, curTotalProgress, maxTotalProgress) {
+    if(curSelfProgress >= maxSelfProgress ||
+       curTotalProgress >= maxTotalProgress){
+      updateStatus(getBrowser().currentURI);
+    }
 		return;
 	},
 
