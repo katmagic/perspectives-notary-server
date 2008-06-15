@@ -5,17 +5,16 @@ ln -s ~/multissh/notarycode/ff3test/getfingerprint@cs.cmu.edu/
 
 You will need to download the lastest xulrunner-sdk (formerly knowns as
 the Gecko SDK) and unzip it to the ff3test directory.  You can get it from: 
-http://ftp.mozilla.org/pub/mozilla.org/xulrunner/nightly/lastest-trunk . 
+http://ftp.mozilla.org/pub/mozilla.org/xulrunner/nightly/latest-trunk . 
 (this may change once FF3 has an official release). 
 
-To build, rename the Makefile for your platform to 'Makefile' and change
-the variable pointing to the xulrunner-sdk if needed.  Then type 'make'.
+To build, rename the Makefile for your platform to 'Makefile' and then type 'make'.
 
 This should create IPerspectives.xpt and Perspectives.so, both of which need
 to by copied to the directory containing the extension.  
 
-Modify copy_files.sh to indicate the location of the extension directory and
-the Firefox string for your OS and then run: 'sh copy_files.sh'.  
+Then run the copy_files_*.sh file for your OS to copy the xpt and so/dylib files 
+from the build directory to the extension diretory.  E.g., 'sh copy_files_linux.sh'.  
 
 Notes:
 

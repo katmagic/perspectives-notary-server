@@ -67,7 +67,13 @@ function run_perspectives() {
    dir.append("getfingerprint@cs.cmu.edu"); 
 
    const cid = "@cs.cmu.edu/Perspectives;1";
-   obj = Components.classes[cid].createInstance();
+   //obj = Components.classes[cid].createInstance();
+   class_obj = Components.classes[cid]; 
+   if(!class_obj) { 
+	alert("Perspectives component (" + cid + ") not installed correctly"); 
+        return; 
+   } 	
+   obj = class_obj.createInstance();
    comp = obj.QueryInterface(Components.interfaces.IPerspectives);
    res = comp.do_notary_check(service_id,cert.md5Fingerprint,dir.path); 
    if(res != "") { 
