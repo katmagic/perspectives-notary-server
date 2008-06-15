@@ -39,7 +39,7 @@ data_from_list(ssh_key_info_list *info_list,
             else {
                 DPRINTF(DEBUG_ERROR, 
                     "insufficient space to convert list to data\n");
-                return -1;
+                return 0;
             }
                 
             offset += size;
@@ -343,7 +343,7 @@ void free_key_info_list(ssh_key_info_list* info_list) {
 char * buf_2_hexstr(char *dgst_raw, int dgst_raw_len){
 
 	char *retval;
-	u_int i;
+	int i;
 
         int str_len = dgst_raw_len * 3 + 1;
 	retval = (char *)malloc(str_len);
@@ -377,7 +377,7 @@ int hexstr_2_buf(char * str, char *buf_out, int buf_len) {
     return i;
 }
 
-char *keytype_2_str(uint8_t type) {
+const char *keytype_2_str(uint8_t type) {
   if(type == SSH_RSA1) return "ssh-rsa1";
   if(type == SSH_RSA) return "ssh-rsa";
   if(type == SSH_DSA) return "ssh-dsa";

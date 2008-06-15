@@ -1,0 +1,44 @@
+First, install the getfingerprint@cs.cmu.edu extension by cd-ing to your 
+firefox extension directory (e.g., ~/.mozilla/firefox/5pnt6pvw.default/extensions) and creating a symlink to the getfingerprint@cs.cmu.edu directory from SVN.
+For example:
+ln -s ~/multissh/notarycode/ff3test/getfingerprint@cs.cmu.edu/
+
+You will need to download the lastest xulrunner-sdk (formerly knowns as
+the Gecko SDK) and unzip it to the ff3test directory.  You can get it from: 
+http://ftp.mozilla.org/pub/mozilla.org/xulrunner/nightly/lastest-trunk . 
+(this may change once FF3 has an official release). 
+
+To build, rename the Makefile for your platform to 'Makefile' and change
+the variable pointing to the xulrunner-sdk if needed.  Then type 'make'.
+
+This should create IPerspectives.xpt and Perspectives.so, both of which need
+to by copied to the directory containing the extension.  
+
+Modify copy_files.sh to indicate the location of the extension directory and
+the Firefox string for your OS and then run: 'sh copy_files.sh'.  
+
+Notes:
+
+The current extension set-up assumes that everything is unzipped, so that you
+can modify the extension and retest simply by restarting firefox.  
+
+Unfortunately, the current code doesn't seem to work with placing a pointer
+file in your extensions directory and keeping the extension code elsewhere.
+This is because the extension loads the notary_list.txt file from within the 
+extension folder, and that breaks if you use a pointer file.  You can still
+just create a symlink to the extension folder in a more convenient location.  
+
+If you get an error like "Components.classes[cid]" is undefined, then firefox
+is not correctly loading our extension.  See the ff_with_log.sh script in the
+ff3test directory for way to get a log of firefox loading each extension (you 
+will have to modify the script to point to your mozilla profile and binaries).
+Failures to load are often the result of shared libraries that are not found
+at runtime.  
+
+That reminds me.  There is an issue with the component failing to find a 
+standard mozilla library libnspr4.so on some platforms (this seesm to be a
+FF3 issue that has not been ironed out on some distros).  I had to copy the 
+library from xulrunner-sdk/lib/libnspr4.so to /usr/lib . 
+
+Running firefox directory from the command line is highly suggested, as
+this allows you to see debug printfs from the C++ code.  

@@ -1,0 +1,12 @@
+#include "nsISupports.idl"
+
+[scriptable, uuid(9da3e716-40ea-4aac-ada1-08e65bc72a2f)]
+interface IPerspectives : nsISupports
+{
+  long Add(in long a, in long b);
+
+  string do_notary_check(in string service_id, in string fingerprint, 
+					       in string extension_dir); 
+};
+
+
