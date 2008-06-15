@@ -45,4 +45,12 @@ this allows you to see debug printfs from the C++ code.
 Also, on OS X we get a TON of compiler warnings because headers from the 
 xulrunner-sdk  have virtual functions but not virtual destructors.  
 I suspect that compiling with an older GCC would eliminate these errors, but
-for some reason I wasn't able to get gcc-3.3 working on my Mac.  
+for some reason I wasn't able to get gcc-3.3 working on my Mac. 
+
+Another OS X issue is that xpidl can fail with the error: 
+dyld: Library not loaded: /opt/local/lib/libintl.3.dylib
+
+This is a known issue (http://developer.mozilla.org/en/docs/Gecko_SDK), 
+and can be solved by installing 'libidl'with darwin ports and then running:
+ ln -s /opt/local/lib/libintl.8.dylib /opt/local/lib/libintl.3.dylib 
+
