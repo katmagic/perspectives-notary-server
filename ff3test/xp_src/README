@@ -40,4 +40,9 @@ FF3 issue that has not been ironed out on some distros).  I had to copy the
 library from xulrunner-sdk/lib/libnspr4.so to /usr/lib . 
 
 Running firefox directory from the command line is highly suggested, as
-this allows you to see debug printfs from the C++ code.  
+this allows you to see debug printfs from the C++ code. 
+
+Also, on OS X we get a TON of compiler warnings because headers from the 
+xulrunner-sdk  have virtual functions but not virtual destructors.  
+I suspect that compiling with an older GCC would eliminate these errors, but
+for some reason I wasn't able to get gcc-3.3 working on my Mac.  

@@ -169,13 +169,6 @@ Perspectives::~Perspectives()
   /* destructor code */
 }
 
-/* long Add (in long a, in long b); */
-NS_IMETHODIMP Perspectives::Add(PRInt32 a, PRInt32 b, PRInt32 *_retval)
-{
-	*_retval = a + b;
-	printf("foo-bar, result = %d \n",*_retval); 
-	return NS_OK;
-}
 
 /* string do_notary_check (in string service_id, in string fingerprint); */
 NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id, 
