@@ -42,6 +42,39 @@ function psv_get_valid_cert() {
 
 } 
 
+
+function do_override() { 
+
+	var cert = psv_get_valid_cert();
+	if(!cert)
+		cert = psv_get_invalid_cert();  
+	if(!cert) { 
+		alert("No certificate found for: " + gBrowser.currentURI.host); 
+		return; 
+	} 
+
+	var uri = gBrowser.currentURI;  
+	var overrideService = Components.classes["@mozilla.org/security/certoverride;1"]
+		.getService(Components.interfaces.nsICertOverrideService);
+	var flags = 0;
+
+//      Seems like the firefox code doesn't like all of these being set at once.  
+//      we should look into this. 
+	
+	flags |= overrideService.ERROR_UNTRUSTED;
+//	flags |= overrideService.ERROR_MISMATCH;
+//	flags |= overrideService.ERROR_TIME;
+
+	overrideService.rememberValidityOverride(
+			uri.asciiHost, uri.port,
+			cert,
+			flags,
+			false);
+ 
+	gBrowser.reload(); 
+} 
+
+
 function run_perspectives() { 
 
  var cert = psv_get_valid_cert();
@@ -57,7 +90,7 @@ function run_perspectives() {
  if(port == -1) 
    port = 443; 
  service_id = uri.host + ":" + port + ",2"; 
- //alert(cert.md5Fingerprint);
+ 
  try { 
    var man = Components.classes["@mozilla.org/extensions/manager;1"]
 		.getService(Components.interfaces.nsIExtensionManager);
