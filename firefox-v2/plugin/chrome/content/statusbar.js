@@ -1,34 +1,6 @@
 var root_prefs = Components.classes["@mozilla.org/preferences-service;1"]
 .getService(Components.interfaces.nsIPrefBranchInternal);
 
-var valid_state = false;
-
-/* We are going to cache the results (e.g which keys were accepted
- * in an object using it as an "associative array"  I don't really know 
- * if this is good form but It seems to be prevalant enough */
-function StatusDisplay(label, tooltip) {
-  dump("Displaying " + label + " \n");
-  var display = document.getElementById("perspective-statusbar-label");
-  if (!display)
-    return;
-
-  display.setAttribute("value", label);
-
-  var tt = document.getElementById("perspective-status-tooltip");
-  if (tt != null) {
-    while(tt.hasChildNodes())
-      tt.removeChild(tt.firstChild);
-  }
-
-  var node = null;
-
-  node = document.createElement("label");
-  node.setAttribute("value", tooltip);
-  tt.appendChild(node);
-
-  return;
-}
-
 
 function ShowContextMenu(e) {
   dump("Show Context Menu\n");
@@ -44,7 +16,7 @@ function ShowContextMenu(e) {
 function ShowInfo(ssl_cache) {
   dump("Show Info\n");
   window.openDialog("chrome://perspectives/content/statusbar-info.xul", 
-    "perspectiveInfo", "centerscreen,modal", gBrowser, ssl_cache).focus();
+      "perspectiveInfo", "centerscreen,modal", gBrowser, ssl_cache).focus();
 }
 
 

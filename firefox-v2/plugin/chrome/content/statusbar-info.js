@@ -42,15 +42,11 @@ function LoadInfo(browser, ssl_cache){
     setQuorumDuration("Invalid Certificate\n");
   }
   else{
-    setQuorumDuration("Valid Certificate\n");
+    setQuorumDuration("Valid Certificate with duration: " 
+        + cert.duration + "\n");
   }
 
-  var info = "Detailed Notary Response:\n" +
-    "Host: "     + cert.host     + "\n" +
-    "Quorum: "   + cert.quorum   + "\n" +
-    "Duration: " + cert.duration + "\n" ;
-
-  setInformation(info);
+  setInformation(cert.summary);
 	return true;
 }
 

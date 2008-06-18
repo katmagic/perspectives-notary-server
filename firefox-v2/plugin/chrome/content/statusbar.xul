@@ -31,14 +31,15 @@
 
 			<hbox>
         <vbox flex="1" pack="center">
-          <image id="perspective-status-image" hidden="false"
+          <image id="perspective-status-image" hidden="true"
           src="chrome://perspectives/content/good.png" 
           style="width:16px ; height:16px;" 
-          context="perspective-contextmenu" onclick="if(event.button == 0) ShowInfo(ssl_cache)"/>
-        </vbox>
-				<label id="perspective-statusbar-label" value="Perspectives" hidden="false"
+          context="perspective-contextmenu" 
           onclick="if(event.button == 0) ShowInfo(ssl_cache)"/>
+        </vbox>
 			</hbox>
+      <label id="perspective-statusbar-label" value="Perspectives"
+      onclick="if(event.button == 0) ShowInfo(ssl_cache)"/>
 		</statusbarpanel>
 	</statusbar>
 
