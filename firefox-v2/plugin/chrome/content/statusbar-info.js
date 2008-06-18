@@ -34,7 +34,7 @@ function LoadInfo(browser, ssl_cache){
   var cert = ssl_cache[browser.currentURI.host];
   if(!cert){
     setQuorumDuration("No Quorum Information");
-    setInformation("This sight does not use ssl encryption");
+    setInformation("This site does not use ssl encryption");
     return;
   }
 

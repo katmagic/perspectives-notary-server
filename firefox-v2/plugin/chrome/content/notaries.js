@@ -17,8 +17,7 @@ function NotaryResponse(quorum, duration){
   this.duration = duration;
 }
 
-// gets current certificat, if it FAILED the security check 
-function psv_get_invalid_cert() { 
+function get_invalid_cert_SSLStatus(){
   try {
     var recentCertsSvc = 
       Components.classes["@mozilla.org/security/recentbadcerts;1"]
@@ -35,15 +34,26 @@ function psv_get_invalid_cert() {
     var gSSLStatus = recentCertsSvc.getRecentBadCert(hostWithPort);
     if (!gSSLStatus)
       return null;
-
-    return gSSLStatus.QueryInterface(Components.interfaces.nsISSLStatus)
-      .serverCert;
+    return gSSLStatus;
   }
   catch (e) {
     alert("exception: " + e); 
     return null;
   }
+}
 
+function cert_from_SSLStatus(gSSLStatus){
+  return gSSLStatus.QueryInterface(Components.interfaces.nsISSLStatus)
+    .serverCert;
+}
+
+// gets current certificat, if it FAILED the security check 
+function psv_get_invalid_cert() { 
+  var gSSLStatus = get_invalid_cert_SSLStatus();
+  if(!gSSLStatus){
+    return null;
+  }
+  return cert_from_SSLStatus(gSSLStatus);
 } 
 
 // gets current certificate, if it PASSED the browser check 
@@ -87,9 +97,11 @@ function queryNotaries(cert){
 }
 
 function applyPolicy(cert){
+
   resp = queryNotaries(cert);
   cert.quorum   = resp.quorum;
   cert.duration = resp.duration;
+
   if(resp.quorum < 3){
     cert.secure = false;
   }
@@ -99,6 +111,38 @@ function applyPolicy(cert){
   return cert;
 }
   
+function do_override() { 
+  var gSSLStatus = get_invalid_cert_SSLStatus();
+  if(!gSSLStatus){ //this paged loaded properly so don't do anythign
+    return false;
+  }
+  var cert = cert_from_SSLStatus(gSSLStatus);
+  if(!cert){
+    return;
+  }
+
+	var uri = gBrowser.currentURI;  
+	var overrideService = Components.classes["@mozilla.org/security/certoverride;1"]
+		.getService(Components.interfaces.nsICertOverrideService);
+
+  var flags = 0;
+  if(gSSLStatus.isUntrusted)
+    flags |= overrideService.ERROR_UNTRUSTED;
+  if(gSSLStatus.isDomainMismatch)
+    flags |= overrideService.ERROR_MISMATCH;
+  if(gSSLStatus.isNotValidAtThisTime)
+    flags |= overrideService.ERROR_TIME;
+
+	overrideService.rememberValidityOverride(
+			uri.asciiHost, uri.port,
+			cert,
+			flags,
+			true);
+ 
+	gBrowser.reload(); 
+  return true;
+} 
+
 function isConsistent(notaryResp){
   return true;
 }
@@ -106,12 +150,17 @@ function isConsistent(notaryResp){
 function setStatusSecure(){
   dump("Secure Status\n");
   document.getElementById("perspective-status-image")
+    .setAttribute("hidden", "false");
+  document.getElementById("perspective-status-image")
     .setAttribute("src", "chrome://perspectives/content/good.png");
+  do_override();
   return true;
 }
 
 function setStatusUnsecure(){
   dump("Unsecure Status\n");
+  document.getElementById("perspective-status-image")
+    .setAttribute("hidden", "false");
   document.getElementById("perspective-status-image")
     .setAttribute("src", "chrome://perspectives/content/bad.png");
   return true;
@@ -120,7 +169,7 @@ function setStatusUnsecure(){
 function setStatusNeutral(){
   dump("Neutral Status\n");
   document.getElementById("perspective-status-image")
-    .setAttribute("src", "chrome://perspectives/content/good.png");
+    .setAttribute("hidden", "true");
   return true;
 }
 
@@ -174,8 +223,7 @@ var notaryListener = {
 
 	onProgressChange: function(webProgress, request, curSelfProgress, 
     maxSelfProgress, curTotalProgress, maxTotalProgress) {
-    if(curSelfProgress >= maxSelfProgress ||
-       curTotalProgress >= maxTotalProgress){
+   if (curTotalProgress >= maxTotalProgress){
       updateStatus(getBrowser().currentURI);
     }
 		return;

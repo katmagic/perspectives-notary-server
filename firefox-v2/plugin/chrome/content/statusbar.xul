@@ -36,7 +36,7 @@
           style="width:16px ; height:16px;" 
           context="perspective-contextmenu" onclick="if(event.button == 0) ShowInfo(ssl_cache)"/>
         </vbox>
-				<label id="perspective-statusbar-label" value="Default" hidden="true"
+				<label id="perspective-statusbar-label" value="Perspectives" hidden="false"
           onclick="if(event.button == 0) ShowInfo(ssl_cache)"/>
 			</hbox>
 		</statusbarpanel>
