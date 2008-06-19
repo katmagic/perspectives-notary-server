@@ -148,7 +148,7 @@ function queryNotaries(){
   
 /* There is a bug here.  Sometimes it gets into a browser reload 
  * loop.  Come back to this later */
-function do_override() { 
+function do_override(location) { 
   var gSSLStatus = get_invalid_cert_SSLStatus();
   if(!gSSLStatus){ //this paged loaded properly so don't do anythign
     return false;
@@ -178,7 +178,10 @@ function do_override() {
 			true);
  
   //Possible browser reload loop here
-	gBrowser.reload(); 
+  //hack
+  //16 specifies that its a reload
+  getBrowser().loadURI(location.spec);
+
   return true;
 } 
 
@@ -243,26 +246,25 @@ function updateStatus(location){
 
   if(cache_cert.secure){
     setStatusSecure();
-    do_override();
+    do_override(location);
   }
   else{
     setStatusUnsecure();
   }
 }
 
+//note can use request to suspend the loading
 var notaryListener = { 
 	/* If something changes in the locationation bar */
-	onLocationChange: function(webProgress, request, location) {
+onLocationChange: function(webProgress, request, location) {
     //dump("Location changed to " + location.scheme + "\n");
-    dump("onLocationChange update status\n");
     updateStatus(location);
-		return;
+    return;
 	},
 
 	onStateChange: function(webProgress, request, stateFlags, status) {
     var STATE_STOP = 0x10;
     if(stateFlags & STATE_STOP){
-      dump("onStateChange update status\n");
       updateStatus(getBrowser().currentURI)
     }
 		return;

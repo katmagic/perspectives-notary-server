@@ -11,16 +11,19 @@
 		<statusbarpanel
 			id="perspective-status"
 			insertafter="statusbarpanel-updates"
-			oncontextmenu="ShowContextMenu(event)"
+			oncontextmenu=""
 			collapsed="false"
 			persist="collapsed"
 			tooltip="perspective-status-tooltip">
 
 			<popup id="perspective-contextmenu" position="before_end">
-				<menuitem id="perspective-more-details" label="More Details" oncommand="ShowInfo(ssl_cache)"/>
+				<menuitem id="perspective-more-details" 
+        label="More Details" oncommand="ShowInfo(ssl_cache)"/>
 				<menuseparator/>
-        <menuitem id="perspective-preferences" label="Preferences" oncommand="ViewPreferences()"/>
-				<menuitem id="perspective-view-config" label="View Config" oncommand="ViewConfig()"/>
+        <menuitem id="perspective-preferences" 
+        label="Preferences" oncommand="ViewPreferences()"/>
+				<menuitem id="perspective-view-config" 
+        label="View Config" oncommand="ViewConfig()"/>
       </popup>
 
 			<popupset id="perspective-dummy-popup">
