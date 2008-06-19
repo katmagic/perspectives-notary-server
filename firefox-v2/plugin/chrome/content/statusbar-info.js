@@ -49,4 +49,3 @@ function LoadInfo(browser, ssl_cache){
   setInformation(cert.summary);
 	return true;
 }
-

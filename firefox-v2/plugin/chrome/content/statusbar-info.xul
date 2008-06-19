@@ -6,8 +6,8 @@
 	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	title="Perspective Information"
 	width="500px"
-	height="300px"
-	buttons="ok"
+	height="350px"
+	buttons="accept"
 	ondialogok="return true;"
 	onload="LoadInfo(window.arguments[0], window.arguments[1])">
 
@@ -49,9 +49,7 @@
             <label value="Quorum Duration"/> 
             <textbox id="quorum-duration-box" cols="3" /> 
           </hbox>
-
         </vbox>
-      
       </vbox>
     </tabpanel>
 	</tabpanels>
