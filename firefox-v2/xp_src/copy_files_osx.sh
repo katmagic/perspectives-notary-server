@@ -1,4 +1,4 @@
-PLUGIN_DIR=../getfingerprint@cs.cmu.edu
+PLUGIN_DIR=../plugin
 PLATFORM=Darwin_x86-gcc3
 LIB_FILE=Perspectives.dylib
 
