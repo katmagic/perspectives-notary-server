@@ -111,10 +111,10 @@ BOOL parse_header(notary_header *hdr, int recv_len, char** hostname_out,
   return TRUE;
 }
 
-// in the future, this will build a data structure so we
-// can do this ``on demand'' probes asynchronously, but for
-// now we just sleep, which is a horrible hack for a single
-// threaded server. shhhhhhhhhh, don't tell anyone
+// called to intiate an "on demand" probe.  We create a datastructure to 
+// remember this specific request, and stash it on the ondemand_list.  
+// We also use a UNIX socket to request that the scanner process probes
+// the service_id of this request.  
 void request_probe(notary_header *hdr, struct sockaddr_in *addr, int addr_len, 
                          ondemand_probe *ondemand_list) {
 
