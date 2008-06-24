@@ -123,7 +123,8 @@ function queryNotaries(){
       .getService(Components.interfaces.nsIPrefBranchInternal);
     var info = root_prefs.getCharPref("perspectives.info");
     var is_consistent = root_prefs.getBoolPref("perspectives.is_consistent");
-    var quorum_duration = root_prefs.getCharPref("perspectives.quorum_duration");
+    var quorum_duration = 
+      root_prefs.getCharPref("perspectives.quorum_duration");
     var str = "Notary Lookup for:\n" + service_id + 
       "\nwith key = " + cert.md5Fingerprint + "\n"; 
     str += "Results:\n"; 
@@ -148,20 +149,25 @@ function queryNotaries(){
   
 /* There is a bug here.  Sometimes it gets into a browser reload 
  * loop.  Come back to this later */
+
 function do_override(location) { 
+  dump("Do Override\n");
   var gSSLStatus = get_invalid_cert_SSLStatus();
   if(!gSSLStatus){ //this paged loaded properly so don't do anythign
+    dump("No invalid cert \n");
     return false;
   }
   var cert = cert_from_SSLStatus(gSSLStatus);
   if(!cert){
+    dump("Error getting certificate from ssl\n");
     return;
   }
 
-  dump("Overriding firefox block\n");
 	var uri = gBrowser.currentURI;  
-	var overrideService = Components.classes["@mozilla.org/security/certoverride;1"]
+	var overrideService = 
+    Components.classes["@mozilla.org/security/certoverride;1"]
 		.getService(Components.interfaces.nsICertOverrideService);
+    
 
   var flags = 0;
   if(gSSLStatus.isUntrusted)
@@ -171,19 +177,25 @@ function do_override(location) {
   if(gSSLStatus.isNotValidAtThisTime)
     flags |= overrideService.ERROR_TIME;
 
+  if(overrideService.isCertUsedForOverrides(
+        cert,true,true)){
+    dump("Already Override\n");
+    return;
+  }
+
 	overrideService.rememberValidityOverride(
-			uri.asciiHost, uri.port,
-			cert,
-			flags,
-			true);
+			uri.asciiHost, uri.port, cert, flags, true);
  
   //Possible browser reload loop here
   //hack
   //16 specifies that its a reload
-  getBrowser().loadURI(location.spec);
+  dump("Reload page: " + location.spec + "\n");
+  gBrowser.loadURIWithFlags(
+      location.spec, gBrowser.LOAD_FLAGS_IS_REFRESH);
+
 
   return true;
-} 
+}
 
 function setStatusSecure(){
   dump("Secure Status\n");
@@ -218,7 +230,7 @@ function updateStatus(location){
     setStatusNeutral();
     return;
   }
-  dump("update ");
+  dump("Update Status: ");
   dump(location.spec);
   dump("\n");
 
@@ -257,7 +269,7 @@ function updateStatus(location){
 var notaryListener = { 
 	/* If something changes in the locationation bar */
 onLocationChange: function(webProgress, request, location) {
-    //dump("Location changed to " + location.scheme + "\n");
+    dump("\nLocation changed to " + location.scheme + "\n");
     updateStatus(location);
     return;
 	},
@@ -265,6 +277,7 @@ onLocationChange: function(webProgress, request, location) {
 	onStateChange: function(webProgress, request, stateFlags, status) {
     var STATE_STOP = 0x10;
     if(stateFlags & STATE_STOP){
+      dump("\nOn State change\n");
       updateStatus(getBrowser().currentURI)
     }
 		return;
