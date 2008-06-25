@@ -190,10 +190,8 @@ function do_override(location) {
   //hack
   //16 specifies that its a reload
   dump("Reload page: " + location.spec + "\n");
-  gBrowser.loadURIWithFlags(
-      location.spec, gBrowser.LOAD_FLAGS_IS_REFRESH);
-
-
+  setTimeout(function (){ gBrowser.loadURIWithFlags(
+        location.spec, gBrowser.LOAD_FLAGS_IS_REFRESH);}, 250);
   return true;
 }
 
@@ -269,37 +267,45 @@ function updateStatus(location){
 var notaryListener = { 
 	/* If something changes in the locationation bar */
 onLocationChange: function(webProgress, request, location) {
-    dump("\nLocation changed to " + location.scheme + "\n");
+    dump("\nLocation changed \n");
     updateStatus(location);
-    return;
 	},
 
 	onStateChange: function(webProgress, request, stateFlags, status) {
-    var STATE_STOP = 0x10;
-    if(stateFlags & STATE_STOP){
-      dump("\nOn State change\n");
-      updateStatus(getBrowser().currentURI)
-    }
-		return;
 	},
 
 	onProgressChange: function(webProgress, request, curSelfProgress, 
     maxSelfProgress, curTotalProgress, maxTotalProgress) {
-		return;
 	},
 
 	onSecurityChange: function(webProgress, request, state) {
-		return;
 	},
 
 	onStatusChange: function(webProgress, request, status, message) {
-		return;
+    //This is just a hack for now I really need to figure out
+    //race condition stuff
+    updateStatus(gBrowser.currentURI);
 	},
 
 	onLinkIconAvailable: function() {
-		return;
 	}
 };
+
+var pageLoadEvent = {
+  init: function(){
+    dump("init init");
+    var appcontent = document.getElementByID("appcontent");
+    if(appcontent){
+      appcontent.addEventListener("DOMContentLoaded", this.onPageLoad, true);
+    }
+  },
+
+  onPageLoad: function(aEvent) {
+    var doc = aEvent.originalTarget;
+    dump("\nOnPageLoad " + doc.location.host + "\n");
+    updateStatus(doc.location);
+  }
+}
 
 function initNotaries(){
   document.getElementById("perspective-statusbar-label")
