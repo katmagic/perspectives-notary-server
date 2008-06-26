@@ -409,8 +409,49 @@ void print_policy_results(SSHNotary *notary,
 }
 
 
+// this function is useful for finding when the the last time 
+// any notary saw a key that a client had in his/her local cache
+uint32_t most_recent_sighting(SSHNotary *notary, char *key_data, 
+			uint16_t key_len, uint8_t key_type) {
 
+        
+        uint32_t most_recent_end = 0; 
 
+	struct list_head *outer_pos, *inner_pos;
+	server_list *server;
+	list_for_each(outer_pos,&notary->notary_servers.list){
+		server = list_entry(outer_pos, server_list, list);
+		ssh_key_info_list *elem;
+                if(server->notary_results == NULL) {
+                  continue;
+                }
 
+		// look at each key entry
+                list_for_each(inner_pos,&(server->notary_results->list)) {
+			elem = list_entry(inner_pos, ssh_key_info_list, list);
+			ssh_key_info *info = elem->info;
+                        
+			if(key_type != info->key_type) continue;
+                	if(key_len != ntohs(info->key_len_bytes)) continue;
+                          
+                	char *key_buf = (char*)(info + 1);
+                	if(memcmp(key_data, key_buf, key_len)) continue;
+			
+			// this is an entry for the key we're talking about
+			int *timespans = FIND_TIMESPANS(info);
+                        for(int i = 0; i < info->num_timespans * 2; i = i + 2) {
+                              uint32_t end = timespans[i + 1];
+                              if(end > most_recent_end) {
+                                  most_recent_end = end;
+                              }
+                        }
+			
+			// I should be safe to break out of the loop here
+			// assuming my memory is not failing me...
+		} // end for-each key 
+
+	}  // end for-each server
+        return most_recent_end; 
+}
 
 

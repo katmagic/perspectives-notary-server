@@ -19,4 +19,7 @@ void print_policy_results(SSHNotary *notary,
     uint32_t required_duration, uint32_t stale_limit_sec, 
     BOOL is_cur_consistent, uint32_t quorum_duration);
 
+uint32_t most_recent_sighting(SSHNotary *notary, char *key_data, 
+			uint16_t key_len, uint8_t key_type); 
+
 #endif
