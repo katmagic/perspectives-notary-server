@@ -223,18 +223,18 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
     
     float qd_days = SEC2DAY(quorum_duration); 
     PR_fprintf(PR_STDERR, "QD = %f days \n", qd_days);
-    
+
      // get text of notary response
      response = get_notary_reply(notary);
+     printf("got notary response of size = %d \n",strlen(response)); 
      int res = set_status(response, qd_days, is_cur_consistent);
      if(res) { 
 	PR_fprintf(PR_STDERR, "Error setting status \n"); 
      } 
- 
 
      free(response);
      free(file_buf); 
- 
+
     *_retval = strdup(""); 
     return NS_OK;
 }
