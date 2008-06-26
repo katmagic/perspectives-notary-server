@@ -156,10 +156,14 @@ char *get_notary_reply(SSHNotary *notary) {
         {
             return NULL;
         }
+        printf("max_len = %d \n", max_len); 
 	list_for_each(outer_pos,&notary->notary_servers.list){
 		server = list_entry(outer_pos, server_list, list);
-                
-
+              
+		if(response_len >= max_len) { 
+			printf("bailing from get_notary_reply \n"); 
+			return response; 
+		} 
                 n = snprintf(response + response_len, max_len - response_len,
                     "***********  Probes from server %s:%d ********** \n", 
 			ip_2_str(server->ip_addr), server->port);
@@ -168,6 +172,7 @@ char *get_notary_reply(SSHNotary *notary) {
 
 		get_key_info_list(response, &response_len, max_len, 
                     server->notary_results);
+		printf("after get_key_info_list: response_len = %d max_len = %d\n", response_len,max_len); 
 	}
         return response;
 }
