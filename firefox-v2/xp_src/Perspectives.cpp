@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 // notary includes
+#include "net_util.h"
 #include "common.h"
 #include "notary_local.h"
 #include "notary_util.h"
@@ -178,7 +179,25 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
     int file_buf_len; 
     PRBool result = false; 
     char *response = NULL; 
+    
+    *_retval = strdup(""); 
 
+    char *host = strdup(service_id); 
+    char *colon = strchr(host,':'); 
+    if(colon)
+ 	*colon = 0; // get just host portion of the string 
+ 
+    if(is_rfc1918(host)) { 
+	char buf[255]; 
+     	snprintf(buf,255,"Did not query notaries because client supplied" 
+		    " a RFC 1918 private address: %s \n", host);  
+	set_status(buf, 0.0, 0);
+	printf("skipping probing because of RFC 1918 address: %s \n", host); 
+	free(host); 
+    	return NS_OK; 
+    }  
+
+    free(host); 
     printf("Perspectives received service_id = '%s' and fingerprint = '%s'\n",
 		service_id, fingerprint);
 
@@ -235,7 +254,6 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
      free(response);
      free(file_buf); 
 
-    *_retval = strdup(""); 
     return NS_OK;
 }
 
