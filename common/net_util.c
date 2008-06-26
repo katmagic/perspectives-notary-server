@@ -10,6 +10,42 @@
 #include <sys/wait.h>
 #include "common.h"
 
+// see if  client entered an RFC 1918 address at the command
+// line.  If so, probing is useless so just print a warning
+// and continue.  
+int is_rfc1918(char *hostname) { 
+	
+
+	struct in_addr test_net, net1, net2,net3;
+
+	// if hostname is DNS name, return false
+	if(! inet_aton(hostname, &test_net) ) 
+		return 0; 
+
+	uint32_t test_ip = ntohl(test_net.s_addr); 
+
+	int ret = inet_aton("10.0.0.0", &net1); 
+	assert(ret); 
+	uint32_t mask = 0xff000000; // slash 8
+	if( (test_ip & mask) == (ntohl(net1.s_addr))) 
+		return 1; 
+
+        ret = inet_aton("192.168.0.0", &net2);
+	assert(ret); 
+	mask = 0xffff0000; // slash 16
+	if( (test_ip & mask) == (ntohl(net2.s_addr))) 
+		return 1; 
+
+ 
+        ret = inet_aton("172.16.0.0", &net3); 
+	assert(ret); 
+	mask = 0xfff00000; // slash 12
+	if( (test_ip & mask) == (ntohl(net3.s_addr))) 
+		return 1; 
+
+	return 0; 
+} 
+
 
 // send data to a local unix socket, identified by 'name'
 int sendToUnixSock(char *name, char *buf, int buf_len){ 

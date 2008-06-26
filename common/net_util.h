@@ -21,6 +21,8 @@
 
 char *ip_2_str(uint32_t ip);
 
+int is_rfc1918(char *hostname); 
+
 int sendToUnixSock(char *name, char *buf, int buf_len); 
 int openUnixServerSock(char *name, int max_queue); 
 int readUnixClientData(int s, char *buf, int buf_len);
