@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
    FD_ZERO(&readfds);
    FD_SET(sock, &readfds);
    struct timeval select_timeout;
-   select_timeout.tv_sec = 4;
+   select_timeout.tv_sec = 6;
    select_timeout.tv_usec = 0;
 
    int is_ready = select(sock + 1, &readfds, NULL, NULL, &select_timeout);

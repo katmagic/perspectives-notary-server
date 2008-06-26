@@ -1,6 +1,10 @@
 var root_prefs = Components.classes["@mozilla.org/preferences-service;1"]
                  .getService(Components.interfaces.nsIPrefBranchInternal);
 
+var bad_cert_handler = Components.classes["@mozilla.org/preferences-service;1"]
+                 .getService(Components.interfaces.nsIPrefBranchInternal);
+
+
 var valid_state = false;
 
 var ProgressListener = {
@@ -11,6 +15,7 @@ var ProgressListener = {
 			return;
                 
                 dump("Scheme is " + location.scheme + "\n");
+                dump("Host is " + location.host + "\n");
 
 		if (location.scheme == 'file' || location.scheme == 'chrome' || location.scheme == 'about')
 			return;

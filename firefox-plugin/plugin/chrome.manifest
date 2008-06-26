@@ -1,4 +1,4 @@
-content perspectives jar:chrome/perspectives.jar!/content/
+content perspectives chrome/content/
 
 
 overlay	chrome://messenger/content/messenger.xul            chrome://perspectives/content/statusbar.xul
@@ -8,4 +8,4 @@ overlay	chrome://browser/content/browser.xul                chrome://perspective
 overlay	chrome://pippki/content/domainMismatch.xul          chrome://perspectives/content/mismatch_overlay.xul
 overlay	chrome://pippki/content/serverCertExpired.xul       chrome://perspectives/content/mismatch_overlay.xul
 
-locale perspectives en-US jar:chrome/perspectives.jar!/locale/en-US/
+locale perspectives en-US chrome/locale/en-US/

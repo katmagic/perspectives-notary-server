@@ -17,7 +17,8 @@ psvBadCertHandler.prototype = {
         var componentsDir = componentFile.parent;
         var extensionDir = componentsDir.parent
             var path = extensionDir.path
-            dump("Extension Dir is " + path + "\n");
+            dump("Extension Dir is " + path + "\n")
+	alert("in JS setExtDir"); ;
         root_prefs.setCharPref("perspectives.ext_dir", path);
         return true;
     },
@@ -79,7 +80,6 @@ var psvBadCertHandlerFactory = {
 var psvBadCertHandlerModule = {
   _firstTime: true,
   registerSelf: function(aCompMgr, aFileSpec, aLocation, aType)  {
-
     aCompMgr = aCompMgr.QueryInterface(Components.interfaces.nsIComponentRegistrar);
     aCompMgr.registerFactoryLocation(CLASS_ID, CLASS_NAME, CONTRACT_ID, aFileSpec, aLocation, aType);
   },

@@ -50,6 +50,10 @@ char *get_ext_dir()
      char *ext_dir = NULL;
 
      nsCOMPtr<psvIBadCertHandler> psv = do_GetService("@cmu.edu/psvBadCertHandler;1");
+     if(psv == NULL) { 
+	printf("component @cmu.edu/psvBadCertHandler;1 is null\n"); 
+	return "";
+     } 
      psv->SetExtDir(&retval);
      
 
@@ -369,6 +373,11 @@ NS_IMETHODIMP psvBadCertListener::ConfirmUnknownIssuer(nsIInterfaceRequestor *so
     printf("Socket is %p \n", sock);
 #endif
 
+     char *ext_dir = get_ext_dir();
+     printf("extension dir = %s \n",ext_dir); 
+     // TODO: this is for debug only 	
+     printf("Quitting before we reach get_url \n"); 
+     return NS_OK;
 
      get_url(cert, url_buf, 512);
      

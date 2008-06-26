@@ -1,7 +1,7 @@
 #!/bin/bash
 
 dir=$PWD
-version=1.1.0
+version=1.2.0
 
 cleanup()
 {
@@ -15,6 +15,7 @@ cleanup()
     rm -rf $dir/plugin/chrome/perspectives.jar
     rm -rf $dir/plugin/platform/Linux_x86-gcc3/components/Perspectives.so  
     rm -rf $dir/plugin/platform/linux-gnu_x86-gcc3/components/Perspectives.so 
+    rm -rf $dir/plugin/platform/Darwin_x86-gcc3/components/Perspectives.so 
     cd $dir
 }
 
@@ -37,8 +38,11 @@ create_plugin()
         exit 1;
     fi  
 
-    cp $dir/_xpcom/Perspectives.so $dir/plugin/platform/Linux_x86-gcc3/components  &&
+    # warning: makes non-portable xpt file
+    # this isn't right, but it works for whatever platform you are developing on
+    cp $dir/_xpcom/Perspectives.so $dir/plugin/platform/Linux_x86-gcc3/components 
     cp $dir/_xpcom/Perspectives.so $dir/plugin/platform/linux-gnu_x86-gcc3/components 
+    cp $dir/_xpcom/Perspectives.so $dir/plugin/platform/Darwin_x86-gcc3/components 
     
     if [ $? != 0 ]; then 
         echo "Copy of Component Library failed"; 

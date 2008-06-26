@@ -661,6 +661,11 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 
 	switch (host_status) {
 	case HOST_OK:
+		if(options.notary_always_probe) {
+			do_probe_check(hostname, port, host_key, original_real_uid,
+				options.notary_always_prompt);
+		}
+
 		/* The host is known and the key matches. */
 		debug("Host '%.200s' is known and matches the %s host key.",
 		    host, type);
@@ -681,10 +686,6 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 				    "of known hosts.", type, ip);
 		}
 		
-		if(options.notary_always_probe) {
-			do_probe_check(hostname, port, host_key, original_real_uid,
-				options.notary_always_prompt);
-		}
                 
 		break;
 	case HOST_NEW:
