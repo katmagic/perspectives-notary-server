@@ -33,11 +33,9 @@
 #define MAX_STALE_SEC (DAY2SEC(5))  
 #define KEY_LEN 16
 
-
 // TODO: put these helper functions in a utility class 
 
-char *read_file(const char *ext_dir, const char *file_name, int *buf_len)
-{
+char *read_file(const char *ext_dir, const char *file_name, int *buf_len){
     nsresult rv;
     char *buf = NULL; 
 
@@ -156,6 +154,7 @@ int set_status(char *info, float qd_days, BOOL is_cur_consistent)
 }
 
 
+
 unsigned int notary_debug = DEBUG_ERROR; 
 
 NS_IMPL_ISUPPORTS1(Perspectives, IPerspectives)
@@ -231,15 +230,37 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
     }
     
     // TODO: should be passed in from options, not hard-coded 
-    int quorum_size = get_number_of_notaries(notary);
+    //int quorum_size = get_number_of_notaries(notary);
+    //Should check if this is null or something
+    //
+
+
+    nsresult rv;
+
+    nsCOMPtr<nsIPrefService> prefService =
+      do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
+    if (NS_FAILED(rv)){
+      return rv;
+    }
+
+    nsCOMPtr<nsIPrefBranch> prefBranch;
+    rv = prefService->GetBranch(nsnull, getter_AddRefs(prefBranch));
+    if (NS_FAILED(rv)){
+      return rv;
+    }
+    int ret = 0;
+    prefBranch->GetIntPref("perspectives.quorum_thresh", &ret);
+    int quorum_size = ret;
+
+    printf("Using Quorum Size %d\n", quorum_size);
     quorum_size = (int ) (((float) (0.75 * quorum_size))  + 0.5);
-     BOOL is_cur_consistent; 
+    BOOL is_cur_consistent; 
 
     PRUint32 quorum_duration = get_quorum_duration(notary, binary_key, 
-	KEY_LEN, SSL_ANY, quorum_size, MAX_STALE_SEC, &is_cur_consistent);
-   
+        KEY_LEN, SSL_ANY, quorum_size, MAX_STALE_SEC, &is_cur_consistent);
+
     free(binary_key);
-    
+
     float qd_days = SEC2DAY(quorum_duration); 
     PR_fprintf(PR_STDERR, "QD = %f days \n", qd_days);
 

@@ -8,14 +8,14 @@
 	width="500px"
 	height="350px"
 	buttons="accept"
-	ondialogok="return true;"
+	ondialogaccept='dialogAccept();'
 	onload="LoadInfo(window.arguments[0], window.arguments[1])">
-<script type="application/x-javascript" src="statusbar-info.js"/>
+  <script type="application/x-javascript" src="statusbar-info.js"/>
 
 <vbox flex="1" width="300"> <hbox flex="1"> <tabbox flex="1">
 	<tabs>
 		<tab label="Information"/>
-    <!--tab label="Preferences"/-->
+    <tab label="Preferences"/>
 	</tabs>
 	<tabpanels>
 		<tabpanel id="perspective-information-tab">
@@ -39,19 +39,18 @@
         </vbox>
       </vbox>
 		</tabpanel>
-    <!--tabpanel id="perspectives-preferences-tab">
+    <tabpanel id="perspective-preferences-tab" >
       <vbox style="text-align: center" flex="1">
         <label value="Perspectives" style="font-weight: bold"/>
         <vbox style="text-align: left" flex="1">
           <hbox> 
-            <label value="Quorum Duration"/> 
-            <textbox id="quorum-duration-box" cols="3" /> 
+            <label value="Quorum Threshold"/> 
+            <textbox id="perspective-quorum-thresh" maxlength="4"/>
           </hbox>
         </vbox>
       </vbox>
-    </tabpanel-->
+    </tabpanel>
 	</tabpanels>
 </tabbox> </hbox> </vbox>
-
 </dialog>
 

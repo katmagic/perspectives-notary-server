@@ -1,6 +1,21 @@
 var root_prefs = Components.classes["@mozilla.org/preferences-service;1"].
                       getService(Components.interfaces.nsIPrefBranch);
 
+function getQuorumThresh(){
+  try{
+    return root_prefs.getIntPref("perspectives.quorum_thresh");
+  }
+  catch (e){
+    setQuorumThresh(3); //default quorum thresh
+    return root_prefs.getIntPref("perspectives.quorum_thresh");
+  }
+}
+
+function setQuorumThresh(thresh){
+  root_prefs.setIntPref("perspectives.quorum_thresh", thresh);
+  return true;
+}
+
 /* Update the xul */
 function setInformation(info){
 
@@ -14,7 +29,7 @@ function setInformation(info){
     info  = "Nothing!";
   }
   display.setAttribute("value", info);
-  dump("Set Information " + info);
+  dump("Set Information " + info + "\n");
 }
 
 function setQuorumDuration(text){
@@ -25,7 +40,7 @@ function setQuorumDuration(text){
     return;
   }
   line.setAttribute("value", text);
-  dump("Set quorum-duration line: " + text);
+  dump("Set quorum-duration line: " + text + "\n");
 }
 
 function LoadInfo(browser, ssl_cache){
@@ -47,5 +62,20 @@ function LoadInfo(browser, ssl_cache){
   }
 
   setInformation(cert.summary);
+
+  //Set the quorum thresh
+  var line = document.getElementById("perspective-quorum-thresh");
+  line.setAttribute("value", getQuorumThresh());
+
 	return true;
 }
+
+function dialogAccept(){
+  var line = document.getElementById("perspective-quorum-thresh");
+  if(line.value < 1){
+    return true;
+  }
+  setQuorumThresh(parseInt(line.value));
+  return true;
+}
+
