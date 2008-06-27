@@ -45,6 +45,10 @@ function setQuorumDuration(text){
 
 function LoadInfo(browser, ssl_cache){
 
+  //Set the quorum thresh
+  var line = document.getElementById("perspective-quorum-thresh");
+  line.setAttribute("value", getQuorumThresh());
+
   /* Later we will pass the md5 into here*/
   var cert = ssl_cache[browser.currentURI.host];
   if(!cert){
@@ -62,10 +66,6 @@ function LoadInfo(browser, ssl_cache){
   }
 
   setInformation(cert.summary);
-
-  //Set the quorum thresh
-  var line = document.getElementById("perspective-quorum-thresh");
-  line.setAttribute("value", getQuorumThresh());
 
 	return true;
 }
