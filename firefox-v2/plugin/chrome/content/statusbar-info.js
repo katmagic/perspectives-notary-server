@@ -6,7 +6,7 @@ function getQuorumThresh(){
     return root_prefs.getIntPref("perspectives.quorum_thresh");
   }
   catch (e){
-    setQuorumThresh(3); //default quorum thresh
+    setQuorumThresh(75); //default quorum thresh
     return root_prefs.getIntPref("perspectives.quorum_thresh");
   }
 }

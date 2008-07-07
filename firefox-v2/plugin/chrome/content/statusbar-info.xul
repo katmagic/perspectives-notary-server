@@ -44,7 +44,7 @@
         <label value="Perspectives" style="font-weight: bold"/>
         <vbox style="text-align: left" flex="1">
           <hbox> 
-            <label value="Quorum Threshold"/> 
+            <label value="Quorum Threshold Percentage"/> 
             <textbox id="perspective-quorum-thresh" maxlength="4"/>
           </hbox>
         </vbox>
