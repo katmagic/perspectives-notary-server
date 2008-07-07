@@ -1,11 +1,8 @@
 #ifndef _NET_UTIL_H_
 #define _NET_UTIL_H_
 
+#include "common.h"
 
-#include <stdio.h>
-#include <string.h>
-
-//#include <netdb.h>
 
 // from NetBSD, apparently this is how you size a unix sock
 #define SUN_LEN(su) \

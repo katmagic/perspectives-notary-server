@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="nspr4.lib xpcom.lib xpcomglue_s.lib Ws2_32.lib"
+				AdditionalDependencies="nspr4.lib xpcom.lib xpcomglue_s.lib Ws2_32.lib nss3.lib "
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\xulrunner-sdk\lib;..\xulrunner-sdk\sdk\lib"
 				GenerateDebugInformation="true"
@@ -184,7 +184,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\contact_notary.c"
+				RelativePath=".\contact_notary.cpp"
 				>
 			</File>
 			<File
@@ -212,6 +212,10 @@
 						Outputs=".\$(InputName).h"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\moz_crypto.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\net_util.c"

@@ -2,6 +2,7 @@
 #include "notary_util.h"
 #include "common.h"
 #include <time.h>
+#include <winsock2.h> 
 
 void xfree(void*);
 

@@ -1,8 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
+#include <winsock2.h>
 
 #include "common.h"
 #include "debug.h"
@@ -15,17 +14,7 @@
 
 */ 
 
-/* DW: not implemented for WIN32, until we figure out openssl
 
-BOOL message_is_valid(char *buf, msg_len, RSA* pub_key) {
-   notary_header *hdr = (notary_header*)buf;
-   if(!verify_message_signature(hdr, pub_key)) {
-      //DPRINTF(DEBUG_ERROR, "**** Signature is invalid **** \n");
-      return NULL;
-   }
-} 
-
-*/
 
 // warning: for WIN32, this no longer checks the signature
 ssh_key_info_list* parse_message(char *buf, int msg_len) {
@@ -71,12 +60,12 @@ notary_header* create_request(char*hostname, uint16_t service_type) {
         return hdr;
 }
 
-void add_notary_server(SSHNotary *notary, uint32_t ip_address, uint16_t port, RSA* key){
+void add_notary_server(SSHNotary *notary, uint32_t ip_address, uint16_t port, char *base64_key){
 	server_list *tmp = (server_list*)malloc(sizeof(server_list));
 	tmp->ip_addr = ip_address;
     tmp->notary_results = NULL; // this is set after data is received + parsed 
     tmp->port = port;
-    tmp->public_key = key;
+    tmp->public_key = strdup(base64_key);
 	tmp->received_reply = 0;
     tmp->consistent_secs = 0;
 	__list_add(&tmp->list,&(notary->notary_servers.list),
@@ -299,9 +288,10 @@ char *read_single_pubkey(char *input_buf, char *output_buf, int max_len, int *by
         char *ptr = input_buf; 
 		while( (ptr = get_line(ptr, line, 1024)) != NULL) {
 			int line_len; 
-            if(strcmp(PEM_PUB_START, line) == 0)
+			if(strcmp(PEM_PUB_START, line) == 0){
               key_started = TRUE;
-
+			  continue;
+			}
             if(!key_started) 
               continue;
 
@@ -310,14 +300,18 @@ char *read_single_pubkey(char *input_buf, char *output_buf, int max_len, int *by
               DPRINTF(DEBUG_ERROR, "error, pubkey file larger than buf \n");
               exit(1);
             }
+
+            if(strcmp(PEM_PUB_END, line) == 0) {
+              *bytes_read = offset; 
+			  output_buf[offset] = 0x0; 
+              return ptr;
+            }
+
             // don't copy null terminator
             memcpy(output_buf + offset, line, line_len);
             offset += line_len;
 
-            if(strcmp(PEM_PUB_END, line) == 0) {
-              *bytes_read = offset; 
-              return ptr;
-            }
+
         }
         DPRINTF(DEBUG_ERROR, "Error: reached EOF before finished reading key \n");
         exit(1);
@@ -384,13 +378,16 @@ void load_notary_servers(SSHNotary *notary, char* data, int buf_len){
 		ip_addr = str_2_ip(buf);
 		port = htons((uint16_t) atoi(delim + 1));
         ptr = read_single_pubkey(ptr, buf2, 1024, &key_len);
-		/* 
-	    WIN32 doesn't actually load keys
-        RSA * pub_key = key_from_buf(buf2, key_len, FALSE);
-        DPRINTF(DEBUG_INFO, "loaded key for server '%s' : %d \n", ip_2_str(ip_addr), port);
-		*/
 
-		add_notary_server(notary, ip_addr, port, pub_key);
+		printf("got single key = '%s' \n", buf2); 
+		/* 
+	    WIN32 changes how keys are stored, using base64 encoded PEM, 
+		instead of an RSA* struct.
+		We need to reconcile that to recombine the files.  
+        RSA * pub_key = key_from_buf(buf2, key_len, FALSE);
+		*/
+		DPRINTF(DEBUG_INFO, "loaded key for server '%s' : %d \n", ip_2_str(ip_addr), port);
+		add_notary_server(notary, ip_addr, port, buf2);
 
 	}
 }

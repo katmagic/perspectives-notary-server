@@ -17,8 +17,8 @@ typedef struct {
 	// server info, in network byte order
 	uint32_t ip_addr;
 	uint16_t port;
-    RSA* public_key; 
-
+   //RSA* public_key; 
+	char *public_key; // base64 encoded null-terminated string
 	// result data
 	ssh_key_info_list *notary_results;
 	uint8_t received_reply;
@@ -61,7 +61,7 @@ int get_number_of_notaries(SSHNotary *notary);
 // often used by notary files. the function below automatically
 // reads a config file and returns an instance of this struct
 typedef struct {
-  BOOL debug;
+  uint8_t debug;
   float timeout_secs;
   int num_notaries; // how many to query.  if -1, then use all notaries
   float quorum; // as a fraction of num_notaries

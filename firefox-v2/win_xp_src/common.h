@@ -28,7 +28,6 @@
 
 
 #if WIN32
-#include <Winsock2.h>
 
 typedef void RSA; // fake openssl data structure for win32
 #define RSA_free(ptr) 
@@ -40,15 +39,19 @@ typedef unsigned short uint16_t;
 typedef unsigned int uint32_t; 
 
 #define PACKED
+#pragma pack(push,1)
 #else 
-typedef uint8_t BOOL; 
+typedef uint8_t BOOL;
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #define PACKED __attribute__ ((packed)) 
+
 #endif
 
-#pragma pack(1)
+
+
+
 // all fields should be in network byte order 
 typedef struct {
 	unsigned char version;
@@ -64,14 +67,15 @@ typedef struct {
 // all fields should be in network byte order 
 // NOTE: this is used for all types of keys, 
 // not just SSH keys
-#pragma pack(1)
 typedef struct {
         uint16_t num_timespans;
 	    uint16_t key_len_bytes;
         uint8_t key_type;
 } PACKED ssh_key_info;
 
-
+#if WIN32
+#pragma pack(pop)
+#endif
 
 #define SSH_RSA1 0
 #define SSH_RSA 1
@@ -98,12 +102,12 @@ typedef struct {
 	ssh_key_info* info;	
 } ssh_key_info_list;
 
-#ifndef min
+//#ifndef min
 
-#define min(X, Y)  ((X) < (Y) ? (X) : (Y))
-#define max(X, Y)  ((X) > (Y) ? (X) : (Y))
+//#define min(X, Y)  ((X) < (Y) ? (X) : (Y))
+//#define max(X, Y)  ((X) > (Y) ? (X) : (Y))
 
-#endif
+//#endif
 
 #define SEC2MIN(x) ((float)x/60.0)
 #define SEC2HOUR(x) ((float)x/3600.0)

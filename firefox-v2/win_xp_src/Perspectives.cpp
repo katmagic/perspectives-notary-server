@@ -2,7 +2,9 @@
 #include <stdlib.h> 
 #include <stdio.h>
 
-
+#if WIN32
+#include <Winsock2.h>
+#endif
 
 
 // XPCOM headers copied from old version of the component
@@ -24,13 +26,17 @@
 #include "nsIPrefBranch2.h"
 #include "nsMemory.h"
 
+
+#include "contact_notary.h"
+
 extern "C" { 
 #include "common.h" 
 #include "notary_local.h"
-#include "contact_notary.h"
 #include "notary_util.h"
 #include "client_policy.h" 
 } 
+
+
 
 #define TIMEOUT 5
 #define NUM_RETRIES 2
@@ -193,11 +199,12 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
 
     *_retval = (char*) nsMemory::Clone(myResult, 
                                        sizeof(char)*(strlen(myResult)+1));
-    
+
     char *host = strdup(service_id); 
     char *colon = strchr(host,':'); 
     if(colon)
  	*colon = 0; // get just host portion of the string 
+
 
  /* have not yet ported is_rfc1918 to WIN32
     if(is_rfc1918(host)) { 

@@ -4,10 +4,10 @@
 #include "prio.h" 
 #include "prnetdb.h" 
 
-#include "common.h"
+extern "C" { 
 #include "net_util.h"
 #include "notary_local.h"
-
+} 
 
 void send_single_query(server_list *server, PRFileDesc *fd,  
                            notary_header *hdr);

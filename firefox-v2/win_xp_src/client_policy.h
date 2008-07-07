@@ -1,6 +1,7 @@
 #ifndef CLIENT_POLICY_H_
 #define CLIENT_POLICY_H_
 
+#include "winsock2.h" // for BOOL
 #include "notary_local.h"
 #include "common.h"
 
