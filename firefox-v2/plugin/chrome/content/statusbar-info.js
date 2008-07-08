@@ -1,5 +1,7 @@
 var root_prefs = Components.classes["@mozilla.org/preferences-service;1"].
-                      getService(Components.interfaces.nsIPrefBranch);
+getService(Components.interfaces.nsIPrefBranch);
+
+var browser;
 
 function getQuorumThresh(){
   try{
@@ -12,6 +14,10 @@ function getQuorumThresh(){
 }
 
 function setQuorumThresh(thresh){
+  if(thresh < 0 || thresh > 100){
+    alert("The quorum thresh is a percentage and should be between 0 and 100");
+    return false;
+  }
   root_prefs.setIntPref("perspectives.quorum_thresh", thresh);
   return true;
 }
@@ -33,7 +39,6 @@ function setInformation(info){
 }
 
 function setQuorumDuration(text){
-
   var line = document.getElementById("perspective-quorum-duration");
   if (!line){
     dump("couldn't find quorum duration line \n");
@@ -43,8 +48,9 @@ function setQuorumDuration(text){
   dump("Set quorum-duration line: " + text + "\n");
 }
 
-function LoadInfo(browser, ssl_cache){
+function LoadInfo(brws, ssl_cache){
 
+  browser = brws;
   //Set the quorum thresh
   var line = document.getElementById("perspective-quorum-thresh");
   line.setAttribute("value", getQuorumThresh());
@@ -67,15 +73,23 @@ function LoadInfo(browser, ssl_cache){
 
   setInformation(cert.summary);
 
-	return true;
+  return true;
 }
 
 function dialogAccept(){
   var line = document.getElementById("perspective-quorum-thresh");
-  if(line.value < 1){
-    return true;
-  }
-  setQuorumThresh(parseInt(line.value));
-  return true;
+  opener.clear_cache();
+  return setQuorumThresh(parseInt(line.value));
 }
+
+function openNotaries(){
+  browser.loadOneTab("chrome://perspectives_main/content/notary_list.txt",
+      null, null, null, false);
+}
+
+function onHelp(){
+  browser.loadOneTab("chrome://perspectives_main/content/help.html",
+      null, null, null, false);
+}
+
 

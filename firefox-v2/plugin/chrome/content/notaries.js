@@ -3,6 +3,10 @@
 /* Data*/
 var ssl_cache = new Object();
 
+function clear_cache(){
+  ssl_cache = new Object();
+}
+
 //certificate used in caching
 function SslCert(host, port, md5, summary, duration, secure){
   this.host     = host;
