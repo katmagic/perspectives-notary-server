@@ -42,16 +42,18 @@
     <tabpanel id="perspective-preferences-tab" >
       <vbox style="text-align: center" flex="1">
         <label value="Perspectives" style="font-weight: bold"/>
-        <vbox style="text-align: left" flex="1">
-          <hbox> 
-            <label value="Quorum Threshold Percentage"/> 
-            <textbox id="perspective-quorum-thresh" maxlength="4"/>
-          </hbox>
-          <hbox>
-            <button label="View Notary Servers" oncommand = "openNotaries()"/>
-            <button label="Help" oncommand = "onHelp()"/>
-          </hbox>
-        </vbox>
+        <hbox>
+          <label value="Quorum"/> 
+          <textbox id="perspective-quorum-thresh" align="left"/>
+        </hbox>
+        <hbox>
+          <label value="Quorum Duration"/>
+          <textbox id="pref-duration" align="left"/>
+        </hbox>
+        <hbox>
+          <button label="Notary Servers" oncommand = "openNotaries()"/>
+          <button label="Help" oncommand = "onHelp()"/>
+        </hbox>
       </vbox>
     </tabpanel>
 	</tabpanels>

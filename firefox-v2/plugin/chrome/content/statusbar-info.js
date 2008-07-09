@@ -13,12 +13,31 @@ function getQuorumThresh(){
   }
 }
 
+function getQuorumDuration(){
+  try{
+    return root_prefs.getIntPref("perspectives.required_duration");
+  }
+  catch (e){
+    setQuorumDuration(5);
+    return root_prefs.getIntPref("perspectives.required_duration");
+  }
+}
+
 function setQuorumThresh(thresh){
   if(thresh < 0 || thresh > 100){
     alert("The quorum thresh is a percentage and should be between 0 and 100");
     return false;
   }
   root_prefs.setIntPref("perspectives.quorum_thresh", thresh);
+  return true;
+}
+
+function setQuorumPref(duration){
+  if(duration < 0){
+    alert("Quorum duration must be greater than 0");
+    return false;
+  }
+  root_prefs.setIntPref("perspectives.required_duration", duration);
   return true;
 }
 
@@ -55,6 +74,9 @@ function LoadInfo(brws, ssl_cache){
   var line = document.getElementById("perspective-quorum-thresh");
   line.setAttribute("value", getQuorumThresh());
 
+  line = document.getElementById("pref-duration");
+  line.setAttribute("value", getQuorumDuration());
+
   /* Later we will pass the md5 into here*/
   var cert = ssl_cache[browser.currentURI.host];
   if(!cert){
@@ -78,8 +100,14 @@ function LoadInfo(brws, ssl_cache){
 
 function dialogAccept(){
   var line = document.getElementById("perspective-quorum-thresh");
+  setQuorumThresh(parseInt(line.value));
+
+  line = document.getElementById("pref-duration");
+  setQuorumPref(parseInt(line.value));
+
+  //clear the ssl-cert cache so we retry the notaries with the new prefs
   opener.clear_cache();
-  return setQuorumThresh(parseInt(line.value));
+  return true;
 }
 
 function openNotaries(){

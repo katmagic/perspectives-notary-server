@@ -242,13 +242,6 @@ function updateStatus(location){
     return;
   }
   var md5 = cert.md5Fingerprint;
-  //Debugging things
-  if(ssl_cache[location.host]){
-    dump("Entry Cached\n");
-  }
-  else{
-    dump("Entry not cached\n");
-  }
 
   if(!ssl_cache[location.host] || ssl_cache[location.host].md5 != md5){
     var resp = queryNotaries();
@@ -258,7 +251,11 @@ function updateStatus(location){
   }
   cache_cert = ssl_cache[location.host];
 
-  if(cache_cert.secure){
+  var root_prefs = Components.classes["@mozilla.org/preferences-service;1"]
+    .getService(Components.interfaces.nsIPrefBranchInternal);
+  var required_duration = 
+    root_prefs.getIntPref("perspectives.required_duration");
+  if(cache_cert.secure && cache_cert.duration >= required_duration){
     setStatusSecure();
     do_override(location);
   }
