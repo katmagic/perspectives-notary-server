@@ -4,8 +4,7 @@
 <prefwindow id = "statusbar-settings" 
 	title          = "Perspectives"
 	xmlns          = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-	buttons        = "accept"
-	ondialogaccept = "dialogAccept()"
+	buttons        = ","
   orient         = "vertical"
 	onload         = "LoadInfo(window.arguments[0], window.arguments[1])">
 
@@ -63,8 +62,10 @@
   <hbox> 
     <button label="View Notary Servers" onclick="openNotaries()"/> 
     <button label="Help" onclick="onHelp()"/> 
+    <spacer flex="1"/>
+    <button label="Close" onclick="window.close()"/>
   </hbox>
+<script type="application/x-javascript" src="statusbar-info.js"/>
 </prefpane> 
 <!--Bug in docs makes me put it here -->
-<script type="application/x-javascript" src="statusbar-info.js"/>
 </prefwindow> 

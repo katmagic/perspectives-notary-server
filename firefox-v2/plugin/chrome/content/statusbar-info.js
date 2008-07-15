@@ -38,7 +38,6 @@ function selectSecurity(){
 
 }
 
-
 /* Update the xul */
 function setInformation(info){
 
