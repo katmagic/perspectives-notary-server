@@ -7,10 +7,14 @@ unsigned int notary_debug = DEBUG_ERROR | DEBUG_INFO;
 
 int main(int argc, char**argv) {
 
-  if(argc != 2) {
+  int max_per_sec = 0; 
+  if(argc < 2) {
     printf("usage: <file-of-serviceids>\n");
     exit(1); 
   }
+  if(argc == 3) { 
+    max_per_sec = atoi(argv[2]); 
+  } 
 
         char buf[1024];
 	FILE *f;
@@ -29,6 +33,9 @@ int main(int argc, char**argv) {
                 DPRINTF(DEBUG_INFO, "Loaded service-id = '%s'\n",buf);
                 sendToUnixSock(NEW_REQUEST_SOCK_NAME, buf, size);
                 ++total; 
+                if(max_per_sec && ((total % max_per_sec) == 0)) {
+                     sleep(1); 
+                }
         }		
         DPRINTF(DEBUG_INFO, "Requested %d total probes \n", total); 
 }
