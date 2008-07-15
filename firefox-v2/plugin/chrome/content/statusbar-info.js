@@ -3,43 +3,41 @@ getService(Components.interfaces.nsIPrefBranch);
 
 var browser;
 
-function getQuorumThresh(){
-  try{
-    return root_prefs.getIntPref("perspectives.quorum_thresh");
+function selectSecurity(){
+  var d = document;
+  var setting  = d.getElementById("secset").getAttribute("value");
+  var quorum   = d.getElementById("pref-thresh");
+  var duration = d.getElementById("pref-duration");
+
+  function menuset(qu, du){
+    quorum.value      = qu;
+    quorum.readOnly   = true;
+
+    duration.value    = du;
+    duration.readOnly = true;
+
+    root_prefs.setIntPref("perspectives.quorum_thresh", qu);
+    root_prefs.setIntPref("perspectives.required_duration", du);
   }
-  catch (e){
-    setQuorumThresh(75); //default quorum thresh
-    return root_prefs.getIntPref("perspectives.quorum_thresh");
+  
+  switch (parseInt(setting)){
+    case 2:
+      menuset(75, 2);
+      break;
+    case 1:
+      menuset(75, 0);
+      break;
+    case 0:
+      menuset(50, 0);
+      break;
+    case -1:
+      quorum.readOnly   = false;
+      duration.readOnly = false;
+      break;
   }
+
 }
 
-function getQuorumDuration(){
-  try{
-    return root_prefs.getIntPref("perspectives.required_duration");
-  }
-  catch (e){
-    setQuorumDuration(5);
-    return root_prefs.getIntPref("perspectives.required_duration");
-  }
-}
-
-function setQuorumThresh(thresh){
-  if(thresh < 0 || thresh > 100){
-    alert("The quorum thresh is a percentage and should be between 0 and 100");
-    return false;
-  }
-  root_prefs.setIntPref("perspectives.quorum_thresh", thresh);
-  return true;
-}
-
-function setQuorumPref(duration){
-  if(duration < 0){
-    alert("Quorum duration must be greater than 0");
-    return false;
-  }
-  root_prefs.setIntPref("perspectives.required_duration", duration);
-  return true;
-}
 
 /* Update the xul */
 function setInformation(info){
@@ -54,7 +52,6 @@ function setInformation(info){
     info  = "Nothing!";
   }
   display.setAttribute("value", info);
-  dump("Set Information " + info + "\n");
 }
 
 function setQuorumDuration(text){
@@ -64,20 +61,13 @@ function setQuorumDuration(text){
     return;
   }
   line.setAttribute("value", text);
-  dump("Set quorum-duration line: " + text + "\n");
 }
 
 function LoadInfo(brws, ssl_cache){
-
   browser = brws;
-  //Set the quorum thresh
-  var line = document.getElementById("perspective-quorum-thresh");
-  line.setAttribute("value", getQuorumThresh());
-
-  line = document.getElementById("pref-duration");
-  line.setAttribute("value", getQuorumDuration());
-
-  /* Later we will pass the md5 into here*/
+ 
+  selectSecurity();
+  /* Set the notary result information */
   var cert = ssl_cache[browser.currentURI.host];
   if(!cert){
     setQuorumDuration("No Quorum Information");
@@ -99,25 +89,17 @@ function LoadInfo(brws, ssl_cache){
 }
 
 function dialogAccept(){
-  var line = document.getElementById("perspective-quorum-thresh");
-  setQuorumThresh(parseInt(line.value));
-
-  line = document.getElementById("pref-duration");
-  setQuorumPref(parseInt(line.value));
-
-  //clear the ssl-cert cache so we retry the notaries with the new prefs
-  opener.clear_cache();
   return true;
 }
 
+//Should open new window because the dialog prevents them from seeing it
 function openNotaries(){
-  browser.loadOneTab("chrome://perspectives_main/content/notary_list.txt",
-      null, null, null, false);
+  window.open("chrome://perspectives_main/content/notary_list.txt");
+
 }
 
 function onHelp(){
-  browser.loadOneTab("chrome://perspectives_main/content/help.html",
-      null, null, null, false);
+  window.open("chrome://perspectives_main/content/help.html");
 }
 
 

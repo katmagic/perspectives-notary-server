@@ -15,6 +15,9 @@
 				<em:maxVersion>3.0.*</em:maxVersion>
 			</Description>
 		</em:targetApplication>
+    <em:targetPlatform>Linux_x86-gcc3</em:targetPlatform>
+    <em:targetPlatform>WINNT_x86-msvc</em:targetPlatform>
+    <em:targetPlatform>Darwin_x86-gcc3</em:targetPlatform>
     <em:type>2</em:type>
 
 		<em:description>An Implementation of Perspectives </em:description>
