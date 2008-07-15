@@ -222,7 +222,7 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
 
     SSHNotary *notary = init_ssh_notary(); 
 
-    DPRINTF(DEBUG_INFO, "initialized notary\n");
+    DPRINTF(DEBUG_INFO, "initialized notary******\n");
      
     file_buf = read_file(local_dir, "notary_list.txt", &file_buf_len);       
 
@@ -235,7 +235,7 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
 
     load_notary_servers(notary, file_buf, file_buf_len);
 
-    DPRINTF(DEBUG_INFO, "Loaded Notary Servers \n");
+    DPRINTF(DEBUG_INFO, "Loaded Notary Servers from file \n");
 
     fetch_notary_observations(notary, (char*)service_id, TIMEOUT, NUM_RETRIES);
 
@@ -266,10 +266,13 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
     }
     int ret = 0;
     prefBranch->GetIntPref("perspectives.quorum_thresh", &ret);
-    int quorum_size = ret;
+
+	float quorum_percent = .01 * (float)ret; 
+	printf("percent = %f \n", quorum_percent); 
+    float quorum_size = (int)(quorum_percent * (float)notary->num_servers + 0.5);
+	printf("size = %f  and int = %d\n", quorum_size, (int)quorum_size); 
 
     DPRINTF(DEBUG_POLICY,"Using Quorum Size %d\n", quorum_size);
-    quorum_size = (int ) (((float) (0.75 * quorum_size))  + 0.5);
     PRBool is_cur_consistent; 
 
 

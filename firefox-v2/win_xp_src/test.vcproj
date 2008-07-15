@@ -45,7 +45,7 @@
 				PreprocessorDefinitions="WIN32;_WINDOWS;_USRDLL;XP_WIN;XP_WIN32;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="nspr4.lib xpcom.lib xpcomglue_s.lib Ws2_32.lib nss3.lib "
+				AdditionalDependencies="nspr4.lib xpcom.lib xpcomglue_s.lib Ws2_32.lib nss3.lib  libcmt.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\xulrunner-sdk\lib;..\xulrunner-sdk\sdk\lib"
 				GenerateDebugInformation="true"
@@ -118,9 +118,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\gecko-sdk\include"
+				AdditionalIncludeDirectories="..\xulrunner-sdk\include;..\xulrunner-sdk\sdk\include"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_USRDLL;XP_WIN;XP_WIN32"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -137,9 +137,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="nspr4.lib xpcom.lib xpcomglue_s.lib"
+				AdditionalDependencies="nspr4.lib xpcom.lib xpcomglue_s.lib Ws2_32.lib nss3.lib  libcmt.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\gecko-sdk\lib"
+				AdditionalLibraryDirectories="..\xulrunner-sdk\lib;..\xulrunner-sdk\sdk\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
