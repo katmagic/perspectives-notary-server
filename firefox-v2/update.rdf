@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RDF:RDF xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+
+  <RDF:Description about="urn:mozilla:extension:perspectives@cmu.edu">
+    <em:updates> <RDF:Seq> <RDF:li>
+      <RDF:Description>
+        <em:version>1.0.2</em:version> <!-- This is the version number of the add-on -->
+
+        <!-- One targetApplication for each application the add-on is compatible with -->
+        <em:targetApplication>
+          <RDF:Description>
+            <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+            <em:minVersion>3.0</em:minVersion>
+            <em:maxVersion>3.0.*</em:maxVersion>
+            <em:updateLink>
+              http://www.cs.cmu.edu/~perspectives/Perspectives.xpi
+            </em:updateLink>
+            <em:updateHash>
+              sha1:1d1e9ca7758dcd49c7996117247c3b16f5e13cd2
+            </em:updateHash>
+            <!-- A page describing what is new in this updated version 
+            <em:updateInfoURL></em:updateInfoURL>-->
+          </RDF:Description>
+        </em:targetApplication>
+      </RDF:Description>
+    </RDF:li> </RDF:Seq> </em:updates>
+    <!-- A signature is only necessary if your add-on includes an updateKey
+         in its install.rdf.-->
+    <em:signature>
+      kGjnnlhf6eIkjImg7lYAEVCUqoKC2ioF/pH/ukfTsUlBvZwt3IR+FGF
+      HPv92PXqMJWL8zXefDhO6dsExoWbpYWJvd2AZy0hllbivSCEZHD0VXaeipF5mf+6
+      KVMHaBcvVKqKb5Lc3exyktTbX1Pgukkl7HwXyElhYeQ30EfHGwHOIft0MxLq9UVB
+      UM43TzKizsH4WGm75RpVIUZcUM+4h+4k4UtzRdWTIKKlLktzbVK7mS4E/6jkrr9z
+      CreIs5x3/FXcX62B2h6xLsnfowDbciEzKQinLNWvDkKNFJj4Qzfb4uJwuy4Jx4W/
+      5gmmMverc61C2BjhOf6iPQ
+    </em:signature> 
+  </RDF:Description>
+</RDF:RDF>
+

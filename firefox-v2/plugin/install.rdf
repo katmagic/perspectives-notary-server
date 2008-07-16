@@ -22,8 +22,19 @@
 
 		<em:description>An Implementation of Perspectives </em:description>
 		<em:creator>Ethan Jackson</em:creator>
-		<em:homepageURL>http://www.cs.cmu.edu/~perspectives/</em:homepageURL>
-
+		<em:homepageURL>
+      http://www.cs.cmu.edu/~perspectives/
+    </em:homepageURL>
+    <em:updateURL>
+      http://www.cs.cmu.edu/~perspectives/update.rdf
+    </em:updateURL>
+    <em:updateKey>
+      MIHKMA0GCSqGSIb3DQEBAQUAA4G4ADCBtAKBrAE0Ow4voLFzfAYf6PIVCT8CBz7G
+      ts4/zWtAntmqk2CkvRw7KJJD9oB2RFjAVIhOIxSZN0GtLb4SjIMtDretJLIyd//U
+      Xx0lvOY8b8tc0XxpCnrMI6GPkmZ1oFZ2K9KSv7Fcega7fBsBvRuSZ1JsrdhW8xtC
+      a1H7YqP9wnh4DYPssYhiNi/e9hbOHP3+spXxTyeTmJW6Xep8sd4j0pNdsQuV9SNd
+      8Lv36+hkNEUCAwEAAQ
+    </em:updateKey>
 	</Description>
 
 </RDF>

@@ -1,0 +1,7 @@
+To build binaries follow the instructions in xp_src and win_xp_src
+
+To make an xpi simply run make
+
+To prepare a new version for update sign the xpi using signxpi.sh
+sh signxpi.sh <private.key> <perspectives.xpi>
+and update the signature tag in the update.rdf
