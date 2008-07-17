@@ -13,4 +13,4 @@ a gpl script found here.  http://www.softlights.net/projects/mexumgen/
 2) Update the version in the install.rdf and make the xpi
 3) Get hold of the private key
 4) sh genupdate.sh <private key> <perspectives.xpi>
-5) put the xpi and the private key on the web servers
+5) put the xpi and the update.rdf on the web servers
