@@ -53,7 +53,7 @@
           min="0" max="100" preference="quorum-thresh"/> 
       </hbox>
       <hbox align="right">
-        <label value="Duration" />
+        <label value="Duration (Days)" />
         <textbox id="pref-duration" min="0" preference="quorum-duration"/>
         
       </hbox> 
