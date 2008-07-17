@@ -202,7 +202,7 @@ our @rdf = map {
                                 ['em:targetApplication' => [
                                     ['rdf:Description' => [
                                         ['em:id' => $_->{app}],
-                                        ['em:minVersion' => $_->{min}],
+                                        ['em:minVersion' => "3.0"],
                                         ['em:maxVersion' => $_->{max}],
                                         ['em:updateLink' => $upd->{url}],
                                         exists($upd->{sha})?

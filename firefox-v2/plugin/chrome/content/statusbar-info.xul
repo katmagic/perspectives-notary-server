@@ -48,7 +48,7 @@
         </menupopup> 
       </menulist>
       <hbox align="right">
-        <label value="Quorum" /> 
+        <label value="Quorum %" /> 
         <textbox id="pref-thresh" 
           min="0" max="100" preference="quorum-thresh"/> 
       </hbox>

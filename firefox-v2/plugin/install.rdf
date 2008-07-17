@@ -7,7 +7,7 @@
     <!-- Required Items -->
 		<em:id>perspectives@cmu.edu</em:id>
 		<em:name>Perspectives</em:name>
-		<em:version>1.0.2</em:version>
+		<em:version>1.0.5</em:version>
 		<em:targetApplication>        <!-- Firefox -->
 			<Description>
 				<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
@@ -29,11 +29,13 @@
       http://www.cs.cmu.edu/~perspectives/update.rdf
     </em:updateURL>
     <em:updateKey>
-      MIHKMA0GCSqGSIb3DQEBAQUAA4G4ADCBtAKBrAE0Ow4voLFzfAYf6PIVCT8CBz7G
-      ts4/zWtAntmqk2CkvRw7KJJD9oB2RFjAVIhOIxSZN0GtLb4SjIMtDretJLIyd//U
-      Xx0lvOY8b8tc0XxpCnrMI6GPkmZ1oFZ2K9KSv7Fcega7fBsBvRuSZ1JsrdhW8xtC
-      a1H7YqP9wnh4DYPssYhiNi/e9hbOHP3+spXxTyeTmJW6Xep8sd4j0pNdsQuV9SNd
-      8Lv36+hkNEUCAwEAAQ
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8mhA7PyW06tTzzY+JkVj
+      qj8ktsIKu33pe7l132DjluXhS9I4LrmEjGvrRWodcgD2CHv8p0kkUMgB2EAVSee0
+      efarBCp60Sm2zc9El5FQtAnygti6l1WhMmKXkHC7KdEAGjmR4lEWj0gawf8iOwvx
+      NYya+XpYCd8jCHLlgPzlD6UiGhPSscaL2qmdC6tQ3huF+LbPQ5tUZFmnonpRTpte
+      sa5ts1tTdxc/GpNmW5eIB1iz8gUFES3rL+LuqhMPIjnvRWi8CW9gvubGwsvElC6/
+      B3t7HjLgjdKU0PYRw/oNJPmiXE9w70ObtUipML+M/IN8cH/1RhKXawpyE2WidpAK
+      FQIDAQAB
     </em:updateKey>
 	</Description>
 

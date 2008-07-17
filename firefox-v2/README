@@ -1,7 +1,16 @@
-To build binaries follow the instructions in xp_src and win_xp_src
+To build the platform specific binaries follow the instructions in xp_src or
+win_xp_src depending on the target platform.
 
-To make an xpi simply run make
+To build an xpi simply type make.
 
-To prepare a new version for update sign the xpi using signxpi.sh
-sh signxpi.sh <private.key> <perspectives.xpi>
-and update the signature tag in the update.rdf
+To push an update follow these instructions.
+Updating an extension is relatively simple.  We need to make an xpi, an
+update.rdf file, and put those on the server.  To generate the update.rdf we use
+a gpl script found here.  http://www.softlights.net/projects/mexumgen/
+1) Make sure you have necessary dependencies.
+  Dependencies include (but are not necessarily limited to) openssl unzip and
+  the following perl modules: Convert::ASN1, XML::Parser, RDF::Core
+2) Update the version in the install.rdf and make the xpi
+3) Get hold of the private key
+4) sh genupdate.sh <private key> <perspectives.xpi>
+5) put the xpi and the private key on the web servers
