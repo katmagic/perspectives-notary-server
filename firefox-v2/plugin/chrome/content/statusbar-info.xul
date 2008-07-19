@@ -5,10 +5,9 @@
 	title          = "Perspectives"
 	xmlns          = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	buttons        = ","
-  orient         = "vertical"
 	onload         = "LoadInfo(window.arguments[0], window.arguments[1])">
 
-<prefpane id="perspective-main-prefpane">
+<prefpane id="perspective-main-prefpane"> 
 <preferences> 
   <preference id="quorum-thresh"   
     name="perspectives.quorum_thresh" 
@@ -32,11 +31,12 @@
         readonly  = "true"
         rows      = "10" 
         cols      = "50" 
-        value     = "Error Loading" />
+        value     = 
+          "There is no available Perspectives information for this locaiton"/>
     </groupbox> </tabpanel>
 
     <tabpanel id="perspective-preferences-tab" > <groupbox> 
-      <caption label="Security Settings"/>
+      <caption label="Security Settings" style="font-weight: bold"/>
       <menulist id="secset"  
         preference = "security-settings"
         oncommand  = "selectSecurity()"> 
@@ -49,13 +49,17 @@
       </menulist>
       <hbox align="right">
         <label value="Quorum %" /> 
+        <spacer flex="1"/>
         <textbox id="pref-thresh" 
-          min="0" max="100" preference="quorum-thresh"/> 
+          size="4"
+          oninput="setQuorum(parseInt(this.value))"/>
       </hbox>
       <hbox align="right">
         <label value="Duration (Days)" />
-        <textbox id="pref-duration" min="0" preference="quorum-duration"/>
-        
+        <spacer flex="1"/>
+        <textbox id="pref-duration" 
+          size="4" 
+          oninput="setDuration(this.value)"/>
       </hbox> 
     </groupbox> 
   </tabpanel> </tabpanels> </tabbox> 
@@ -65,7 +69,8 @@
     <spacer flex="1"/>
     <button label="Close" onclick="window.close()"/>
   </hbox>
+</prefpane>
 <script type="application/x-javascript" src="statusbar-info.js"/>
-</prefpane> 
+
 <!--Bug in docs makes me put it here -->
 </prefwindow> 

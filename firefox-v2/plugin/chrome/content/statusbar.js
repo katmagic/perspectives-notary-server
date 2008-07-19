@@ -3,7 +3,7 @@ var root_prefs = Components.classes["@mozilla.org/preferences-service;1"]
 
 function ShowInfo(ssl_cache) {
   window.openDialog("chrome://perspectives/content/statusbar-info.xul", 
-      "perspectiveInfo", "centerscreen,modal", gBrowser, ssl_cache).focus();
+      "perspectiveInfo", "centerscreen, chrome, toolbar", gBrowser, ssl_cache).focus();
 }
 
 function evtLoad(evt){

@@ -3,11 +3,35 @@ getService(Components.interfaces.nsIPrefBranch);
 
 var browser;
 
+
+function setDuration(flt){
+  root_prefs.setIntPref("perspectives.required_duration", 100 * flt);
+}
+
+function setQuorum(num){
+   /* if(!typeof(num)=="number"){
+      num = parseInt(num);
+    }*/
+    if(num < 0){
+      num = 0;
+      document.getElementById("pref-thresh").value="0"
+    }
+    else if(num > 100){
+      num = 100;
+      document.getElementById("pref-thresh").value="100"
+    }
+    root_prefs.setIntPref("perspectives.quorum_thresh", num);
+}
+
 function selectSecurity(){
   var d = document;
-  var setting  = d.getElementById("secset").getAttribute("value");
+  var setting  = d.getElementById("secset").value;
   var quorum   = d.getElementById("pref-thresh");
   var duration = d.getElementById("pref-duration");
+
+  quorum.value   = root_prefs.getIntPref("perspectives.quorum_thresh");
+  duration.value = 
+    root_prefs.getIntPref("perspectives.required_duration") / 100.0;
 
   function menuset(qu, du){
     quorum.value      = qu;
@@ -16,8 +40,8 @@ function selectSecurity(){
     duration.value    = du;
     duration.readOnly = true;
 
-    root_prefs.setIntPref("perspectives.quorum_thresh", qu);
-    root_prefs.setIntPref("perspectives.required_duration", du);
+    setQuorum(qu);
+    setDuration(du);
   }
   
   switch (parseInt(setting)){

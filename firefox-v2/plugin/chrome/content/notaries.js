@@ -254,7 +254,7 @@ function updateStatus(location){
   var root_prefs = Components.classes["@mozilla.org/preferences-service;1"]
     .getService(Components.interfaces.nsIPrefBranchInternal);
   var required_duration = 
-    root_prefs.getIntPref("perspectives.required_duration");
+    root_prefs.getIntPref("perspectives.required_duration") / 100.0;
   if(cache_cert.secure && cache_cert.duration >= required_duration){
     setStatusSecure();
     do_override(location);
