@@ -244,7 +244,7 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
   prefBranch->GetIntPref("perspectives.quorum_thresh", &ret);
   float quorum_percent = .01 * (float)ret; 
 
-  int quorum_size = (quorum_percent * notary->num_servers + 0.5);
+  int quorum_size = ((float)quorum_percent * (float)notary->num_servers + 0.5);
   BOOL is_cur_consistent; 
   PRUint32 quorum_duration = get_quorum_duration(notary, binary_key, 
       KEY_LEN, SSL_ANY, quorum_size, MAX_STALE_SEC, &is_cur_consistent);
@@ -255,7 +255,6 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
 
   // get text of notary response
   response = get_notary_reply(notary);
-  printf("got notary response of size = %d \n",strlen(response)); 
   int res = set_status(response, qd_days, is_cur_consistent);
   if(res) { 
     PR_fprintf(PR_STDERR, "Error setting status \n"); 
