@@ -196,9 +196,11 @@ function setStatus(state){
       dump("Unsecure Status\n");
       i.setAttribute("hidden", "false");
       i.setAttribute("src", "chrome://perspectives/content/bad.png");
+      break;
     case STATE_NEUT:
       dump("Neutral Status\n");
       i.setAttribute("hidden", "true");
+      break;
   }
   return true;
 }
@@ -236,23 +238,22 @@ function updateStatus(uri){
   cache_cert = ssl_cache[uri.host];
 
   var secure = cache_cert.secure && cache_cert.duration >= duration;
+
   if(secure){
     setStatus(STATE_SEC);
+    if (broken){
+      var flags = gBrowser.LOAD_FLAGS_IS_REFRESH;
+      broken = false;
+      do_override(uri, cert);
+      /*setTimeout(function (){ 
+        gBrowser.loadURIWithFlags(uri.spec, flags);}, 5);*/
+      setTimeout(function (){ gBrowser.reload();}, 25);
+    }
   }
   else{
-    setStatus(STATE_UNSEC);
+    setStatus(STATE_NSEC);
   }
 
-  if (broken){
-    var flags = gBrowser.LOAD_FLAGS_IS_REFRESH;
-    broken = false;
-    if(secure){
-      do_override(uri, cert);
-    }
-    /*setTimeout(function (){ 
-      gBrowser.loadURIWithFlags(uri.spec, flags);}, 5);*/
-    setTimeout(function (){ gBrowser.reload();}, 25);
-  }
   broken = false;
 }
 

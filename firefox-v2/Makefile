@@ -1,5 +1,6 @@
 all:
 	cp ../config/notary_list.txt plugin
+	rm -rf build/
 	mkdir build
 	cp -r plugin/* build/
 	cp -r dist/* build/

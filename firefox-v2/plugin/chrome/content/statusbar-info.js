@@ -6,6 +6,7 @@ var browser;
 
 function setDuration(flt){
   root_prefs.setIntPref("perspectives.required_duration", 100 * flt);
+  clear_cache();
 }
 
 function setQuorum(num){
@@ -21,6 +22,7 @@ function setQuorum(num){
       document.getElementById("pref-thresh").value="100"
     }
     root_prefs.setIntPref("perspectives.quorum_thresh", num);
+    clear_cache();
 }
 
 function selectSecurity(){

@@ -67,7 +67,7 @@
     <button label="View Notary Servers" onclick="openNotaries()"/> 
     <button label="Help" onclick="onHelp()"/> 
     <spacer flex="1"/>
-    <button label="Close" onclick="window.close()"/>
+    <button label="OK" onclick="window.close();"/>
   </hbox>
 </prefpane>
 <script type="application/x-javascript" src="statusbar-info.js"/>
