@@ -1,7 +1,21 @@
-/*Handles querying the notaries and updating the browser */
+/* Data */
+var ssl_cache     = new Object();
+var root_prefs    = Components.classes["@mozilla.org/preferences-service;1"]
+  .getService(Components.interfaces.nsIPrefBranchInternal);
+var overrideService = 
+  Components.classes["@mozilla.org/security/certoverride;1"]
+  .getService(Components.interfaces.nsICertOverrideService);
+var broken = false;
 
-/* Data*/
-var ssl_cache = new Object();
+const STATE_SEC   = 0;
+const STATE_NSEC  = 1;
+const STATE_NEUT  = 2;
+const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
+const STATE_STOP  = Components.interfaces.nsIWebProgressListener.STATE_STOP;
+const STATE_IS_BROKEN   = 
+  Components.interfaces.nsIWebProgressListener.STATE_IS_BROKEN;
+const STATE_IS_INSECURE = 
+  Components.interfaces.nsIWebProgressListener.STATE_IS_INSECURE;
 
 function clear_cache(){
   ssl_cache = new Object();
@@ -72,15 +86,15 @@ function psv_get_valid_cert() {
 } 
 
 function getCertificate(){
- var cert = psv_get_valid_cert();
- if(!cert){
-   cert = psv_get_invalid_cert();  
- }
+  var cert = psv_get_valid_cert();
+  if(!cert){
+    cert = psv_get_invalid_cert();  
+  }
 
- if(!cert) {
-   return null;
- }
- return cert;
+  if(!cert) {
+    return null;
+  }
+  return cert;
 }
 
 /* Takes an SslCert Returns a Notary Response*/
@@ -123,8 +137,6 @@ function queryNotaries(){
       return;  
     } 
 
-    var root_prefs = Components.classes["@mozilla.org/preferences-service;1"]
-      .getService(Components.interfaces.nsIPrefBranchInternal);
     var info = root_prefs.getCharPref("perspectives.info");
     var is_consistent = root_prefs.getBoolPref("perspectives.is_consistent");
     var quorum_duration = 
@@ -154,25 +166,10 @@ function queryNotaries(){
 /* There is a bug here.  Sometimes it gets into a browser reload 
  * loop.  Come back to this later */
 
-function do_override(location) { 
+function do_override(uri, cert) { 
   dump("Do Override\n");
-  var gSSLStatus = get_invalid_cert_SSLStatus();
-  if(!gSSLStatus){ //this paged loaded properly so don't do anythign
-    dump("No invalid cert \n");
-    return false;
-  }
-  var cert = cert_from_SSLStatus(gSSLStatus);
-  if(!cert){
-    dump("Error getting certificate from ssl\n");
-    return;
-  }
 
-	var uri = gBrowser.currentURI;  
-	var overrideService = 
-    Components.classes["@mozilla.org/security/certoverride;1"]
-		.getService(Components.interfaces.nsICertOverrideService);
-    
-
+  gSSLStatus = get_invalid_cert_SSLStatus();
   var flags = 0;
   if(gSSLStatus.isUntrusted)
     flags |= overrideService.ERROR_UNTRUSTED;
@@ -181,136 +178,117 @@ function do_override(location) {
   if(gSSLStatus.isNotValidAtThisTime)
     flags |= overrideService.ERROR_TIME;
 
-  if(overrideService.isCertUsedForOverrides(
-        cert,true,true)){
-    dump("Already Override\n");
-    return;
-  }
-
 	overrideService.rememberValidityOverride(
 			uri.asciiHost, uri.port, cert, flags, true);
- 
-  //Possible browser reload loop here
-  //hack
-  //16 specifies that its a reload
-  dump("Reload page: " + location.spec + "\n");
-  setTimeout(function (){ gBrowser.loadURIWithFlags(
-        location.spec, gBrowser.LOAD_FLAGS_IS_REFRESH);}, 250);
+
   return true;
 }
 
-function setStatusSecure(){
-  dump("Secure Status\n");
-  document.getElementById("perspective-status-image")
-    .setAttribute("hidden", "false");
-  document.getElementById("perspective-status-image")
-    .setAttribute("src", "chrome://perspectives/content/good.png");
-  return true;
-}
-
-function setStatusUnsecure(){
-  dump("Unsecure Status\n");
-  document.getElementById("perspective-status-image")
-    .setAttribute("hidden", "false");
-  document.getElementById("perspective-status-image")
-    .setAttribute("src", "chrome://perspectives/content/bad.png");
-  return true;
-}
-
-function setStatusNeutral(){
-  dump("Neutral Status\n");
-  document.getElementById("perspective-status-image")
-    .setAttribute("hidden", "true");
+function setStatus(state){
+  var i = document.getElementById("perspective-status-image");
+  switch(state){
+    case STATE_SEC:
+      dump("Secure Status\n");
+      i.setAttribute("hidden", "false");
+      i.setAttribute("src", "chrome://perspectives/content/good.png");
+      break;
+    case STATE_NSEC:
+      dump("Unsecure Status\n");
+      i.setAttribute("hidden", "false");
+      i.setAttribute("src", "chrome://perspectives/content/bad.png");
+    case STATE_NEUT:
+      dump("Neutral Status\n");
+      i.setAttribute("hidden", "true");
+  }
   return true;
 }
 
 /* Updates the status of the current page */
 //Make this a bit more efficient when I get a chance
-function updateStatus(location){
+function updateStatus(uri){
 
-  if(!location || location.scheme != "https"){
-    setStatusNeutral();
-    return;
-  }
-  dump("Update Status: ");
-  dump(location.spec);
-  dump("\n");
-
-  var cert = getCertificate();
-  if(!cert){
-    dump("Couldn't find md5 the page hasn't finished loading\n");
-    return;
-  }
-  var md5 = cert.md5Fingerprint;
-
-  if(!ssl_cache[location.host] || ssl_cache[location.host].md5 != md5){
-    var resp = queryNotaries();
-    ssl_cache[location.host] = new SslCert(location.host, 
-          location.port, md5, resp.summary, 
-          resp.duration, resp.consistent);
-  }
-  cache_cert = ssl_cache[location.host];
-
-  var root_prefs = Components.classes["@mozilla.org/preferences-service;1"]
-    .getService(Components.interfaces.nsIPrefBranchInternal);
-  var required_duration = 
+  dump("Update Status: " + uri.spec + "\n");
+  broken         = false;
+  var cert       = getCertificate();
+  var md5        = cert.md5Fingerprint;
+  var state      = gBrowser.securityUI.state;
+  var gSSLStatus = null;
+  var duration   = 
     root_prefs.getIntPref("perspectives.required_duration") / 100.0;
-  if(cache_cert.secure && cache_cert.duration >= required_duration){
-    setStatusSecure();
-    do_override(location);
+
+  if ((state & STATE_IS_BROKEN || state & STATE_IS_INSECURE) &&
+      !overrideService.isCertUsedForOverrides(cert,true,true)){
+    broken = true; 
+    /*
+    gBrowser.stop();
+    var flags = gBrowser.LOAD_FLAGS_BYPASS_HISTORY;
+    gBrowser.loadURIWithFlags(
+      "chrome://perspectives_main/content/help.html", flags);
+     this doesn't work */
+  }
+
+  //Update ssl cache cert
+  if(!ssl_cache[uri.host] || ssl_cache[uri.host].md5 != md5){
+    var resp = queryNotaries();
+    ssl_cache[uri.host] = new SslCert(uri.host, 
+      uri.port, md5, resp.summary, resp.duration, resp.consistent);
+  }
+  cache_cert = ssl_cache[uri.host];
+
+  var secure = cache_cert.secure && cache_cert.duration >= duration;
+  if(secure){
+    setStatus(STATE_SEC);
   }
   else{
-    setStatusUnsecure();
+    setStatus(STATE_UNSEC);
   }
+
+  if (broken){
+    var flags = gBrowser.LOAD_FLAGS_IS_REFRESH;
+    broken = false;
+    if(secure){
+      do_override(uri, cert);
+    }
+    /*setTimeout(function (){ 
+      gBrowser.loadURIWithFlags(uri.spec, flags);}, 5);*/
+    setTimeout(function (){ gBrowser.reload();}, 25);
+  }
+  broken = false;
 }
 
 //note can use request to suspend the loading
 var notaryListener = { 
-	/* If something changes in the locationation bar */
-onLocationChange: function(webProgress, request, location) {
-    dump("\nLocation changed \n");
-    updateStatus(location);
-	},
 
-	onStateChange: function(webProgress, request, stateFlags, status) {
-	},
+  /* Note can use state is broken to listen if we need to do special stuff for
+   * redirecting */
+  onLocationChange: function(aWebProgress, aRequest, aURI) {
+      dump("\nLocation changed \n");
+      if(!aURI || aURI.scheme != "https"){
+        setStatus(STATE_NEUT);
+        return;
+      }
+      updateStatus(aURI);
+  },
 
-	onProgressChange: function(webProgress, request, curSelfProgress, 
-    maxSelfProgress, curTotalProgress, maxTotalProgress) {
-	},
-
-	onSecurityChange: function(webProgress, request, state) {
-	},
-
-	onStatusChange: function(webProgress, request, status, message) {
-    //This is just a hack for now I really need to figure out
-    //race condition stuff
-    updateStatus(gBrowser.currentURI);
-	},
-
-	onLinkIconAvailable: function() {
-	}
-};
-
-var pageLoadEvent = {
-  init: function(){
-    dump("init init");
-    var appcontent = document.getElementByID("appcontent");
-    if(appcontent){
-      appcontent.addEventListener("DOMContentLoaded", this.onPageLoad, true);
+	onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) { 
+    var uri = gBrowser.currentURI;
+    if(!uri || uri.scheme != "https"){
+      setStatus(STATE_NEUT);
+      return;
+    }
+    else if(aFlag & STATE_STOP){
+      dump("\nPage Finished Loading\n");
+      updateStatus(gBrowser.currentURI);
     }
   },
 
-  onPageLoad: function(aEvent) {
-    var doc = aEvent.originalTarget;
-    dump("\nOnPageLoad " + doc.location.host + "\n");
-    updateStatus(doc.location);
-  }
-}
+	onSecurityChange:    function(aWebProgress, aRequest, aState){ },
+	onStatusChange:      function() { },
+	onProgressChange:    function() { },
+	onLinkIconAvailable: function() { }
+};
 
 function initNotaries(){
-  document.getElementById("perspective-statusbar-label")
-    .setAttribute("hidden", "false");
   document.getElementById("perspective-status-image")
     .setAttribute("hidden", "true");
   getBrowser().addProgressListener(notaryListener, 
