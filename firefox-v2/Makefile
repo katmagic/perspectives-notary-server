@@ -1,7 +1,9 @@
 all:
 	cp ../config/notary_list.txt plugin
-	cp -rf plugin/* dist/
-	sh -c "cd dist/ && zip -r ../Perspectives.xpi *"
+	mkdir build
+	cp -r plugin/* build/
+	cp -r dist/* build/
+	sh -c "cd build/ && zip -r ../Perspectives.xpi *"
 
 test:
 	chdir dist
