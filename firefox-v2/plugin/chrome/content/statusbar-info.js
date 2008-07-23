@@ -3,7 +3,6 @@ getService(Components.interfaces.nsIPrefBranch);
 
 var browser;
 
-
 function setDuration(flt){
   root_prefs.setIntPref("perspectives.required_duration", 100 * flt);
   clear_cache();

@@ -209,6 +209,11 @@ function setStatus(state){
 //Make this a bit more efficient when I get a chance
 function updateStatus(uri){
 
+  if(!uri || uri.scheme != "https" || uri.host == "www.pnc.com"){
+    setStatus(STATE_NEUT);
+    return;
+  }
+
   dump("Update Status: " + uri.spec + "\n");
   broken         = false;
   var cert       = getCertificate();
@@ -245,9 +250,9 @@ function updateStatus(uri){
       var flags = gBrowser.LOAD_FLAGS_IS_REFRESH;
       broken = false;
       do_override(uri, cert);
-      /*setTimeout(function (){ 
-        gBrowser.loadURIWithFlags(uri.spec, flags);}, 5);*/
-      setTimeout(function (){ gBrowser.reload();}, 25);
+      setTimeout(function (){ 
+        gBrowser.loadURIWithFlags(uri.spec, flags);}, 25);
+      //setTimeout(function (){ gBrowser.reload();}, 25);
     }
   }
   else{
@@ -263,22 +268,12 @@ var notaryListener = {
   /* Note can use state is broken to listen if we need to do special stuff for
    * redirecting */
   onLocationChange: function(aWebProgress, aRequest, aURI) {
-      dump("\nLocation changed \n");
-      if(!aURI || aURI.scheme != "https"){
-        setStatus(STATE_NEUT);
-        return;
-      }
       updateStatus(aURI);
   },
 
 	onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) { 
     var uri = gBrowser.currentURI;
-    if(!uri || uri.scheme != "https"){
-      setStatus(STATE_NEUT);
-      return;
-    }
-    else if(aFlag & STATE_STOP){
-      dump("\nPage Finished Loading\n");
+    if(aFlag & STATE_STOP){
       updateStatus(gBrowser.currentURI);
     }
   },

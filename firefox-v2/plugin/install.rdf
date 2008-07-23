@@ -7,7 +7,7 @@
     <!-- Required Items -->
 		<em:id>perspectives@cmu.edu</em:id>
 		<em:name>Perspectives</em:name>
-		<em:version>1.1.2</em:version>
+		<em:version>1.1.3</em:version>
 		<em:targetApplication>        <!-- Firefox -->
 			<Description>
 				<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
@@ -20,8 +20,12 @@
     <em:targetPlatform>Darwin_x86-gcc3</em:targetPlatform>
     <em:type>2</em:type>
 
-    <em:optionsURL>chrome://perspectives/content/statusbar-info.xul</em:optionsURL>
-		<em:description>An Implementation of Perspectives </em:description>
+    <em:optionsURL>
+      chrome://perspectives/content/statusbar-info.xul
+    </em:optionsURL>
+		<em:description>
+      A secure way to verify encrypted websites and bypass security warnings 
+    </em:description>
 		<em:creator>Ethan Jackson</em:creator>
 		<em:homepageURL>
       http://www.cs.cmu.edu/~perspectives/

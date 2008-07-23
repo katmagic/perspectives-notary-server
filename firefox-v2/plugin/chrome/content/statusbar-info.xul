@@ -32,7 +32,7 @@
         rows      = "10" 
         cols      = "50" 
         value     = 
-          "There is no available Perspectives information for this locaiton"/>
+          "There is no Perspectives information available for this location"/>
     </groupbox> </tabpanel>
 
     <tabpanel id="perspective-preferences-tab" > <groupbox> 
@@ -71,6 +71,7 @@
   </hbox>
 </prefpane>
 <script type="application/x-javascript" src="statusbar-info.js"/>
+<script type="application/x-javascript" src="notaries.js"/>
 
 <!--Bug in docs makes me put it here -->
 </prefwindow> 
