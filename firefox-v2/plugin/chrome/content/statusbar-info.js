@@ -9,9 +9,6 @@ function setDuration(flt){
 }
 
 function setQuorum(num){
-   /* if(!typeof(num)=="number"){
-      num = parseInt(num);
-    }*/
     if(num < 0){
       num = 0;
       document.getElementById("pref-thresh").value="0"
@@ -22,6 +19,11 @@ function setQuorum(num){
     }
     root_prefs.setIntPref("perspectives.quorum_thresh", num);
     clear_cache();
+}
+
+function setManual(){
+  document.getElementById("secset").value = -1;
+  root_prefs.setIntPref("perspectives.security_settings", -1);
 }
 
 function selectSecurity(){
@@ -36,10 +38,7 @@ function selectSecurity(){
 
   function menuset(qu, du){
     quorum.value      = qu;
-    quorum.readOnly   = true;
-
     duration.value    = du;
-    duration.readOnly = true;
 
     setQuorum(qu);
     setDuration(du);
@@ -56,12 +55,11 @@ function selectSecurity(){
       menuset(50, 0);
       break;
     case -1:
-      quorum.readOnly   = false;
-      duration.readOnly = false;
       break;
   }
 
 }
+
 
 /* Update the xul */
 function setInformation(info){
@@ -104,7 +102,7 @@ function LoadInfo(brws, ssl_cache){
   }
   else{
     setQuorumDuration("Valid Certificate with duration: " 
-        + cert.duration + "\n");
+        + cert.duration + " days\n");
   }
 
   setInformation(cert.summary);

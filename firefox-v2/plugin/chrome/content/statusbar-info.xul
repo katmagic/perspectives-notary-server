@@ -29,7 +29,7 @@
 
 <tabbox> 
   <tabs> <tab label="Information"/> <tab label="Preferences"/> </tabs> <tabpanels>
-    <tabpanel id="perspective-information-tab"> <groupbox style="text-align: left" >
+    <tabpanel id="perspective-information-tab"> <groupbox style="text-align: left">
       <caption label="Detailed Information" style="font-weight: bold"/>
       <label id="perspective-quorum-duration" value=""/>
       <textbox id="perspective-statusinfo-description"
@@ -60,7 +60,7 @@
         <spacer flex="1"/>
         <textbox id="pref-thresh" 
           size="4"
-          oninput="setQuorum(parseInt(this.value))"/>
+          oninput='setQuorum(parseInt(this.value)); setManual();'/>
       </hbox>
       <label 
         value="The length of time quorum must be achieved to verify a page "/>
@@ -69,7 +69,7 @@
         <spacer flex="1"/>
         <textbox id="pref-duration" 
           size="4" 
-          oninput="setDuration(this.value)"/>
+          oninput="setDuration(this.value); setManual();"/>
       </hbox> 
     </groupbox> 
     <groupbox>

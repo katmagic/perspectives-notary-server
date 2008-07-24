@@ -270,11 +270,13 @@ var notaryListener = {
   /* Note can use state is broken to listen if we need to do special stuff for
    * redirecting */
   onLocationChange: function(aWebProgress, aRequest, aURI) {
+      dump("Location change " + aURI.spec + "\n");
       updateStatus(aURI);
   },
 
 	onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) { 
     var uri = gBrowser.currentURI;
+    dump("State change " + aURI.spec + "\n");
     if(aFlag & STATE_STOP){
       updateStatus(gBrowser.currentURI);
     }
