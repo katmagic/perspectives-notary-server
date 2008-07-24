@@ -168,6 +168,9 @@ function queryNotaries(){
 
 function do_override(uri, cert) { 
   dump("Do Override\n");
+  if(!root_prefs.getBoolPref("perspectives.exceptions.enabled")){
+    return;
+  }
 
   gSSLStatus = get_invalid_cert_SSLStatus();
   var flags = 0;
@@ -178,9 +181,12 @@ function do_override(uri, cert) {
   if(gSSLStatus.isNotValidAtThisTime)
     flags |= overrideService.ERROR_TIME;
 
+  var isTemp = ! root_prefs.getBoolPref("perspectives.exceptions.permanent");
 	overrideService.rememberValidityOverride(
-			uri.asciiHost, uri.port, cert, flags, true);
+			uri.asciiHost, uri.port, cert, flags, isTemp);
 
+  setTimeout(function (){ 
+    gBrowser.loadURIWithFlags(uri.spec, flags);}, 25);
   return true;
 }
 
@@ -247,12 +253,8 @@ function updateStatus(uri){
   if(secure){
     setStatus(STATE_SEC);
     if (broken){
-      var flags = gBrowser.LOAD_FLAGS_IS_REFRESH;
       broken = false;
       do_override(uri, cert);
-      setTimeout(function (){ 
-        gBrowser.loadURIWithFlags(uri.spec, flags);}, 25);
-      //setTimeout(function (){ gBrowser.reload();}, 25);
     }
   }
   else{

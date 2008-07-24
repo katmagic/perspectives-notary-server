@@ -18,6 +18,12 @@
   <preference id="security-settings"
     name="perspectives.security_settings"
     type="int"/>
+  <preference id="exception-perm"
+    name="perspectives.exceptions.permanent"
+    type="bool"/>
+  <preference id="exception-enabled"
+    name="perspectives.exceptions.enabled"
+    type="bool"/>
 </preferences>
 <dialogheader title="Perspectives" />
 
@@ -35,7 +41,7 @@
           "There is no Perspectives information available for this location"/>
     </groupbox> </tabpanel>
 
-    <tabpanel id="perspective-preferences-tab" > <groupbox> 
+    <tabpanel id="perspective-preferences-tab" > <vbox><groupbox> 
       <caption label="Security Settings" style="font-weight: bold"/>
       <menulist id="secset"  
         preference = "security-settings"
@@ -47,6 +53,8 @@
         <menuitem label="Manual Configuration" value="-1"/>
         </menupopup> 
       </menulist>
+      <label 
+        value="The percentage of notaries that must agree to verify a page"/>
       <hbox align="right">
         <label value="Quorum %" /> 
         <spacer flex="1"/>
@@ -54,6 +62,8 @@
           size="4"
           oninput="setQuorum(parseInt(this.value))"/>
       </hbox>
+      <label 
+        value="The length of time quorum must be achieved to verify a page "/>
       <hbox align="right">
         <label value="Duration (Days)" />
         <spacer flex="1"/>
@@ -62,6 +72,15 @@
           oninput="setDuration(this.value)"/>
       </hbox> 
     </groupbox> 
+    <groupbox>
+      <caption label="Invalid Certficate Exceptions" 
+        style="font-weight: bold"/>
+      <hbox>
+        <checkbox label="Enable Exceptions" preference="exception-enabled"/>
+        <checkbox label="Permanent Exceptions" preference="exception-perm"/>
+      </hbox>
+    </groupbox></vbox>
+
   </tabpanel> </tabpanels> </tabbox> 
   <hbox> 
     <button label="View Notary Servers" onclick="openNotaries()"/> 
