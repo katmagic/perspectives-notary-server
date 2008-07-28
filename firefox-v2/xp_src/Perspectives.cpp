@@ -155,7 +155,7 @@ int set_status(char *info, float qd_days, BOOL is_cur_consistent)
 
 
 
-unsigned int notary_debug = DEBUG_ERROR; 
+unsigned int notary_debug = DEBUG_ERROR | DEBUG_SOCKET | DEBUG_ALL; 
 
 NS_IMPL_ISUPPORTS1(Perspectives, IPerspectives)
 

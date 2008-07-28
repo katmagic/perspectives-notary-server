@@ -58,6 +58,7 @@ int recv_single_reply( PRFileDesc *fd, char *buf, int buf_len,
 // storing those responses in the server's list. 
 void fetch_notary_observations(SSHNotary *notary, 
 		char* service_id, int timeout_secs, int max_retries) {
+   PRBool first_reply; 
 
    free_key_info(notary); // free any old data we had
    
@@ -112,15 +113,24 @@ void fetch_notary_observations(SSHNotary *notary,
         if(server == NULL) {
           DPRINTF(DEBUG_ERROR, "Could not find server state for reply message\n");  
         }else {
-          DPRINTF(DEBUG_INFO, "Parsing message from: %s : %d \n", 
-              ip_2_str(server->ip_addr), server->port);
-          server->received_reply = 1; // got something, even if its invalid
+		DPRINTF(DEBUG_INFO, "Parsing message from: %s : %d \n", 
+				ip_2_str(server->ip_addr), server->port);
+		server->received_reply = 1; // got something, even if its invalid
 
-          server->notary_results = parse_message(recv_buf, recv_len, server->public_key);
+		first_reply = server->notary_results == NULL; 
+		server->notary_results = parse_message(recv_buf, recv_len, server->public_key);
 
 
-          ++reply_count;
-        }
+		// count only if the server returned results.
+		// This isn't great, but it stops us from quitting early during
+		// on demand probes, which is a big problem.  Eventually, the server
+		// should be sure to never return an empty result if an on-demand 
+		// probe is in progress. 
+		if(server->notary_results && first_reply) {  
+			DPRINTF(DEBUG_SOCKET,"new valid reply received ****** \n"); 
+			++reply_count;
+		} 
+	}
     }else {
         if(retry_count == max_retries) {
             DPRINTF(DEBUG_INFO, "Reached max notary connect attempts \n");

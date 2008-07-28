@@ -13,7 +13,7 @@ PRBool verify_signature(char *buf, int msg_len, char *server_key);
 void send_single_query(server_list *server, PRFileDesc *fd,  
 					   notary_header *hdr) {
 	int len, n; 
-
+	
     PRNetAddr addr;
     PRIntervalTime timeout = PR_INTERVAL_NO_WAIT;
     addr.inet.family = PR_AF_INET;
@@ -61,7 +61,7 @@ void fetch_notary_observations(SSHNotary *notary,
    int reply_count = 0;
    PRNetAddr recv_addr;
    char recv_buf[MAX_PACKET_LEN];
-
+   PRBool first_reply; 
 
    free_key_info(notary); // free any old data we had (dw: this is observation data, right?)
    
@@ -99,19 +99,27 @@ void fetch_notary_observations(SSHNotary *notary,
         if(server == NULL) {
           DPRINTF(DEBUG_ERROR, "Could not find server state for reply message\n");  
         }else {
-          DPRINTF(DEBUG_INFO, "Parsing message from: %s : %d \n", 
-              ip_2_str(server->ip_addr), server->port);
-          server->received_reply = 1; // got something, even if its invalid
+		DPRINTF(DEBUG_INFO, "Parsing message from: %s : %d \n", 
+				ip_2_str(server->ip_addr), server->port);
+		server->received_reply = 1; // got something, even if its invalid
 
-   
-		  if(!verify_signature(recv_buf, recv_len, server->public_key)) {
-			  DPRINTF(DEBUG_ERROR, "Droppy reply from %s:%d because of bad signature\n",
-				  ip_2_str(server->ip_addr), server->port); 
-			  server->notary_results = NULL;
-		  } else 
-			  server->notary_results = parse_message(recv_buf, recv_len);
+		first_reply = server->notary_results == NULL; 
+		if(!verify_signature(recv_buf, recv_len, server->public_key)) {
+			DPRINTF(DEBUG_ERROR, "Droppy reply from %s:%d because of bad signature\n",
+					ip_2_str(server->ip_addr), server->port); 
+			server->notary_results = NULL;
+		} else 
+			server->notary_results = parse_message(recv_buf, recv_len);
 
-          ++reply_count;
+		// count only if the server returned results.
+		// This isn't great, but it stops us from quitting early during
+		// on demand probes, which is a big problem.  Eventually, the server
+		// should be sure to never return an empty result if an on-demand 
+		// probe is in progress. 
+		if(server->notary_results && first_reply) {  
+			DPRINTF(DEBUG_SOCKET,"new valid reply received ****** \n"); 
+			++reply_count;
+		} 
         }
     }else {
 		
