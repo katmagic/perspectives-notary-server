@@ -22,13 +22,14 @@ function clear_cache(){
 }
 
 //certificate used in caching
-function SslCert(host, port, md5, summary, duration, secure){
+function SslCert(host, port, md5, summary, tooltip, duration, secure){
   this.host     = host;
   this.port     = port;
   this.md5      = md5;
   this.secure   = secure;
   this.duration = duration;
   this.summary  = summary;
+  this.tooltip  = tooltip;
 }
 
 function get_invalid_cert_SSLStatus(){
@@ -144,8 +145,7 @@ function queryNotaries(){
     var str = "Notary Lookup for:\n" + service_id + 
       "\nwith key = " + cert.md5Fingerprint + "\n"; 
     str += "Results:\n"; 
-    str += "Quorum duration = " + quorum_duration + " days\n"; 
-    str += "is_consistent = " + is_consistent + "\n"; 
+    str += "Quorum duration: " + quorum_duration + " days\n"; 
     str += "Notary Observations: \n" + info; 
   } 
   catch (err) {
@@ -190,8 +190,13 @@ function do_override(uri, cert) {
   return true;
 }
 
-function setStatus(state){
+function setStatus(state, tooltip){
   var i = document.getElementById("perspective-status-image");
+  var t = document.getElementById("perspective-status");
+  if(!tooltip){
+    tooltip = "Perspectives";
+  }
+  t.setAttribute("tooltiptext", tooltip);
   switch(state){
     case STATE_SEC:
       dump("Secure Status\n");
@@ -216,7 +221,9 @@ function setStatus(state){
 function updateStatus(uri){
 
   if(!uri || uri.scheme != "https" || uri.host == "www.pnc.com"){
-    setStatus(STATE_NEUT);
+    setStatus(STATE_NEUT,
+     "No Information:  Perspectives only provides information about" +
+     " HTTPS enabled websites");
     return;
   }
 
@@ -244,23 +251,30 @@ function updateStatus(uri){
   if(!ssl_cache[uri.host] || ssl_cache[uri.host].md5 != md5){
     var resp = queryNotaries();
     ssl_cache[uri.host] = new SslCert(uri.host, 
-      uri.port, md5, resp.summary, resp.duration, resp.consistent);
+      uri.port, md5, resp.summary, null, resp.duration, resp.consistent);
   }
   cache_cert = ssl_cache[uri.host];
 
-  var secure = cache_cert.secure && cache_cert.duration >= duration;
-
-  if(secure){
-    setStatus(STATE_SEC);
+  if(!cache_cert.secure){
+    cache_cert.tooltip = "Warning: Key has NOT been seen consistently";
+    setStatus(STATE_NSEC, cache_cert.tooltip);
+  }
+  else if(cache_cert.duration < duration){
+    cache_cert.tooltip = 
+      "Warning: Key seen consistently for only " + cache_cert.duration + 
+      " days, threshold is " + duration + " days";
+    setStatus(STATE_NSEC, cache_cert.tooltip);
+  }
+  else { //Its secure
+    cache_cert.tooltip = 
+      "Key Verified: Key seen consistently for " + cache_cert.duration +
+      " days, threshold is " + duration + " days";
+    setStatus(STATE_SEC, cache_cert.tooltip);
     if (broken){
       broken = false;
       do_override(uri, cert);
     }
   }
-  else{
-    setStatus(STATE_NSEC);
-  }
-
   broken = false;
 }
 
@@ -276,13 +290,13 @@ var notaryListener = {
 
 	onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) { 
     var uri = gBrowser.currentURI;
-    dump("State change " + aURI.spec + "\n");
+    dump("State change " + uri.spec + "\n");
     if(aFlag & STATE_STOP){
-      updateStatus(gBrowser.currentURI);
+      updateStatus(uri);
     }
   },
 
-	onSecurityChange:    function(aWebProgress, aRequest, aState){ },
+	onSecurityChange:    function() { },
 	onStatusChange:      function() { },
 	onProgressChange:    function() { },
 	onLinkIconAvailable: function() { }

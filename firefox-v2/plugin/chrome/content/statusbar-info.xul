@@ -31,7 +31,7 @@
   <tabs> <tab label="Information"/> <tab label="Preferences"/> </tabs> <tabpanels>
     <tabpanel id="perspective-information-tab"> <groupbox style="text-align: left">
       <caption label="Detailed Information" style="font-weight: bold"/>
-      <label id="perspective-quorum-duration" value=""/>
+      <label id="perspective-quorum-duration" value="No Quorum Information"/>
       <textbox id="perspective-statusinfo-description"
         multiline = "true" 
         readonly  = "true"
