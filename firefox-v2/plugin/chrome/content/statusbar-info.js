@@ -3,6 +3,10 @@ getService(Components.interfaces.nsIPrefBranch);
 
 var browser;
 
+function openCertificates(){
+  openDialog("chrome://pippki/content/certManager.xul", "Certificate Manager");
+}
+
 function setDuration(flt){
   root_prefs.setIntPref("perspectives.required_duration", 100 * flt);
   clear_cache();

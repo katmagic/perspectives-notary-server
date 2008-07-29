@@ -253,12 +253,6 @@ function updateStatus(uri){
   if ((state & STATE_IS_BROKEN || state & STATE_IS_INSECURE) &&
       !overrideService.isCertUsedForOverrides(cert,true,true)){
     broken = true; 
-    /*
-    gBrowser.stop();
-    var flags = gBrowser.LOAD_FLAGS_BYPASS_HISTORY;
-    gBrowser.loadURIWithFlags(
-      "chrome://perspectives_main/content/help.html", flags);
-     this doesn't work */
   }
 
   //Update ssl cache cert

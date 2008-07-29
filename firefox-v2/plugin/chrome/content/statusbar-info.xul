@@ -83,7 +83,8 @@
 
   </tabpanel> </tabpanels> </tabbox> 
   <hbox> 
-    <button label="View Notary Servers" onclick="openNotaries()"/> 
+    <button label="Certificates" onclick="openCertificates()"/> 
+    <button label="Notary Servers" onclick="openNotaries()"/> 
     <button label="Help" onclick="onHelp()"/> 
     <spacer flex="1"/>
     <button label="OK" onclick="window.close();"/>
