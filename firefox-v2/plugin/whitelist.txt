@@ -1,2 +1,11 @@
-pnc.com
-chase.com
+www.icq.com
+www.pncbank.com
+cards.chase.com
+www.aa.com
+smtp.andrew.cmu.edu
+www.citicards.com
+mcp.microsoft.com
+www.mealpayplus.com
+www.pnc.com
+www.onlinebanking.pnc.com
+chaseonline.chase.com
