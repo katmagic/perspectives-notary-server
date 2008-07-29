@@ -1,4 +1,5 @@
 /* Data */
+var whitelist     = new Array();
 var ssl_cache     = new Object();
 var root_prefs    = Components.classes["@mozilla.org/preferences-service;1"]
   .getService(Components.interfaces.nsIPrefBranchInternal);
@@ -30,6 +31,17 @@ function SslCert(host, port, md5, summary, tooltip, duration, secure){
   this.duration = duration;
   this.summary  = summary;
   this.tooltip  = tooltip;
+}
+
+function onWhitelist(host){
+  var length = whitelist.length //heard a rumor that this is O(n) sometimes
+  for(var i = 0; i < length; i++){
+    if(host.indexOf(whitelist[i]) < 0){
+      dump("Whitelisted\n");
+      return true;
+    }
+  }
+  return false;
 }
 
 function get_invalid_cert_SSLStatus(){
@@ -118,6 +130,8 @@ function queryNotaries(){
   try { 
     var man = Components.classes["@mozilla.org/extensions/manager;1"]
       .getService(Components.interfaces.nsIExtensionManager);
+
+
 
     var il = man.getInstallLocation("perspectives@cmu.edu");
     var dir = il.location; 
@@ -220,7 +234,7 @@ function setStatus(state, tooltip){
 //Make this a bit more efficient when I get a chance
 function updateStatus(uri){
 
-  if(!uri || uri.scheme != "https" || uri.host == "www.pnc.com"){
+  if(!uri || uri.scheme != "https" || onWhitelist(uri.host)){
     setStatus(STATE_NEUT,
      "No Information:  Perspectives only provides information about" +
      " HTTPS enabled websites");
@@ -302,9 +316,31 @@ var notaryListener = {
 	onLinkIconAvailable: function() { }
 };
 
+function init_whitelist(){
+  var req = XMLHttpRequest();
+
+  function parse(){ 
+    if (req.readyState != 4){ 
+      return;
+    }
+    whitelist = req.responseText.split(" \n\t");
+  } 
+
+  //Do it this way so we don't lag while our whitelist page loads
+  try{
+    req.open('GET', 'chrome://perspectives_main/content/whitelist.txt', true);
+    req.onreadystatechange = parse; 
+    req.send(null);
+  }
+  catch(e){
+    return;
+  }
+}
+
 function initNotaries(){
   document.getElementById("perspective-status-image")
     .setAttribute("hidden", "true");
+  init_whitelist();
   getBrowser().addProgressListener(notaryListener, 
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
 }
