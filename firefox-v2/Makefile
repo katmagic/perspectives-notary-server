@@ -1,9 +1,9 @@
 all:
-	cp ../config/notary_list.txt plugin
+	cp -f ../config/notary_list.txt plugin
 	rm -rf build/
 	mkdir build
-	cp -r plugin/* build/
-	cp -r dist/* build/
+	cp -fr plugin/* build/
+	cp -fr dist/* build/
 	sh -c "cd build/ && zip -r ../Perspectives.xpi *"
 
 test:
