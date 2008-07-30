@@ -242,6 +242,7 @@ function updateStatus(uri){
   } 
   if(onWhitelist(uri.host)){
     setStatus(STATE_NEUT, "No Information: This site has been whitelisted");
+    return;
   }
 
   dump("Update Status: " + uri.spec + "\n");
