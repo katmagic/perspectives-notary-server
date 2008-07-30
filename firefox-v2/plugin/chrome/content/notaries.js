@@ -36,7 +36,7 @@ function SslCert(host, port, md5, summary, tooltip, duration, secure){
 function onWhitelist(host){
   var length = whitelist.length //heard a rumor that this is O(n) sometimes
   for(var i = 0; i < length; i++){
-    if(host.indexOf(whitelist[i]) < 0){
+    if(host.indexOf(whitelist[i]) >= 0){
       dump("Whitelisted\n");
       return true;
     }
@@ -234,11 +234,14 @@ function setStatus(state, tooltip){
 //Make this a bit more efficient when I get a chance
 function updateStatus(uri){
 
-  if(!uri || uri.scheme != "https" || onWhitelist(uri.host)){
+  if(!uri || uri.scheme != "https"){
     setStatus(STATE_NEUT,
      "No Information:  Perspectives only provides information about" +
      " HTTPS enabled websites");
     return;
+  } 
+  if(onWhitelist(uri.host)){
+    setStatus(STATE_NEUT, "No Information: This site has been whitelisted");
   }
 
   dump("Update Status: " + uri.spec + "\n");
@@ -317,7 +320,7 @@ function init_whitelist(){
     if (req.readyState != 4){ 
       return;
     }
-    whitelist = req.responseText.split(" \n\t");
+    whitelist = req.responseText.split("\n");
   } 
 
   //Do it this way so we don't lag while our whitelist page loads
@@ -327,6 +330,7 @@ function init_whitelist(){
     req.send(null);
   }
   catch(e){
+    dump(e + "\n");
     return;
   }
 }
