@@ -35,9 +35,13 @@ function SslCert(host, port, md5, summary, tooltip, duration, secure){
 
 function onWhitelist(host){
   var length = whitelist.length //heard a rumor that this is O(n) sometimes
+  dump(length + "\n");
   for(var i = 0; i < length; i++){
+    if(whitelist[i] == ""){//don't know why i need this
+      continue;
+    }
     if(host.indexOf(whitelist[i]) >= 0){
-      dump("Whitelisted\n");
+      dump("Whitelisted: " + whitelist[i] + "\n");
       return true;
     }
   }
@@ -322,6 +326,10 @@ function init_whitelist(){
       return;
     }
     whitelist = req.responseText.split("\n");
+    dump("Whitelist length " + whitelist.length + "\n");
+    for(var i = 0; i < whitelist.length; i++){
+      dump("(" + whitelist[i] + ")" + "\n");
+    }
   } 
 
   //Do it this way so we don't lag while our whitelist page loads
@@ -337,9 +345,11 @@ function init_whitelist(){
 }
 
 function initNotaries(){
+  dump("\nPerspectives Initialization\n");
   document.getElementById("perspective-status-image")
     .setAttribute("hidden", "true");
   init_whitelist();
   getBrowser().addProgressListener(notaryListener, 
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
+  dump("Perspectives Finished Initialization\n\n");
 }
