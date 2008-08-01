@@ -111,15 +111,15 @@ void fetch_notary_observations(SSHNotary *notary,
 		} else 
 			server->notary_results = parse_message(recv_buf, recv_len);
 
-		// count only if the server returned results.
-		// This isn't great, but it stops us from quitting early during
-		// on demand probes, which is a big problem.  Eventually, the server
-		// should be sure to never return an empty result if an on-demand 
-		// probe is in progress. 
-		if(server->notary_results && first_reply) {  
-			DPRINTF(DEBUG_SOCKET,"new valid reply received ****** \n"); 
-			++reply_count;
-		} 
+			// count only if the server returned results.
+			// This isn't great, but it stops us from quitting early during
+			// on demand probes, which is a big problem.  Eventually, the server
+			// should be sure to never return an empty result if an on-demand 
+			// probe is in progress. 
+			if(server->notary_results && first_reply) {  
+				DPRINTF(DEBUG_SOCKET,"new valid reply received ****** \n"); 
+				++reply_count;
+			} 
         }
     }else {
 		

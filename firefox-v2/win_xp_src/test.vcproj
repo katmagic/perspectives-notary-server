@@ -295,6 +295,10 @@
 				RelativePath=".\Perspectives.h"
 				>
 			</File>
+			<File
+				RelativePath=".\str_buffer.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

@@ -221,9 +221,6 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
     DPRINTF(DEBUG_INFO,"Perspectives received service_id = '%s' and fingerprint = '%s'\n",service_id, fingerprint);
 
     SSHNotary *notary = init_ssh_notary(); 
-
-    DPRINTF(DEBUG_INFO, "initialized notary******\n");
-     
     file_buf = read_file(local_dir, "notary_list.txt", &file_buf_len);       
 
     if(file_buf == NULL)
@@ -268,7 +265,7 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
     prefBranch->GetIntPref("perspectives.quorum_thresh", &ret);
 
 	float quorum_percent = .01 * (float)ret; 
-	printf("percent = %f \n", quorum_percent); 
+	DPRINTF(DEBUG_POLICY,"quorum_percent = %f \n", quorum_percent); 
     float quorum_size = (int)(quorum_percent * (float)notary->num_servers + 0.5);
 
     DPRINTF(DEBUG_POLICY,"Using Quorum Size %f\n", quorum_size);
@@ -278,16 +275,13 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
     PRUint32 quorum_duration = get_quorum_duration(notary, binary_key, 
         KEY_LEN, SSL_ANY, quorum_size, MAX_STALE_SEC, &is_cur_consistent);
 
-
     free(binary_key);
-
-
     double qd_days = SEC2DAY(quorum_duration); 
     DPRINTF(DEBUG_POLICY, "QD = %f days \n", qd_days);
 
      // get text of notary response
-     response = get_notary_reply(notary);
-     DPRINTF(DEBUG_INFO,"text summary of notary data has size = %d \n",strlen(response)); 
+     response = get_reply_as_text(notary);
+	 DPRINTF(DEBUG_INFO,"Response:\n%s", response); 
      int res = set_status(response, qd_days, is_cur_consistent);
      if(res) { 
 		PR_fprintf(PR_STDERR, "Error setting status \n"); 

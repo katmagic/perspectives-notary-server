@@ -9,12 +9,6 @@
 #include "notary_util.h"
 #include "net_util.h"
 
-/*
-#include "notary_crypto.h"
-
-*/ 
-
-
 
 // warning: for WIN32, this no longer checks the signature
 ssh_key_info_list* parse_message(char *buf, int msg_len) {
@@ -130,49 +124,31 @@ server_list * find_server(SSHNotary* notary, uint32_t server_ip, uint16_t server
 
 // print all information received from probe servers
 void print_notary_reply(FILE * f, SSHNotary *notary) {
-	server_list *server;
-	struct list_head *outer_pos;
-	list_for_each(outer_pos,&notary->notary_servers.list){
-		server = list_entry(outer_pos, server_list, list);
-
-		printf("***********  Probes from server %s:%d ********** \n", 
-			ip_2_str(server->ip_addr), server->port);
-		
-		print_key_info_list(f, server->notary_results);
-	}
+	char *str = get_reply_as_text(notary);
+	fprintf(f,str);
+	free(str);
 }
 
 //Get Notary Reply 
-char *get_notary_reply(SSHNotary *notary) {
+char *get_reply_as_text(SSHNotary *notary) {
 	server_list *server;
 	struct list_head *outer_pos;
-        int response_len = 0;
-        int max_len = 4096;
-        int n = 0;
-        // Macro 4096 
-        char *response = (char *) malloc(sizeof(char) * max_len);
-        if(!response)
-        {
-            return NULL;
-        }
-        printf("max_len = %d \n", max_len); 
+	str_buffer *b = str_buffer_new(1024); 
+	char *buf[1024], *to_return; 
+
 	list_for_each(outer_pos,&notary->notary_servers.list){
 		server = list_entry(outer_pos, server_list, list);
               
-		if(response_len >= max_len) { 
-			printf("bailing from get_notary_reply \n"); 
-			return response; 
-		} 
-        n = snprintf(response + response_len, max_len - response_len,
-                    "***********  Probes from server %s:%d ********** \n", 
-		ip_2_str(server->ip_addr), server->port);
-	    response_len += n;
+        snprintf(buf, 1024,
+           "\n****  Probes from server %s:%d **** \n", 
+			ip_2_str(server->ip_addr), ntohs(server->port));
 
-		get_key_info_list(response, &response_len, max_len, 
-                    server->notary_results);
-		printf("after get_key_info_list: response_len = %d max_len = %d\n", response_len,max_len); 
+		str_buffer_append(b,(char*)buf); 
+		get_key_info_list(b, server->notary_results);
 	}
-        return response;
+    to_return = str_buffer_get(b);
+	str_buffer_free(b); 
+	return to_return; 
 }
 
 

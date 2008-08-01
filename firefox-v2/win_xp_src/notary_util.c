@@ -1,8 +1,12 @@
 #include "list.h"
 #include "notary_util.h"
 #include "common.h"
+#include "str_buffer.h" 
+
+#ifdef WIN32
 #include <time.h>
 #include <winsock2.h> 
+#endif
 
 void xfree(void*);
 
@@ -213,143 +217,59 @@ void add_observation_to_list(ssh_key_info_list *info_list,
 }
 
 
-void print_key_info_timespans(FILE *f, ssh_key_info* info) {
-  char *key_buf;
-  int len, num_spans, i;
-  int *timespans; 
 
-  if(info == NULL) 
-    return;
-
-  key_buf = (char*)(info + 1);
-  len = ntohs(info->key_len_bytes);
-  timespans = (int*)(key_buf + len);
-  num_spans = ntohs(info->num_timespans);
-
-  for(i = 0; i < num_spans; i++){
-    uint32_t t_start = ntohl(timespans[0]);
-    uint32_t t_end = ntohl(timespans[1]);
-    //bug fix:  ctime requires time_t, which may be 64-bit
-    time_t start_time = (time_t) t_start;
-    time_t end_time = (time_t) t_end; 
-    fprintf(f, "start:\t %d - %s", t_start, ctime((const time_t*)&start_time));
-    fprintf(f, "end:\t %d - %s", t_end, ctime((const time_t*)&end_time));
-    timespans += 2;
-  }
-
-}
-
-int get_key_info_timespans(char *response, int *response_len, int max_len, ssh_key_info *info)
+void get_key_info_timespans(str_buffer *b, ssh_key_info *info)
 {
-  char *key_buf;
-  int n = 0, len, num_spans, i, *timespans;
-  if(info == NULL) 
-    return -1;
+  char buf[1024];
+  int i; 
+  char *key_buf = (char*)(info + 1);
+  int len = ntohs(info->key_len_bytes);
+  int *timespans = (int*)(key_buf + len);
+  int num_spans = ntohs(info->num_timespans);
 
-  key_buf = (char*)(info + 1);
-  len = ntohs(info->key_len_bytes);
-  timespans = (int*)(key_buf + len);
-  num_spans = ntohs(info->num_timespans);
   for(i = 0; i < num_spans; i++){
     int t_start = ntohl(timespans[0]);
     int t_end = ntohl(timespans[1]);
     time_t start_time = (time_t) t_start;
     time_t end_time = (time_t) t_end; 
-    if(*response_len >= max_len) {
-	printf("bailing from get_key_info_timespans 1\n"); 
-    	printf("response_len = %d  max_len = %d \n", *response_len, max_len); 
-	return 0; 
-    }
-    //printf("ts1:  response_len = %d  max_len = %d \n", *response_len, max_len); 
-    n = snprintf(response + *response_len, max_len - *response_len, "start:\t %d - %s", t_start, ctime((const time_t*)&start_time));
-    *response_len += n;
-    if(*response_len >= max_len) {
-	printf("bailing from get_key_info_timespans 2\n"); 
-    	printf("response_len = %d  max_len = %d \n", *response_len, max_len); 
-	return 0; 
-    } 
-    //printf("ts2:  response_len = %d  max_len = %d \n", *response_len, max_len); 
-    n = snprintf(response + *response_len, max_len - *response_len, "end:\t %d - %s", t_end, ctime((const time_t*)&end_time));
-    *response_len += n;
+
+    snprintf(buf,1024,"start:  %d - %s", t_start, ctime((const time_t*)&start_time));
+	str_buffer_append(b,buf); 
+	snprintf(buf,1024,"end:    %d - %s", t_end, ctime((const time_t*)&end_time));
+	str_buffer_append(b,buf); 
     timespans += 2;
   }
-  return 0;
 }
 
 
-
-void print_key_info_list(FILE *f, ssh_key_info_list* info_list) {
-        struct list_head *pos,*tmp;
-        ssh_key_info_list* cur;
-		char *key_buf, *str;
-		int len; 
-
-        if(info_list == NULL) { 
-          fprintf(f, "[NULL LIST]  \n"); 
-          return;
-        }
-
-		  list_for_each_safe(pos, tmp, &info_list->list) {
-          cur = list_entry(pos, ssh_key_info_list, list);
-
-          if(cur->info == NULL) {
-              DPRINTF(DEBUG_ERROR, "cur->info should never be null \n");
-              exit(1);
-          }
-          key_buf = (char*)(cur->info + 1);
-          len = ntohs(cur->info->key_len_bytes);
-          str = buf_2_hexstr(key_buf,len);
-          fprintf(f, "%s key: %s \n", keytype_2_str(cur->info->key_type),str);
-          free(str);
-          print_key_info_timespans(f, cur->info);
-          fprintf(f, "\n");
-        } 
-}
-
-
-int get_key_info_list(char *response, int *response_len, int max_len, ssh_key_info_list *info_list)
-{
+void get_key_info_list(str_buffer *b, ssh_key_info_list *info_list){
 		char *key_buf,*str;
 		int len;
-
+		char buf[1024]; 
 	    struct list_head *pos,*tmp;
         ssh_key_info_list* cur;
-        int n = 0;
-        if(info_list == NULL) 
-            return -1;
-
+		if(info_list == NULL) { 
+			str_buffer_append(b, "[EMPTY LIST]\n"); 
+            return;
+		} 
 
         list_for_each_safe(pos, tmp, &info_list->list) {
           cur = list_entry(pos, ssh_key_info_list, list);
 
           if(cur->info == NULL) {
               DPRINTF(DEBUG_ERROR, "cur->info should never be null \n");
-              return -1;
           }
-	  if(*response_len >= max_len) {
-		printf("bailing from get_key_info_list1 \n"); 
-		return 0; 
- 	  } 
+ 
           key_buf = (char*)(cur->info + 1);
           len = ntohs(cur->info->key_len_bytes);
           str = buf_2_hexstr(key_buf,len);
-
-
-          n = snprintf(response + *response_len, max_len - *response_len, "%s key: %s \n", keytype_2_str(cur->info->key_type),
+          snprintf(buf, 1024, "%s key: %s \n", keytype_2_str(cur->info->key_type),
                                   str);
-          *response_len += n;                        
-	  printf("after key: n = %d response_len = %d \n", n, *response_len); 
+		  str_buffer_append(b,buf); 
           free(str);
-          get_key_info_timespans(response, response_len, max_len, cur->info);
-	  if(*response_len >= max_len) {
-		printf("bailing from get_key_info_list 2 \n"); 
-		return 0; 
- 	  } 
-          n = snprintf(response + *response_len, max_len - *response_len, "\n");
-          *response_len += n;
-	  printf("after timespans: n = %d response_len = %d \n", n, *response_len); 
+          get_key_info_timespans(b, cur->info);
         } 
-        return 0;
+
 }
 
 
