@@ -270,9 +270,8 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
 	float quorum_percent = .01 * (float)ret; 
 	printf("percent = %f \n", quorum_percent); 
     float quorum_size = (int)(quorum_percent * (float)notary->num_servers + 0.5);
-	printf("size = %f  and int = %d\n", quorum_size, (int)quorum_size); 
 
-    DPRINTF(DEBUG_POLICY,"Using Quorum Size %d\n", quorum_size);
+    DPRINTF(DEBUG_POLICY,"Using Quorum Size %f\n", quorum_size);
     PRBool is_cur_consistent; 
 
 
