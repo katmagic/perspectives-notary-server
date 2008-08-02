@@ -488,7 +488,7 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 	uint32_t cur_secs, cutoff; 
 	server_list *server;
 	struct list_head *outer_pos, *inner_pos;
-  	int height = 300, width = 700; 
+  	int height = 400, width = 700; 
 	int x_offset = 160;
 	int y_offset = 40;  
 	float pixels_per_day = (width - x_offset - 20) / len_days;  
@@ -576,18 +576,19 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 					most_recent_color = color;
 				}  		 
 
-				if(!strcmp(color,"grey")) 
+				if(!strcmp(color,"grey")) {  
 					grey_used = TRUE; 
+				} 
 				int time_since = cur_secs - t_end;
 				int duration = t_end - t_start; 
 				int x_cord = x_offset + (int)(pixels_per_day * SEC2DAY(time_since)); 
-				int width =  (int)(pixels_per_day * SEC2DAY(duration));
+				float width =  (pixels_per_day * SEC2DAY(duration));
 				
 				// a timespan with no width is not shown	
 				if(width > 0) {  
 					snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" "
-					  "width=\"%d\" height=\"%d\" fill=\"%s\" "
-					  "rx=\"2\" stroke=\"black\" stroke-width=\"1px\" />\n",
+					  "width=\"%f\" height=\"%d\" fill=\"%s\" "
+					  "rx=\"1\" stroke=\"black\" stroke-width=\"1px\" />\n",
 					  x_cord,y_cord,width,rec_height,color);	
 					str_buffer_append(b,buf); 
 				} 
@@ -595,7 +596,7 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 			}
 			// print "current key" circle 
 			snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" width=\"10\" height=\"10\" "
-				"fill=\"%s\" rx=\"5\" stroke=\"black\" stroke-width=\"2px\" />\n",
+				"fill=\"%s\" rx=\"5\" stroke=\"black\" stroke-width=\"1px\" />\n",
 				x_offset - 30, y_cord,most_recent_color);	
 			str_buffer_append(b,buf); 
 
@@ -624,7 +625,7 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 	y_cord += 30;
 	for(i = 0; i < num_keys && i <= MAX_COLORS; i++) { 
 		snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" width=\"10\" height=\"10\" "
-				"fill=\"%s\" rx=\"0\" stroke=\"black\" stroke-width=\"2px\" />\n",
+				"fill=\"%s\" rx=\"0\" stroke=\"black\" stroke-width=\"1px\" />\n",
 				x_offset, y_cord,color_info[i].color);	
 		str_buffer_append(b,buf); 
 		char *key_str = buf_2_hexstr(color_info[i].key_data,KEY_LEN);
@@ -637,7 +638,7 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 	// extra legend entry for default color, if needed
 	if (grey_used) { 
 		snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" width=\"10\" height=\"10\" "
-			"fill=\"%s\" rx=\"5\" stroke=\"black\" stroke-width=\"2px\" />\n",
+			"fill=\"%s\" rx=\"5\" stroke=\"black\" stroke-width=\"1px\" />\n",
 			x_offset, y_cord,"grey");	
 		str_buffer_append(b,buf); 
 		snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%s</text>\n", 

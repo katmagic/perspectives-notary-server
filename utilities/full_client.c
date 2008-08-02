@@ -17,7 +17,7 @@
 unsigned int notary_debug = DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO | DEBUG_CRYPTO;
 //unsigned int notary_debug = DEBUG_ERROR;
 
-#define TIMEOUT 15
+#define TIMEOUT 8
 #define NUM_RETRIES 3
 
 int main(int argc, char *argv[])

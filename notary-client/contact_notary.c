@@ -53,8 +53,10 @@ int recv_single_reply( int sock, char *buf, int buf_len,
 void fetch_notary_observations(SSHNotary *notary, 
 		char* service_id, int timeout_secs, int max_retries) {
 
+   BOOL first_reply; 
    free_key_info(notary); // free any old data we had
-   
+   DPRINTF(DEBUG_SOCKET, "Querying for '%s' with timeout of %d secs\n",
+		service_id, timeout_secs);    
    int sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) {
      perror("socket");
@@ -91,7 +93,8 @@ void fetch_notary_observations(SSHNotary *notary,
      FD_ZERO(&readfds);
      FD_SET(sock, &readfds);
      select_timeout.tv_sec = MILLIS_TO_TIMEVAL_SEC(s_timeout_millis);  
-     select_timeout.tv_usec = MILLIS_TO_TIMEVAL_USEC(s_timeout_millis);  
+     select_timeout.tv_usec = MILLIS_TO_TIMEVAL_USEC(s_timeout_millis); 
+     printf("tv_sec %d  tv_usec = %d \n", select_timeout.tv_sec, select_timeout.tv_usec);  
      int is_ready = select(sock + 1, &readfds, NULL, NULL, &select_timeout);
      if(is_ready) {
         int recv_len = recv_single_reply(sock, recv_buf, MAX_PACKET_LEN, &recv_addr);
@@ -106,8 +109,17 @@ void fetch_notary_observations(SSHNotary *notary,
           DPRINTF(DEBUG_INFO, "Parsing message from: %s : %d \n", 
               ip_2_str(server->ip_addr), server->port);
           server->received_reply = 1; // got something, even if its invalid
+	  first_reply = server->notary_results == NULL; 
           server->notary_results = parse_message(recv_buf, recv_len, server->public_key);
-          ++reply_count;
+          // count only if the server returned new results.
+	  // This isn't great, but it stops us from quitting early during
+	  // on demand probes, which is a big problem.  Eventually, the server
+	  // should be sure to never return an empty result if an on-demand 
+	  // probe is in progress. 
+	  if(server->notary_results && first_reply) {  
+		DPRINTF(DEBUG_SOCKET,"new valid reply received ****** \n"); 
+		++reply_count;
+	  } 
         }
     }else {
         if(retry_count == max_retries) {
@@ -120,7 +132,7 @@ void fetch_notary_observations(SSHNotary *notary,
 
         // see if we need to retranmit
         if(time_diff > (retry_count * round_len_millis)) {
-            DPRINTF(DEBUG_SOCKET, "Retrnsmitting %.0f millis after start\n", time_diff);
+            DPRINTF(DEBUG_SOCKET, "Retransmitting %.0f millis after start\n", time_diff);
             list_for_each_safe(pos, q, &notary->notary_servers.list){
                   server = list_entry(pos, server_list, list);
                   if(!server->received_reply) {
