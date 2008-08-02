@@ -26,8 +26,8 @@ unsigned int notary_debug = DEBUG_ERROR;
 // notary results. 
 int main(int argc, char **argv) {
  
-  if (argc != 3) { 
-    printf("Usage: <service> <notary-list> \n");
+  if (argc != 4) { 
+    printf("Usage: <service> <notary-list> <graph duration>\n");
     exit(1);
   }
 
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
       TIMEOUT, NUM_RETRIES);
 
  
-  char *str = get_reply_as_svg(argv[1],notary); 
+  char *str = get_reply_as_svg(argv[1],notary,atoi(argv[3])); 
   printf(str); 
   free(str); 
   return 0;

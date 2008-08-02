@@ -53,7 +53,7 @@ server_list * find_server(SSHNotary* notary, uint32_t server_ip, uint16_t server
 
 char *get_notary_reply(SSHNotary *notary);
 
-char* get_reply_as_svg(const char* service_id, SSHNotary *notary); 
+char* get_reply_as_svg(const char* service_id, SSHNotary *notary,uint32_t show_len_sec); 
 
 int get_number_of_notaries(SSHNotary *notary);
 

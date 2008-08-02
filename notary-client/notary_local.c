@@ -419,33 +419,96 @@ void parse_client_config(client_config *conf, char *fname){
 
 // below is ugly code to generate SVG images representing the key timespans
 
-struct key_color_pair { 
+typedef struct key_color_pair_t { 
 	char key_data[KEY_LEN]; 
 	char *color;
-}; 
+} key_color_pair; 
 
-#define MAX_NUM_KEYS 100
-#define MAX_COLORS 5
-char* colors[MAX_COLORS] = { "red", "blue", "green", "purple", "yellow" };  
+#define MAX_COLORS 8
+char* colors[MAX_COLORS] = { "blue","purple", "yellow", "orange","cyan", "green", "red","brown" };  
 
-char* get_reply_as_svg(const char* service_id, SSHNotary *notary) {
+// returns num_keys
+int setup_color_info(key_color_pair *color_info, Notary *notary, uint32_t cutoff) { 
+	struct list_head *outer_pos, *inner_pos;
+	ssh_key_info *info; 
+	BOOL key_found, needs_display; 
+	char *key_buf; 
+	int i, num_keys = 0, *timespans,len,num_spans; 
+
+	list_for_each(outer_pos,&notary->notary_servers.list){
+		server_list *server = list_entry(outer_pos, server_list, list);
+		if(server->notary_results == NULL)
+			continue;
+		list_for_each(inner_pos,&server->notary_results->list) {
+			ssh_key_info_list *list_elem = list_entry(inner_pos, ssh_key_info_list, list);
+			info = list_elem->info; 
+			key_buf = (char*)(list_elem->info + 1);
+			
+			// first we look at the timespans to see if this key
+			// is recent enough that it will be display
+			len = ntohs(info->key_len_bytes);
+			timespans = (int*)(key_buf + len);
+			num_spans = ntohs(info->num_timespans);
+			needs_display = FALSE; 
+			for(i = 0; i < num_spans; i++){
+				uint32_t t_end = ntohl(timespans[1]);
+				if(t_end >= cutoff) { 
+					needs_display = TRUE; 
+					break; 
+				} 
+				timespans += 2;
+			} 
+			if(!needs_display) { 
+				continue; 
+			}
+
+			key_found = FALSE;
+			for(i = 0; i < num_keys; i++) { 
+				if(!memcmp(key_buf,color_info[i].key_data,KEY_LEN)){
+					key_found = TRUE;
+					break; 
+				}
+			}
+			if(!key_found && num_keys < MAX_COLORS) {
+				// if not, add it to the list
+				memcpy(color_info[num_keys].key_data,key_buf,KEY_LEN);
+				color_info[num_keys].color = colors[num_keys]; 
+				num_keys++;
+			} 
+			// keys not assigned a color will appear as grey
+		}
+	}  
+	return num_keys; 
+} 
+
+
+char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_days) {
 	int i; 
   	struct timeval now; 
-	uint32_t cur_secs; 
-  	int height = 500, width = 700; 
-	int x_offset = 130;
+	uint32_t cur_secs, cutoff; 
+	server_list *server;
+	struct list_head *outer_pos, *inner_pos;
+  	int height = 300, width = 700; 
+	int x_offset = 160;
 	int y_offset = 40;  
-	int pixels_per_day = 2;  
+	float pixels_per_day = (width - x_offset - 20) / len_days;  
 	int rec_height = 10;  
 	int num_keys = 0;
 	int y_cord = y_offset; 
-	struct key_color_pair *color_info = (struct key_color_pair*)
-		malloc(MAX_NUM_KEYS * sizeof(color_info)); 
+	key_color_pair *color_info = (key_color_pair*)
+		malloc(MAX_COLORS * sizeof(key_color_pair)); 
   	char buf[1024]; 
   	str_buffer *b = str_buffer_new(1024);   
+	ssh_key_info *info; 
+	char *key_buf;
+	BOOL grey_used = FALSE; 
 	
   	gettimeofday(&now, NULL); 
-  	cur_secs = now.tv_sec;  
+  	cur_secs = now.tv_sec; 
+	cutoff = cur_secs - DAY2SEC(len_days);  
+	
+	num_keys = setup_color_info(color_info, notary, cutoff);  
+
 	str_buffer_append(b,"<?xml version=\"1.0\"?>\n" 
  	    "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" "
             "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">"); 
@@ -460,26 +523,19 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary) {
 	str_buffer_append(b,buf); 
 	y_cord += 20;  
 
-	snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">Key Duration (Days) </text>\n",
-								x_offset + 70, y_cord); 
+	snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\" >"
+			"Key History (Days) </text>\n",
+			x_offset + 70, y_cord); 
 	str_buffer_append(b,buf); 
-	snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">Server </text>\n",4, y_cord); 
+	snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">Notary and Current Key</text>\n",
+											4, y_cord); 
 	str_buffer_append(b,buf); 
 	y_cord += 20; 
-	for(i = 0; i < 11; i++) { 
-		int days = i * 20; 
-		int x = x_offset + pixels_per_day * days; 
-		snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%d</text>\n",x,y_cord,days);
-		str_buffer_append(b,buf); 
-		snprintf(buf,1024,"<path d = \"M %d %d L %d %d\" stroke = \"grey\" "
-				"stroke-width = \"1\"/>",x,y_cord + 5,x,y_cord + 100); 
-		str_buffer_append(b,buf); 	
-	} 
 
-	// loop through each reply list to find all unique keys
-	server_list *server;
-	struct list_head *outer_pos, *inner_pos;
+	// loop through each reply list to draw each valid timespan 
 	list_for_each(outer_pos,&notary->notary_servers.list){
+		char *most_recent_color = "white"; // none 
+		uint32_t most_recent_end = 0; 
 		ssh_key_info_list *list_elem;
 		server = list_entry(outer_pos, server_list, list);
 		y_cord += 20;
@@ -489,79 +545,105 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary) {
 		
 		if(server->notary_results == NULL)
 			continue; 
-		list_for_each(inner_pos,&server->notary_results->list) {
+		
+                list_for_each(inner_pos,&server->notary_results->list) {
+			char *color = "grey"; // default color 
 			list_elem = list_entry(inner_pos, ssh_key_info_list, list);
-			ssh_key_info *info = list_elem->info; 
+			info = list_elem->info; 
 
-			BOOL key_found = FALSE;
-			char *key_buf = (char*)(list_elem->info + 1);
+			key_buf = (char*)(list_elem->info + 1);
 			for(i = 0; i < num_keys; i++) { 
 				if(!memcmp(key_buf,color_info[i].key_data,KEY_LEN)){
-					key_found = TRUE;
+					color = color_info[i].color;
 					break; 
 				}
 			} 
-			if(!key_found && num_keys < MAX_NUM_KEYS - 1) {
-				// if not, add it to the list
-				memcpy(color_info[num_keys].key_data,key_buf,KEY_LEN);
-				if(num_keys < MAX_COLORS) 
-					color_info[num_keys].color = colors[num_keys]; 
-				else  
-					color_info[num_keys].color = "grey"; 
-				i = num_keys; 
-				num_keys++;
-			}else if (!key_found) { 
-//				snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">"
-//					"Error, to many keys unique keys to generate image</text>\n", 
-//				         x_offset,y_cord + 70); 
-//				str_buffer_append(b,buf); 	
-//				return;  
-//  				we can just fake it, since they will all be grey anyway
-//				(note: this assumes that MAX_NUM_KEYS > MAX_COLORS
-				i = num_keys - 1; 
-			} 
-			char *color = color_info[i].color; 	
+
 			int len = ntohs(info->key_len_bytes);
 			int *timespans = (int*)(key_buf + len);
 			int num_spans = ntohs(info->num_timespans);
 			for(i = 0; i < num_spans; i++){
 				uint32_t t_start = ntohl(timespans[0]);
 				uint32_t t_end = ntohl(timespans[1]);
+				if(t_end < cutoff) { 
+					timespans += 2;
+					continue; 
+				} 
+				if(t_start < cutoff) 
+					t_start = cutoff; 
+				if(t_end > most_recent_end) { 
+					most_recent_end = t_end;
+					most_recent_color = color;
+				}  		 
+
+				if(!strcmp(color,"grey")) 
+					grey_used = TRUE; 
 				int time_since = cur_secs - t_end;
 				int duration = t_end - t_start; 
 				int x_cord = x_offset + (int)(pixels_per_day * SEC2DAY(time_since)); 
 				int width =  (int)(pixels_per_day * SEC2DAY(duration));
-				if(width == 0) 
-					width = 2; // hack for when start/end time is the same 	
-				snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" "
-				  "fill=\"%s\" rx=\"2\" stroke=\"black\" stroke-width=\"1px\" />\n",
-						x_cord,y_cord,width,rec_height,color);	
-				str_buffer_append(b,buf); 
+				
+				// a timespan with no width is not shown	
+				if(width > 0) {  
+					snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" "
+					  "width=\"%d\" height=\"%d\" fill=\"%s\" "
+					  "rx=\"2\" stroke=\"black\" stroke-width=\"1px\" />\n",
+					  x_cord,y_cord,width,rec_height,color);	
+					str_buffer_append(b,buf); 
+				} 
 				timespans += 2;
 			}
+			// print "current key" circle 
+			snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" width=\"10\" height=\"10\" "
+				"fill=\"%s\" rx=\"5\" stroke=\"black\" stroke-width=\"2px\" />\n",
+				x_offset - 30, y_cord,most_recent_color);	
+			str_buffer_append(b,buf); 
 
 		}
 	}
+	
+	// draw Days axis 
+	for(i = 0; i < 11; i++) { 
+		float days = i * (len_days / 10.0); 
+		int x = x_offset + (pixels_per_day * days);
+		int y = y_offset + 50; 
+		if(len_days < 10 && days != 0)  {  // print with decimal
+			snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%.1f</text>\n",
+				x,y,days);
+		} else { 
+			snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%.0f</text>\n",
+				x,y,days);
+		} 
+		str_buffer_append(b,buf); 
+		snprintf(buf,1024,"<path d = \"M %d %d L %d %d\" stroke = \"grey\" "
+				"stroke-width = \"1\"/>",x, y,x, y_cord + 20); 
+		str_buffer_append(b,buf); 	
+	} 
 
+	// draw legend mapping colors to keys 
 	y_cord += 30;
 	for(i = 0; i < num_keys && i <= MAX_COLORS; i++) { 
 		snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" width=\"10\" height=\"10\" "
-				"fill=\"%s\" rx=\"5\" stroke=\"black\" stroke-width=\"2px\" />\n",
+				"fill=\"%s\" rx=\"0\" stroke=\"black\" stroke-width=\"2px\" />\n",
 				x_offset, y_cord,color_info[i].color);	
 		str_buffer_append(b,buf); 
-		if( i < MAX_COLORS  ) { 
-			char *key_str = buf_2_hexstr(color_info[i].key_data,KEY_LEN);
-			snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%s</text>\n", 
-				x_offset + 15,y_cord + 9, key_str); 
-			str_buffer_append(b,buf); 
-		} else if (i == MAX_COLORS) { 
-			snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%s</text>\n", 
-				x_offset + 15, y_cord + 9, "all other keys"); 
-			str_buffer_append(b,buf); 
-		}  
+		char *key_str = buf_2_hexstr(color_info[i].key_data,KEY_LEN);
+		snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%s</text>\n", 
+			x_offset + 15,y_cord + 9, key_str); 
+		str_buffer_append(b,buf); 
 		y_cord += 20; 
 	} 
 
+	// extra legend entry for default color, if needed
+	if (grey_used) { 
+		snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" width=\"10\" height=\"10\" "
+			"fill=\"%s\" rx=\"5\" stroke=\"black\" stroke-width=\"2px\" />\n",
+			x_offset, y_cord,"grey");	
+		str_buffer_append(b,buf); 
+		snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%s</text>\n", 
+			x_offset + 15, y_cord + 9, "all other keys"); 
+		str_buffer_append(b,buf); 
+	} 
   	str_buffer_append(b,"</svg>\n"); 
   	char *str = str_buffer_get(b); 
   	str_buffer_free(b); 
