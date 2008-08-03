@@ -488,7 +488,7 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 	uint32_t cur_secs, cutoff; 
 	server_list *server;
 	struct list_head *outer_pos, *inner_pos;
-  	int height = 400, width = 700; 
+  	int height, width = 700; 
 	int x_offset = 160;
 	int y_offset = 40;  
 	float pixels_per_day = (width - x_offset - 20) / len_days;  
@@ -508,6 +508,7 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 	cutoff = cur_secs - DAY2SEC(len_days);  
 	
 	num_keys = setup_color_info(color_info, notary, cutoff);  
+        height = num_keys * 30 + get_number_of_notaries(notary) * 20 + y_offset + 30; 
 
 	str_buffer_append(b,"<?xml version=\"1.0\"?>\n" 
  	    "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" "
@@ -518,10 +519,10 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 	snprintf(buf,1024,"<rect x=\"0\" y=\"0\" width=\"%d\" height=\"%d\" fill=\"white\" />",
 							width,height);  
 	str_buffer_append(b,buf); 
-	snprintf(buf,1024,"<text x=\"80\" y=\"%d\" font-size=\"15\">Key History for %s</text>\n", 
-								18,service_id);
-	str_buffer_append(b,buf); 
-	y_cord += 20;  
+//	snprintf(buf,1024,"<text x=\"80\" y=\"%d\" font-size=\"15\">Key History for %s</text>\n", 
+//								18,service_id);
+//	str_buffer_append(b,buf); 
+//	y_cord += 20;  
 
 	snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\" >"
 			"Key History (Days) </text>\n",
@@ -607,7 +608,7 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 	for(i = 0; i < 11; i++) { 
 		float days = i * (len_days / 10.0); 
 		int x = x_offset + (pixels_per_day * days);
-		int y = y_offset + 50; 
+		int y = y_offset + 30; 
 		if(len_days < 10 && days != 0)  {  // print with decimal
 			snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%.1f</text>\n",
 				x,y,days);
