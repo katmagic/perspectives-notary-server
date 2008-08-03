@@ -430,37 +430,36 @@ char* colors[MAX_COLORS] = { "blue","purple", "yellow", "orange","cyan", "green"
 // returns num_keys
 int setup_color_info(key_color_pair *color_info, Notary *notary, uint32_t cutoff) { 
 	struct list_head *outer_pos, *inner_pos;
-	ssh_key_info *info; 
-	BOOL key_found, needs_display; 
-	char *key_buf; 
-	int i, num_keys = 0, *timespans,len,num_spans; 
+	int num_keys = 0; 
+	char *key_buf = NULL; 
+	int *timespans;
 
-	list_for_each(outer_pos,&notary->notary_servers.list){
+	while(1) { 
+	  // we try to find the most recently seen key that has not yet been assigned a color
+	  uint32_t most_recent_unmatched_end = 0; 
+	  char* most_recent_unmatched_key = NULL; 
+	  list_for_each(outer_pos,&notary->notary_servers.list){
 		server_list *server = list_entry(outer_pos, server_list, list);
 		if(server->notary_results == NULL)
 			continue;
 		list_for_each(inner_pos,&server->notary_results->list) {
 			ssh_key_info_list *list_elem = list_entry(inner_pos, ssh_key_info_list, list);
-			info = list_elem->info; 
+			int i; 
+			BOOL key_found; 
+			uint32_t most_recent = 0; // most recent obs. for this key  
+			ssh_key_info *info = list_elem->info; 
+			int len = ntohs(info->key_len_bytes);
+			int num_spans = ntohs(info->num_timespans);
 			key_buf = (char*)(list_elem->info + 1);
-			
-			// first we look at the timespans to see if this key
-			// is recent enough that it will be display
-			len = ntohs(info->key_len_bytes);
 			timespans = (int*)(key_buf + len);
-			num_spans = ntohs(info->num_timespans);
-			needs_display = FALSE; 
 			for(i = 0; i < num_spans; i++){
 				uint32_t t_end = ntohl(timespans[1]);
-				if(t_end >= cutoff) { 
-					needs_display = TRUE; 
-					break; 
-				} 
+				if(t_end > most_recent)  
+					most_recent = t_end; 
 				timespans += 2;
 			} 
-			if(!needs_display) { 
+			if(most_recent < cutoff)  
 				continue; 
-			}
 
 			key_found = FALSE;
 			for(i = 0; i < num_keys; i++) { 
@@ -470,14 +469,22 @@ int setup_color_info(key_color_pair *color_info, Notary *notary, uint32_t cutoff
 				}
 			}
 			if(!key_found && num_keys < MAX_COLORS) {
-				// if not, add it to the list
-				memcpy(color_info[num_keys].key_data,key_buf,KEY_LEN);
-				color_info[num_keys].color = colors[num_keys]; 
-				num_keys++;
+				if(most_recent > most_recent_unmatched_end) { 
+					most_recent_unmatched_end = most_recent; 
+					most_recent_unmatched_key = key_buf;  
+				}
 			} 
-			// keys not assigned a color will appear as grey
 		}
-	}  
+	    } 
+	    if(most_recent_unmatched_key) { 
+		memcpy(color_info[num_keys].key_data,most_recent_unmatched_key,KEY_LEN);
+		color_info[num_keys].color = colors[num_keys]; 
+		num_keys++;
+	    }else { 
+		break; // all keys have been assigned, or all colors used
+		       // keys not assigned a color will appear as grey
+	    } 
+	} // end while   
 	return num_keys; 
 } 
 
