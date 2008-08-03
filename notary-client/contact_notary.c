@@ -94,7 +94,6 @@ void fetch_notary_observations(SSHNotary *notary,
      FD_SET(sock, &readfds);
      select_timeout.tv_sec = MILLIS_TO_TIMEVAL_SEC(s_timeout_millis);  
      select_timeout.tv_usec = MILLIS_TO_TIMEVAL_USEC(s_timeout_millis); 
-     printf("tv_sec %d  tv_usec = %d \n", select_timeout.tv_sec, select_timeout.tv_usec);  
      int is_ready = select(sock + 1, &readfds, NULL, NULL, &select_timeout);
      if(is_ready) {
         int recv_len = recv_single_reply(sock, recv_buf, MAX_PACKET_LEN, &recv_addr);
