@@ -35,8 +35,12 @@ with network probes from multiple vantage points taking the place of manual veri
 by certificate authorities (e.g., Verisign).
 </p> 
 
-<h3> What is Quorum and Quorum Duration </h3> 
-<p> 
+<h3> Preferences </h3> 
+
+<p> This section helps you understand the configuration parameters you can control via
+Perspective's "Preferences" panel.</p> 
+
+<p><b>Security Settings: What is Quorum and Quorum Duration?</b> </p> 
 The preferences dialog lets you configure different values for "Quorum" and "Quorum Duration".
 These threshold values let you decide how paranoid you want to be about accepting keys.  In both cases, 
 higher values are more secure, but also run the risk of incorrectly determining that a key is
@@ -49,10 +53,18 @@ particular server, it may have no available key history.  As a result, setting D
 than zero will cause more valid keys to be rejected.  
 </p> 
 
+<p> <b>  Invalid Certificate Exceptions </b> </p>
+<p> When a certificate satisfies quorum duration,
+Perspectives can install an exception for that certificate so that Firefox will not show a security error
+page for pages using that certificate.  You can choose whether Perspectives installs these exceptions,
+and if so, if these exceptions should be permanent. 
+</p> 
+
+
 <h3> Questions / Comments ? </h3> 
 
 <ul>
-<li> Please contact us at perspectives@cs.cmu.edu </li> 
+<li> Please contact us at perspectives-project@cs.cmu.edu </li> 
 <li> For more details, please see our conference paper on the topic, available at the  
 <a href="http://www.cs.cmu.edu/~perspectives"> Perspectives Website </a>   </li> 
 </ul> 
