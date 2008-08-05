@@ -18,8 +18,63 @@ const STATE_IS_BROKEN   =
 const STATE_IS_INSECURE = 
   Components.interfaces.nsIWebProgressListener.STATE_IS_INSECURE;
 
+
 function clear_cache(){
   ssl_cache = new Object();
+}
+
+
+function notifyOverride(){
+  var notificationBox = gBrowser.getNotificationBox(browser);
+
+  var oldNotification = 
+    notificationBox.getNotificationWithValue("Perspectives");
+  if(oldNotification != null){
+    notificationBox.removeNotification(oldNotification);
+  }
+
+  var priority = notificationBox.PRIORITY_INFO_LOW;
+  var message = 
+    "Perspectives has verified the security of your "
+    + "connection to this website and has bypassed Firefox's "
+    + "security error page";
+  var buttons = [{
+    label: "Learn More", 
+    callback: function() {
+      gBrowser.loadOneTab(
+      "chrome://perspectives_main/content/help.html", null, null,
+      null, false);
+    }
+  }];
+    
+  notificationBox.appendNotification(message, "Perspectives", null,
+    priority, buttons);
+}
+
+function notifyFailed(){
+  var notificationBox = gBrowser.getNotificationBox(browser);
+
+  var oldNotification = 
+    notificationBox.getNotificationWithValue("Perspectives");
+  if(oldNotification != null){
+    notificationBox.removeNotification(oldNotification);
+  }
+
+  var priority = notificationBox.PRIORITY_CRITICAL_LOW;
+  var message = 
+    "Suspected attack: Perspectives was unable to verify the "
+    + "security of your connection to this website";
+  var buttons = null;
+  /* Uncomment when we have some sort of system
+  var buttons = [{
+    label: "Report This", 
+    callback: function() {
+      alert("Do Stuff");
+    }
+  }];
+  */
+  notificationBox.appendNotification(message, "Perspectives", null,
+    priority, buttons);
 }
 
 //certificate used in caching
@@ -91,6 +146,8 @@ function psv_get_invalid_cert() {
 function psv_get_valid_cert() { 
   try { 
     var ui = gBrowser.securityUI; 
+    dump(ui.state +
+    "-----------------------------------------------------------------------\n");
     ui.QueryInterface(Components.interfaces.nsISSLStatusProvider); 
     if(!ui.SSLStatus) 
       return null; 
@@ -115,14 +172,15 @@ function getCertificate(){
 }
 
 /* Takes an SslCert Returns a Notary Response*/
-function queryNotaries(){
+function queryNotaries(cert){
 
-  var cert = psv_get_valid_cert();
-  if(!cert)
-    cert = psv_get_invalid_cert();  
+  root_prefs.setCharPref("perspectives.info", "");
+  root_prefs.setBoolPref("perspectives.is_consistent", true);
+  root_prefs.setCharPref("perspectives.quorum_duration", "");
+
   if(!cert) { 
     alert("No certificate found for: " + gBrowser.currentURI.host); 
-    return; 
+    return null; 
   } 
 
   uri = gBrowser.currentURI;  
@@ -146,29 +204,33 @@ function queryNotaries(){
     class_obj = Components.classes[cid]; 
     if(!class_obj) { 
       alert("Perspectives component (" + cid + ") not installed correctly"); 
-      return; 
+      return null; 
     } 	
     obj = class_obj.createInstance();
     comp = obj.QueryInterface(Components.interfaces.IPerspectives);
     res = comp.do_notary_check(service_id,cert.md5Fingerprint,dir.path); 
     if(res != "") { 
       alert("Notary Error: " + res);
-      return;  
+      return null;  
     } 
 
-    var info = root_prefs.getCharPref("perspectives.info");
-    var is_consistent = root_prefs.getBoolPref("perspectives.is_consistent");
     var quorum_duration = 
       root_prefs.getCharPref("perspectives.quorum_duration");
-    var str = "Notary Lookup for:\n" + service_id + 
-      "\nwith key = " + cert.md5Fingerprint + "\n"; 
+    if(quorum_duration == ""){ //Make sure everything completed properyl
+      return null;
+    }
+    var info = root_prefs.getCharPref("perspectives.info");
+    var is_consistent = root_prefs.getBoolPref("perspectives.is_consistent");
+    var str = "Notary Lookup for: " + service_id + "\n";
+    str += "Key = " + cert.md5Fingerprint + "\n\n"; 
     str += "Results:\n"; 
     str += "Quorum duration: " + quorum_duration + " days\n"; 
     str += "Notary Observations: \n" + info; 
+    dump("\n\n" + str + "\n\n");
   } 
   catch (err) {
     alert(err);
-    return;
+    return null;
   }
 
   function NotaryResponse(summary, duration, consistent){
@@ -249,6 +311,10 @@ function updateStatus(uri){
     return;
   }
 
+  if(uri.host != gBrowser.currentURI.host){
+    dump("\n---------------THE WORLD HAS ENDED------------\n");
+  }
+
   dump("Update Status: " + uri.spec + "\n");
   broken         = false;
   var cert       = getCertificate();
@@ -258,28 +324,57 @@ function updateStatus(uri){
   var duration   = 
     root_prefs.getIntPref("perspectives.required_duration") / 100.0;
 
-  if ((state & STATE_IS_BROKEN || state & STATE_IS_INSECURE) &&
+  if((state & STATE_IS_BROKEN)){ //This means that the cert hasn't downloaded
+    dump("State is broken\n");
+    return;
+  }
+
+  if (state & STATE_IS_INSECURE && //firefox didn't like the cert
       !overrideService.isCertUsedForOverrides(cert,true,true)){
     broken = true; 
   }
+  else if(!root_prefs.getBoolPref("perspectives.check_good_certificates")){
+    setStatus(STATE_NEUT, 
+      "No Infomration: Perspectives is disabled for sites with valid "
+      + "certificates");
+    return;
+  }
 
   //Update ssl cache cert
+  var firstLook = false;
   if(!ssl_cache[uri.host] || ssl_cache[uri.host].md5 != md5){
-    var resp = queryNotaries();
-    ssl_cache[uri.host] = new SslCert(uri.host, 
+    firstLook = true;
+    var resp = queryNotaries(cert);
+    if(!resp){
+      dump("\nNotary Query Failed\n");
+      return;
+    }
+    var temp = new SslCert(uri.host, 
       uri.port, md5, resp.summary, null, resp.duration, resp.consistent);
+    ssl_cache[uri.host] = temp;
+  }
+
+  if(!ssl_cache[uri.host]){
+    dump("\nSHOULDNT HAPPEN NO CACHE ENTRY\n");
+    return;
   }
   cache_cert = ssl_cache[uri.host];
 
   if(!cache_cert.secure){
     cache_cert.tooltip = "Warning: Key has NOT been seen consistently";
     setStatus(STATE_NSEC, cache_cert.tooltip);
+    if(broken && firstLook){
+      notifyFailed();
+    }
   }
   else if(cache_cert.duration < duration){
     cache_cert.tooltip = 
       "Warning: Key seen consistently for only " + cache_cert.duration + 
       " days, threshold is " + duration + " days";
     setStatus(STATE_NSEC, cache_cert.tooltip);
+    if(broken && firstLook){
+      notifyFailed();
+    }
   }
   else { //Its secure
     cache_cert.tooltip = 
@@ -289,6 +384,9 @@ function updateStatus(uri){
     if (broken){
       broken = false;
       do_override(uri, cert);
+      if(firstLook){
+        notifyOverride();
+      }
     }
   }
   broken = false;

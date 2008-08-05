@@ -24,6 +24,9 @@
   <preference id="exception-enabled"
     name="perspectives.exceptions.enabled"
     type="bool"/>
+  <preference id="check-good"
+    name="perspectives.check_good_certificates"
+    type="bool"/>
 </preferences>
 <dialogheader title="Perspectives" />
 
@@ -35,7 +38,7 @@
       <textbox id="perspective-statusinfo-description"
         multiline = "true" 
         readonly  = "true"
-        rows      = "10" 
+        rows      = "12" 
         cols      = "50" 
         value     = 
           "There is no Perspectives information available for this location"/>
@@ -79,8 +82,11 @@
         <checkbox label="Enable Exceptions" preference="exception-enabled"/>
         <checkbox label="Permanent Exceptions" preference="exception-perm"/>
       </hbox>
+    </groupbox>
+    <groupbox>
+      <caption label="Other Options" style="font-weight: bold"/>
+      <checkbox label="Check Valid Certificates" preference="check-good"/>
     </groupbox></vbox>
-
   </tabpanel> </tabpanels> </tabbox> 
   <hbox> 
     <button label="Certificates" onclick="openCertificates()"/> 
