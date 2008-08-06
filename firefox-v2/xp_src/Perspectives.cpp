@@ -125,9 +125,8 @@ char *read_file(const char *ext_dir, const char *file_name, int *buf_len){
   return buf;
 }
 
-int set_status(char *info, float qd_days, BOOL is_cur_consistent)
+int set_status(char *info, char *svg, float qd_days, BOOL is_cur_consistent)
 {
-
   nsresult rv;
   if(info == NULL)
   {
@@ -150,6 +149,7 @@ int set_status(char *info, float qd_days, BOOL is_cur_consistent)
   prefBranch->SetCharPref("perspectives.quorum_duration", buf); 
   prefBranch->SetBoolPref("perspectives.is_consistent", is_cur_consistent); 
   prefBranch->SetCharPref("perspectives.info", info); 
+  prefBranch->SetCharPref("perspectives.svg", svg);
   return 0;  
 }
 
@@ -188,7 +188,7 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
     char buf[255]; 
     snprintf(buf,255,"Did not query notaries because client supplied" 
         " a RFC 1918 private address: %s \n", host);  
-    set_status(buf, 0.0, 0);
+    set_status(buf,"",  0.0, 0);
     printf("skipping probing because of RFC 1918 address: %s \n", host); 
     free(host); 
     return NS_OK; 
@@ -249,13 +249,15 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
   PRUint32 quorum_duration = get_quorum_duration(notary, binary_key, 
       KEY_LEN, SSL_ANY, quorum_size, MAX_STALE_SEC, &is_cur_consistent);
   free(binary_key);
+  char *svg = get_reply_as_svg(service_id, notary);
 
   float qd_days = SEC2DAY(quorum_duration); 
   PR_fprintf(PR_STDERR, "QS = %d \nQD = %f days \n", quorum_size, qd_days);
 
   // get text of notary response
   response = get_notary_reply(notary);
-  int res = set_status(response, qd_days, is_cur_consistent);
+  int res = set_status(response, svg, qd_days, is_cur_consistent);
+  free(svg);
   if(res) { 
     PR_fprintf(PR_STDERR, "Error setting status \n"); 
   } 

@@ -5,3 +5,4 @@ pref("perspectives.exceptions.permanent", false);
 pref("perspectives.exceptions.enabled", true);
 pref("perspectives.exceptions.enabled", true);
 pref("perspectives.check_good_certificates", true);
+pref("perspectives.svg", "");

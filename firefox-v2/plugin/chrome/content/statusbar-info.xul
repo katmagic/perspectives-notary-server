@@ -32,7 +32,8 @@
 
 <tabbox> 
   <tabs> <tab label="Information"/> <tab label="Preferences"/> </tabs> <tabpanels>
-    <tabpanel id="perspective-information-tab"> <groupbox style="text-align: left">
+    <tabpanel id="perspective-information-tab"> 
+    <groupbox id="perspective-information-box" style="text-align: left">
       <caption label="Detailed Information" style="font-weight: bold"/>
       <label id="perspective-quorum-duration" value="No Quorum Information"/>
       <textbox id="perspective-statusinfo-description"
@@ -40,6 +41,7 @@
         readonly  = "true"
         rows      = "12" 
         cols      = "50" 
+        hidden    = "false"
         value     = 
           "There is no Perspectives information available for this location"/>
     </groupbox> </tabpanel>

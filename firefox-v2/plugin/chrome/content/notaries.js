@@ -78,7 +78,7 @@ function notifyFailed(){
 }
 
 //certificate used in caching
-function SslCert(host, port, md5, summary, tooltip, duration, secure){
+function SslCert(host, port, md5, summary, tooltip, svg, duration, secure){
   this.host     = host;
   this.port     = port;
   this.md5      = md5;
@@ -86,6 +86,7 @@ function SslCert(host, port, md5, summary, tooltip, duration, secure){
   this.duration = duration;
   this.summary  = summary;
   this.tooltip  = tooltip;
+  this.svg      = svg;
 }
 
 function onWhitelist(host){
@@ -177,6 +178,7 @@ function queryNotaries(cert){
   root_prefs.setCharPref("perspectives.info", "");
   root_prefs.setBoolPref("perspectives.is_consistent", true);
   root_prefs.setCharPref("perspectives.quorum_duration", "");
+  root_prefs.setCharPref("perspectives.svg", "");
 
   if(!cert) { 
     alert("No certificate found for: " + gBrowser.currentURI.host); 
@@ -227,19 +229,22 @@ function queryNotaries(cert){
     str += "Quorum duration: " + quorum_duration + " days\n"; 
     str += "Notary Observations: \n" + info; 
     dump("\n\n" + str + "\n\n");
+
+    var svg = root_prefs.getCharPref("perspectives.svg");
   } 
   catch (err) {
     alert(err);
     return null;
   }
 
-  function NotaryResponse(summary, duration, consistent){
+  function NotaryResponse(summary, svg, duration, consistent){
     this.duration   = duration;
     this.consistent = consistent;
     this.summary    = summary;
+    this.svg        = svg;
   }
 
-  return new NotaryResponse(str, quorum_duration, is_consistent);
+  return new NotaryResponse(str, svg, quorum_duration, is_consistent);
 } 
 
   
@@ -350,7 +355,7 @@ function updateStatus(uri){
       return;
     }
     var temp = new SslCert(uri.host, 
-      uri.port, md5, resp.summary, null, resp.duration, resp.consistent);
+      uri.port, md5, resp.summary, null, resp.svg, resp.duration, resp.consistent);
     ssl_cache[uri.host] = temp;
   }
 

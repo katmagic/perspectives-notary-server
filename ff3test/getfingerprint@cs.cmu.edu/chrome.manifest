@@ -1,2 +1,0 @@
-content getfingerprint chrome/content/
-overlay chrome://browser/content/browser.xul chrome://getfingerprint/content/getfingerprint.xul

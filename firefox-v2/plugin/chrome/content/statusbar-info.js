@@ -1,5 +1,6 @@
 var root_prefs = Components.classes["@mozilla.org/preferences-service;1"].
 getService(Components.interfaces.nsIPrefBranch);
+const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 var browser;
 
@@ -64,6 +65,26 @@ function selectSecurity(){
 
 }
 
+//Should open new window because the dialog prevents them from seeing it
+function openNotaries(){
+  window.open("chrome://perspectives_main/content/notary_list.txt");
+}
+
+function onHelp(){
+  window.open("chrome://perspectives_main/content/help.html");
+}
+
+function addTimeline(svgString){
+  var after     = document.getElementById("perspective-information-box");
+  parser = new DOMParser();
+  var svgDoc    = parser.parseFromString(svgString, "text/xml");
+  var elements = svgDoc.getElementsByTagName("svg");
+  var svg = elements[0];
+  svg.setAttribute("width", 575);
+  svg.setAttribute("height", 300); 
+  after.appendChild(svg);
+}
+
 function LoadInfo(brws, ssl_cache){
   var info  = document.getElementById("perspective-statusinfo-description");
   var liner = document.getElementById("perspective-quorum-duration");
@@ -72,17 +93,27 @@ function LoadInfo(brws, ssl_cache){
   selectSecurity();
   info.setAttribute("value", cert.summary);
   liner.setAttribute("value", cert.tooltip);
+  if(cert.svg && cert.svg != ""){
+    info.setAttribute("hidden", true);
+    addTimeline(cert.svg);
+  }
   return true;
 }
 
-//Should open new window because the dialog prevents them from seeing it
-function openNotaries(){
-  window.open("chrome://perspectives_main/content/notary_list.txt");
 
-}
 
-function onHelp(){
-  window.open("chrome://perspectives_main/content/help.html");
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
