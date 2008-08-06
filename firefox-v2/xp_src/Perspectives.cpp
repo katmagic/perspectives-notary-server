@@ -249,7 +249,7 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
   PRUint32 quorum_duration = get_quorum_duration(notary, binary_key, 
       KEY_LEN, SSL_ANY, quorum_size, MAX_STALE_SEC, &is_cur_consistent);
   free(binary_key);
-  char *svg = get_reply_as_svg(service_id, notary);
+  char *svg = get_reply_as_svg(service_id, notary, 50);
 
   float qd_days = SEC2DAY(quorum_duration); 
   PR_fprintf(PR_STDERR, "QS = %d \nQD = %f days \n", quorum_size, qd_days);

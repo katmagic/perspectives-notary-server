@@ -80,8 +80,8 @@ function addTimeline(svgString){
   var svgDoc    = parser.parseFromString(svgString, "text/xml");
   var elements = svgDoc.getElementsByTagName("svg");
   var svg = elements[0];
-  svg.setAttribute("width", 575);
-  svg.setAttribute("height", 300); 
+ // svg.setAttribute("width", 575);
+ // svg.setAttribute("height", 300); 
   after.appendChild(svg);
 }
 
