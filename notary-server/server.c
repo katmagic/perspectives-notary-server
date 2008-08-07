@@ -177,12 +177,12 @@ int attempt_lookup_and_reply(DB *db, int sock, notary_header *hdr,
       0 ,(struct sockaddr *)remote_addr,addr_len);
   if (n  < 0) 
     sock_error("sendto");
-  else     
-    DPRINTF(DEBUG_INFO,"Replied to %s with %d bytes \n",
-            ip_2_str(*(uint32_t*)&remote_addr->sin_addr.s_addr),n);
 
-  /* 
-     printf("server sent: \n");
+    /*  ------ Disabled for Production ---------
+  else     
+     DPRINTF(DEBUG_INFO,"Replied with %d bytes about %s\n",n,service_id); 
+     DPRINTF(DEBUG_INFO,"Sent to %s : \n",
+	ip_2_str(*(uint32_t*)&remote_addr->sin_addr.s_addr)); 
      ssh_key_info_list *list = list_from_data(buf + hdr_len, data_len,
      SIGNATURE_LEN);
      print_key_info_list(list);
@@ -270,9 +270,12 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port) {
         if(! parse_header(hdr, n, &host,&type))
           continue;
 
-        DPRINTF(DEBUG_INFO,"Request for: %s (%d) len = %d from %s \n",
-           host, type, n,
-           ip_2_str(*(uint32_t*)&from.sin_addr.s_addr));
+        DPRINTF(DEBUG_INFO,"Request for: %s (%d) len = %d \n",host, type, n); 
+	/* 
+		--- Disabled for Production --- 
+        DPRINTF(DEBUG_INFO,"Request from: %s \n", 
+		ip_2_str(*(uint32_t*)&from.sin_addr.s_addr));
+	*/  
 
         int bytes = attempt_lookup_and_reply(db,sock,hdr,&from,fromlen,FALSE); 
   
