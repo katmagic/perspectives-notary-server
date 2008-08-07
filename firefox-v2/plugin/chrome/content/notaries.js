@@ -323,6 +323,9 @@ function updateStatus(uri){
   dump("Update Status: " + uri.spec + "\n");
   broken         = false;
   var cert       = getCertificate();
+  if(!cert){
+    return;
+  }
   var md5        = cert.md5Fingerprint;
   var state      = gBrowser.securityUI.state;
   var gSSLStatus = null;

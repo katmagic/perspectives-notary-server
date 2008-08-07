@@ -14,16 +14,16 @@ function setDuration(flt){
 }
 
 function setQuorum(num){
-    if(num < 0){
-      num = 0;
-      document.getElementById("pref-thresh").value="0"
-    }
-    else if(num > 100){
-      num = 100;
-      document.getElementById("pref-thresh").value="100"
-    }
-    root_prefs.setIntPref("perspectives.quorum_thresh", num);
-    clear_cache();
+  if(num < 0){
+    num = 0;
+    document.getElementById("pref-thresh").value="0"
+  }
+  else if(num > 100){
+    num = 100;
+    document.getElementById("pref-thresh").value="100"
+  }
+  root_prefs.setIntPref("perspectives.quorum_thresh", num);
+  clear_cache();
 }
 
 function setManual(){
@@ -75,27 +75,29 @@ function onHelp(){
 }
 
 function addTimeline(svgString){
-  var after     = document.getElementById("perspective-information-box");
-  parser = new DOMParser();
-  var svgDoc    = parser.parseFromString(svgString, "text/xml");
+  parser       = new DOMParser();
+  var svgDoc   = parser.parseFromString(svgString, "text/xml");
   var elements = svgDoc.getElementsByTagName("svg");
-  var svg = elements[0];
- // svg.setAttribute("width", 575);
- // svg.setAttribute("height", 300); 
+  var svg      = elements[0];
+  var after    = document.getElementById("perspective-information-box");
   after.appendChild(svg);
 }
 
 function LoadInfo(brws, ssl_cache){
   var info  = document.getElementById("perspective-statusinfo-description");
   var liner = document.getElementById("perspective-quorum-duration");
+  var host  = document.getElementById("perspective-information-caption");
   var cert  = ssl_cache[brws.currentURI.host];
  
+  host.setAttribute("label", brws.currentURI.host);
   selectSecurity();
-  info.setAttribute("value", cert.summary);
-  liner.setAttribute("value", cert.tooltip);
-  if(cert.svg && cert.svg != ""){
-    info.setAttribute("hidden", true);
-    addTimeline(cert.svg);
+  if(cert){
+    info.setAttribute("value", cert.summary);
+    liner.setAttribute("value", cert.tooltip);
+    if(cert.svg && cert.svg != ""){
+      info.setAttribute("hidden", true);
+      addTimeline(cert.svg);
+    }
   }
   return true;
 }

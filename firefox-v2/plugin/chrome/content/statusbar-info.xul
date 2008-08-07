@@ -9,94 +9,116 @@
 
 <prefpane id="perspective-main-prefpane"> 
 <preferences> 
-  <preference id="quorum-thresh"   
+  <preference 
+    id="quorum-thresh"   
     name="perspectives.quorum_thresh" 
     type="int"/>
-  <preference id="quorum-duration" 
+  <preference 
+    id="quorum-duration" 
     name="perspectives.required_duration"
     type="int"/>
-  <preference id="security-settings"
+  <preference 
+    id="security-settings"
     name="perspectives.security_settings"
     type="int"/>
-  <preference id="exception-perm"
+  <preference 
+    id="exception-perm"
     name="perspectives.exceptions.permanent"
     type="bool"/>
-  <preference id="exception-enabled"
+  <preference 
+    id="exception-enabled"
     name="perspectives.exceptions.enabled"
     type="bool"/>
-  <preference id="check-good"
+  <preference 
+    id="check-good"
     name="perspectives.check_good_certificates"
     type="bool"/>
 </preferences>
+
 <dialogheader title="Perspectives" />
-
 <tabbox> 
-  <tabs> <tab label="Information"/> <tab label="Preferences"/> </tabs> <tabpanels>
-    <tabpanel id="perspective-information-tab"> 
-    <groupbox id="perspective-information-box" style="text-align: left">
-      <caption label="Detailed Information" style="font-weight: bold"/>
-      <label id="perspective-quorum-duration" value="No Quorum Information"/>
-      <textbox id="perspective-statusinfo-description"
-        multiline = "true" 
-        readonly  = "true"
-        rows      = "12" 
-        cols      = "50" 
-        hidden    = "false"
-        value     = 
-          "There is no Perspectives information available for this location"/>
-    </groupbox> </tabpanel>
+<tabs> 
+  <tab label="Information"/> 
+  <tab label="Preferences"/> 
+</tabs> 
 
-    <tabpanel id="perspective-preferences-tab" > <vbox><groupbox> 
-      <caption label="Security Settings" style="font-weight: bold"/>
-      <menulist id="secset"  
-        preference = "security-settings"
-        oncommand  = "selectSecurity()"> 
-        <menupopup>
-        <menuitem label="High Security"        value="2"/> 
-        <menuitem label="Medium Security"      value="1"/>
-        <menuitem label="High Availability"    value="0"/>
-        <menuitem label="Manual Configuration" value="-1"/>
-        </menupopup> 
-      </menulist>
-      <label 
-        value="The percentage of notaries that must agree to verify a page"/>
-      <hbox align="right">
-        <label value="Quorum %" /> 
-        <spacer flex="1"/>
-        <textbox id="pref-thresh" 
-          size="4"
-          oninput='setQuorum(parseInt(this.value)); setManual();'/>
-      </hbox>
-      <label 
-        value="The length of time quorum must be achieved to verify a page "/>
-      <hbox align="right">
-        <label value="Duration (Days)" />
-        <spacer flex="1"/>
-        <textbox id="pref-duration" 
-          size="4" 
-          oninput="setDuration(this.value); setManual();"/>
-      </hbox> 
-    </groupbox> 
-    <groupbox>
-      <caption label="Invalid Certficate Exceptions" 
-        style="font-weight: bold"/>
-      <hbox>
-        <checkbox label="Enable Exceptions" preference="exception-enabled"/>
-        <checkbox label="Permanent Exceptions" preference="exception-perm"/>
-      </hbox>
-    </groupbox>
-    <groupbox>
-      <caption label="Other Options" style="font-weight: bold"/>
-      <checkbox label="Check Valid Certificates" preference="check-good"/>
-    </groupbox></vbox>
-  </tabpanel> </tabpanels> </tabbox> 
-  <hbox> 
-    <button label="Certificates" onclick="openCertificates()"/> 
-    <button label="Notary Servers" onclick="openNotaries()"/> 
-    <button label="Help" onclick="onHelp()"/> 
-    <spacer flex="1"/>
-    <button label="OK" onclick="window.close();"/>
-  </hbox>
+<tabpanels>
+  <tabpanel id="perspective-information-tab" orient="vertical"> 
+  <groupbox id="perspective-information-box" align="center">
+    <caption 
+      id="perspective-information-caption" 
+      label="Detailed Information" 
+      style="font-weight: bold"/>
+    <label id="perspective-quorum-duration" value="No Quorum Information"/>
+    <textbox id="perspective-statusinfo-description"
+    multiline = "true" 
+    readonly  = "true"
+    rows      = "10"
+    cols      = "60"
+    value     = 
+      "There is no Perspectives information available for this location"/>
+  </groupbox>
+  </tabpanel>
+
+  <tabpanel id="perspective-preferences-tab" orient="horizontal">
+  <spacer flex="1"/>
+  <groupbox> 
+    <caption label="Security Settings" style="font-weight: bold"/>
+    <menulist id="secset"  
+      preference = "security-settings"
+      oncommand  = "selectSecurity()"> 
+      <menupopup>
+      <menuitem label="High Security"        value="2"/> 
+      <menuitem label="Medium Security"      value="1"/>
+      <menuitem label="High Availability"    value="0"/>
+      <menuitem label="Manual Configuration" value="-1"/>
+      </menupopup> 
+    </menulist>
+    <label 
+      value="Percentage of notaries that must agree"/>
+    <hbox align="right">
+      <label value="Quorum %" /> 
+      <spacer flex="1"/>
+      <textbox id="pref-thresh" 
+        size="4"
+        oninput='setQuorum(parseInt(this.value)); setManual();'/>
+    </hbox>
+    <label value="Length of time quorum must be achieved"/>
+    <hbox align="right">
+      <label value="Duration (Days)" />
+      <spacer flex="1"/>
+      <textbox id="pref-duration" 
+        size="4" 
+        oninput="setDuration(this.value); setManual();"/>
+    </hbox> 
+  </groupbox> 
+  <vbox>
+  <groupbox>
+    <caption  label="Invalid Certficate Exceptions" style="font-weight: bold"/>
+    <checkbox label="Enable Exceptions" preference="exception-enabled"/>
+    <checkbox label="Permanent Exceptions" preference="exception-perm"/>
+  </groupbox>
+
+  <groupbox>
+    <caption label="Other Options" style="font-weight: bold"/>
+    <checkbox
+      label="Also Query on Root-Signed Certificates" 
+      preference="check-good"/>
+  </groupbox> 
+  </vbox>
+  <spacer flex="1"/>
+</tabpanel> 
+</tabpanels> 
+</tabbox> 
+
+<hbox> 
+  <button label="Certificates" onclick="openCertificates()"/> 
+  <button label="Notary Servers" onclick="openNotaries()"/> 
+  <button label="Help" onclick="onHelp()"/> 
+  <spacer flex="1"/>
+  <button label="OK" onclick="window.close();"/>
+</hbox>
+
 </prefpane>
 <script type="application/x-javascript" src="statusbar-info.js"/>
 <script type="application/x-javascript" src="notaries.js"/>

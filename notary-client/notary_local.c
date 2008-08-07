@@ -547,8 +547,8 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 		ssh_key_info_list *list_elem;
 		server = list_entry(outer_pos, server_list, list);
 		y_cord += 20;
-		snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"12\">%s:%d</text>\n", 
-			4,y_cord + 7,ip_2_str(server->ip_addr), server->port);
+		snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"12\">%s</text>\n", 
+			4,y_cord + 7,ip_2_str(server->ip_addr));
 		str_buffer_append(b,buf); 	
 		
 		if(server->notary_results == NULL)
