@@ -1,7 +1,7 @@
 #!/usr/local/bin/bash
 
 
-if ! [ -d "firefox-plugin" ]; then
+if ! [ -d "firefox-v2" ]; then
   echo "Error: Script must be run from top of notarycode directory"
   echo "EXITING"
   exit 1
@@ -19,14 +19,16 @@ make clean
 cd ../notary-client
 make clean
 
-cd ../firefox-plugin
-./make-plugin.sh clean 
+cd ../firefox-v2/xp_src
+make clean 
 
-cd ../..
+cd ../../..
 
+echo "notarycode/firefox-v2/xulrunner-sdk" >> exclude
+echo "notarycode/firefox-v2/dist" >> exclude
 find notarycode -type d -print | egrep '\.svn' >> exclude
 
-tar czfX notarycode/$fname exclude notarycode/firefox-plugin notarycode/common notarycode/notary-client
+tar czfX notarycode/$fname exclude notarycode/firefox-v2 notarycode/common notarycode/notary-client
 
 rm exclude
 
