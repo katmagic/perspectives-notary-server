@@ -26,6 +26,7 @@
 #include "nsDirectoryServiceUtils.h"
 #include "nsIPrefService.h"
 #include "nsIPrefBranch2.h"
+#include "nsMemory.h"
 
 #define TIMEOUT 5
 #define NUM_RETRIES 2
@@ -177,12 +178,17 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
   int file_buf_len; 
   PRBool result = false; 
   char *response = NULL; 
-  *_retval = strdup(""); 
   char *host = strdup(service_id); 
   char *colon = strchr(host,':'); 
   if(colon){
     *colon = 0; // get just host portion of the string 
   }
+
+  const char myResult[] = "";
+  if(!_retval) return NS_ERROR_NULL_POINTER;
+
+  *_retval = (char*) nsMemory::Clone(myResult, 
+               sizeof(char)*(strlen(myResult)+1));
 
   if(is_rfc1918(host)) { 
     char buf[255]; 
