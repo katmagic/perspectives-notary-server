@@ -139,7 +139,7 @@ char *read_file(const char *ext_dir, const char *file_name, int *buf_len){
 }
 
 
-int set_status(char *info, double qd_days, PRBool is_cur_consistent)
+int set_status(char *info, char *svg, double qd_days, PRBool is_cur_consistent)
 {
 
      nsresult rv;
@@ -164,6 +164,7 @@ int set_status(char *info, double qd_days, PRBool is_cur_consistent)
     prefBranch->SetCharPref("perspectives.quorum_duration", buf); 
     prefBranch->SetBoolPref("perspectives.is_consistent", is_cur_consistent); 
     prefBranch->SetCharPref("perspectives.info", info); 
+	prefBranch->SetCharPref("perspectives.svg", svg);
     return 0;  
 }
 
@@ -276,13 +277,15 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
         KEY_LEN, SSL_ANY, quorum_size, MAX_STALE_SEC, &is_cur_consistent);
 
     free(binary_key);
+    char *svg = get_reply_as_svg(service_id, notary, 30);
+
     double qd_days = SEC2DAY(quorum_duration); 
     DPRINTF(DEBUG_POLICY, "QD = %f days \n", qd_days);
 
      // get text of notary response
      response = get_reply_as_text(notary);
 	 DPRINTF(DEBUG_INFO,"Response:\n%s", response); 
-     int res = set_status(response, qd_days, is_cur_consistent);
+     int res = set_status(response, svg, qd_days, is_cur_consistent);
      if(res) { 
 		PR_fprintf(PR_STDERR, "Error setting status \n"); 
      } 

@@ -55,7 +55,7 @@ ssh_key_info_list* parse_message(char *buf, int msg_len  /*, RSA* pub_key */ );
 server_list * find_server(SSHNotary* notary, uint32_t server_ip, uint16_t server_port);
 
 char *get_reply_as_text(SSHNotary *notary); 
-
+char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_days);
 int get_number_of_notaries(SSHNotary *notary);
 
 // an optional struct that can represent values 

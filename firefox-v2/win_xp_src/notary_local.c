@@ -134,7 +134,7 @@ char *get_reply_as_text(SSHNotary *notary) {
 	server_list *server;
 	struct list_head *outer_pos;
 	str_buffer *b = str_buffer_new(1024); 
-	char *buf[1024], *to_return; 
+	char buf[1024], *to_return; 
 
 	list_for_each(outer_pos,&notary->notary_servers.list){
 		server = list_entry(outer_pos, server_list, list);
@@ -367,6 +367,252 @@ void load_notary_servers(SSHNotary *notary, char* data, int buf_len){
 
 	}
 }
+
+// below is ugly code to generate SVG images representing the key timespans
+
+typedef struct key_color_pair_t { 
+	char key_data[KEY_LEN]; 
+	char *color;
+} key_color_pair; 
+
+#define MAX_COLORS 8
+char* colors[MAX_COLORS] = { "blue","purple", "yellow", "orange","cyan", "green", "red","brown" };  
+
+// returns num_keys
+int setup_color_info(key_color_pair *color_info, Notary *notary, uint32_t cutoff) { 
+	struct list_head *outer_pos, *inner_pos;
+	int num_keys = 0; 
+	char *key_buf = NULL; 
+	int *timespans;
+
+	while(1) { 
+	  // we try to find the most recently seen key that has not yet been assigned a color
+	  uint32_t most_recent_unmatched_end = 0; 
+	  char* most_recent_unmatched_key = NULL; 
+	  list_for_each(outer_pos,&notary->notary_servers.list){
+		server_list *server = list_entry(outer_pos, server_list, list);
+		if(server->notary_results == NULL)
+			continue;
+		list_for_each(inner_pos,&server->notary_results->list) {
+			ssh_key_info_list *list_elem = list_entry(inner_pos, ssh_key_info_list, list);
+			int i; 
+			BOOL key_found; 
+			uint32_t most_recent = 0; // most recent obs. for this key  
+			ssh_key_info *info = list_elem->info; 
+			int len = ntohs(info->key_len_bytes);
+			int num_spans = ntohs(info->num_timespans);
+			key_buf = (char*)(list_elem->info + 1);
+			timespans = (int*)(key_buf + len);
+			for(i = 0; i < num_spans; i++){
+				uint32_t t_end = ntohl(timespans[1]);
+				if(t_end > most_recent)  
+					most_recent = t_end; 
+				timespans += 2;
+			} 
+			if(most_recent < cutoff)  
+				continue; 
+
+			key_found = FALSE;
+			for(i = 0; i < num_keys; i++) { 
+				if(!memcmp(key_buf,color_info[i].key_data,KEY_LEN)){
+					key_found = TRUE;
+					break; 
+				}
+			}
+			if(!key_found && num_keys < MAX_COLORS) {
+				if(most_recent > most_recent_unmatched_end) { 
+					most_recent_unmatched_end = most_recent; 
+					most_recent_unmatched_key = key_buf;  
+				}
+			} 
+		}
+	    } 
+	    if(most_recent_unmatched_key) { 
+		memcpy(color_info[num_keys].key_data,most_recent_unmatched_key,KEY_LEN);
+		color_info[num_keys].color = colors[num_keys]; 
+		num_keys++;
+	    }else { 
+		break; // all keys have been assigned, or all colors used
+		       // keys not assigned a color will appear as grey
+	    } 
+	} // end while   
+	return num_keys; 
+} 
+
+
+char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_days) {
+	int i; 
+  	struct timeval now; 
+	uint32_t cur_secs, cutoff; 
+	server_list *server;
+	struct list_head *outer_pos, *inner_pos;
+  	int height, width = 700; 
+	int x_offset = 160;
+	int y_offset = 40;  
+	float pixels_per_day = (width - x_offset - 20) / len_days;  
+	int rec_height = 10;  
+	int num_keys = 0;
+	int y_cord = y_offset; 
+	key_color_pair *color_info = (key_color_pair*)
+		malloc(MAX_COLORS * sizeof(key_color_pair)); 
+  	char buf[1024]; 
+  	str_buffer *b = str_buffer_new(1024);   
+	ssh_key_info *info; 
+	char *key_buf, *str;
+	BOOL grey_used = FALSE; 
+	
+  	gettimeofday(&now, NULL); 
+  	cur_secs = now.tv_sec; 
+	cutoff = cur_secs - DAY2SEC(len_days);  
+	
+	num_keys = setup_color_info(color_info, notary, cutoff);  
+        height = num_keys * 30 + get_number_of_notaries(notary) * 20 + y_offset + 30; 
+
+	str_buffer_append(b,"<?xml version=\"1.0\"?>\n" 
+ 	    "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" "
+            "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">"); 
+  	snprintf(buf,1024,"<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\""
+            " width=\"%d\" height=\"%d\">",width,height); 
+	str_buffer_append(b,buf); 
+	snprintf(buf,1024,"<rect x=\"0\" y=\"0\" width=\"%d\" height=\"%d\" fill=\"white\" />",
+							width,height);  
+	str_buffer_append(b,buf); 
+//	snprintf(buf,1024,"<text x=\"80\" y=\"%d\" font-size=\"15\">Key History for %s</text>\n", 
+//								18,service_id);
+//	str_buffer_append(b,buf); 
+//	y_cord += 20;  
+
+	snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\" >"
+			"Key History (Days) </text>\n",
+			x_offset + 70, y_cord); 
+	str_buffer_append(b,buf); 
+	snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">Notary and Current Key</text>\n",
+											4, y_cord); 
+	str_buffer_append(b,buf); 
+	y_cord += 20; 
+
+	// loop through each reply list to draw each valid timespan 
+	list_for_each(outer_pos,&notary->notary_servers.list){
+		char *most_recent_color = "white"; // none 
+		int *timespans; 
+		uint32_t most_recent_end = 0; 
+		ssh_key_info_list *list_elem;
+		server = list_entry(outer_pos, server_list, list);
+		y_cord += 20;
+		snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"12\">%s</text>\n", 
+			4,y_cord + 7,ip_2_str(server->ip_addr));
+		str_buffer_append(b,buf); 	
+		
+		if(server->notary_results == NULL)
+			continue; 
+		
+        list_for_each(inner_pos,&server->notary_results->list) {
+			char *color = "grey"; // default color 
+			int len, num_spans; 
+
+			list_elem = list_entry(inner_pos, ssh_key_info_list, list);
+			info = list_elem->info; 
+			key_buf = (char*)(list_elem->info + 1);
+			for(i = 0; i < num_keys; i++) { 
+				if(!memcmp(key_buf,color_info[i].key_data,KEY_LEN)){
+					color = color_info[i].color;
+					break; 
+				}
+			} 
+
+			len = ntohs(info->key_len_bytes);
+			timespans = (int*)(key_buf + len);
+			num_spans = ntohs(info->num_timespans);
+			for(i = 0; i < num_spans; i++){
+				int time_since,duration,x_cord; 
+				float width; 
+				uint32_t t_start = ntohl(timespans[0]);
+				uint32_t t_end = ntohl(timespans[1]);
+				if(t_end < cutoff) { 
+					timespans += 2;
+					continue; 
+				} 
+				if(t_start < cutoff) 
+					t_start = cutoff; 
+				if(t_end > most_recent_end) { 
+					most_recent_end = t_end;
+					most_recent_color = color;
+				}  		 
+
+				if(!strcmp(color,"grey")) {  
+					grey_used = TRUE; 
+				} 
+				time_since = cur_secs - t_end;
+				duration = t_end - t_start; 
+				x_cord = x_offset + (int)(pixels_per_day * SEC2DAY(time_since)); 
+				width =  (pixels_per_day * SEC2DAY(duration));
+				
+				// a timespan with no width is not shown	
+				if(width > 0) {  
+					snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" "
+					  "width=\"%f\" height=\"%d\" fill=\"%s\" "
+					  "rx=\"1\" stroke=\"black\" stroke-width=\"1px\" />\n",
+					  x_cord,y_cord,width,rec_height,color);	
+					str_buffer_append(b,buf); 
+				} 
+				timespans += 2;
+			}
+			// print "current key" circle 
+			snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" width=\"10\" height=\"10\" "
+				"fill=\"%s\" rx=\"5\" stroke=\"black\" stroke-width=\"1px\" />\n",
+				x_offset - 30, y_cord,most_recent_color);	
+			str_buffer_append(b,buf); 
+
+		}
+	}
+	
+	// draw Days axis 
+	for(i = 0; i < 11; i++) { 
+		float days = i * (len_days / 10.0); 
+		int x = x_offset + (pixels_per_day * days);
+		int y = y_offset + 30; 
+		if(len_days < 10 && days != 0)  {  // print with decimal
+			snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%.1f</text>\n",
+				x,y,days);
+		} else { 
+			snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%.0f</text>\n",
+				x,y,days);
+		} 
+		str_buffer_append(b,buf); 
+		snprintf(buf,1024,"<path d = \"M %d %d L %d %d\" stroke = \"grey\" "
+				"stroke-width = \"1\"/>",x, y,x, y_cord + 20); 
+		str_buffer_append(b,buf); 	
+	} 
+
+	// draw legend mapping colors to keys 
+	y_cord += 30;
+	for(i = 0; i < num_keys && i <= MAX_COLORS; i++) { 
+		char *key_str = buf_2_hexstr(color_info[i].key_data,KEY_LEN);
+		snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" width=\"10\" height=\"10\" "
+				"fill=\"%s\" rx=\"0\" stroke=\"black\" stroke-width=\"1px\" />\n",
+				x_offset, y_cord,color_info[i].color);	
+		str_buffer_append(b,buf); 
+		snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%s</text>\n", 
+			x_offset + 15,y_cord + 9, key_str); 
+		str_buffer_append(b,buf); 
+		y_cord += 20; 
+	} 
+
+	// extra legend entry for default color, if needed
+	if (grey_used) { 
+		snprintf(buf,1024,"<rect x=\"%d\" y=\"%d\" width=\"10\" height=\"10\" "
+			"fill=\"%s\" rx=\"5\" stroke=\"black\" stroke-width=\"1px\" />\n",
+			x_offset, y_cord,"grey");	
+		str_buffer_append(b,buf); 
+		snprintf(buf,1024,"<text x=\"%d\" y=\"%d\" font-size=\"15\">%s</text>\n", 
+			x_offset + 15, y_cord + 9, "all other keys"); 
+		str_buffer_append(b,buf); 
+	} 
+  	str_buffer_append(b,"</svg>\n"); 
+  	str = str_buffer_get(b); 
+  	str_buffer_free(b); 
+	return str; 
+}
   
 #ifndef WIN32
 
@@ -415,5 +661,8 @@ void parse_client_config(client_config *conf, char *fname){
 		}
 	}		
 }
+
+
+
 
 #endif
