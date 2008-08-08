@@ -337,15 +337,16 @@ function updateStatus(uri){
     return;
   }
 
-  if (state & STATE_IS_INSECURE && //firefox didn't like the cert
-      !overrideService.isCertUsedForOverrides(cert,true,true)){
-    broken = true; 
-  }
-  else if(!root_prefs.getBoolPref("perspectives.check_good_certificates")){
-    setStatus(STATE_NEUT, 
-      "No Infomration: Perspectives is disabled for sites with valid "
-      + "certificates");
-    return;
+  if(!overrideService.isCertUsedForOverrides(cert, true, true)){
+    if (state & STATE_IS_INSECURE){
+      broken = true; 
+    }
+    else if(!root_prefs.getBoolPref("perspectives.check_good_certificates")){
+      setStatus(STATE_NEUT, 
+        "No Infomration: Perspectives is disabled for sites with valid "
+        + "certificates");
+      return;
+    }
   }
 
   //Update ssl cache cert
