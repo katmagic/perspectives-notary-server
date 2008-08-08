@@ -336,8 +336,8 @@ function updateStatus(uri){
     }
     else if(!root_prefs.getBoolPref("perspectives.check_good_certificates")){
       setStatus(STATE_NEUT, 
-        "No Infomration: Perspectives is disabled for sites with valid "
-        + "certificates");
+        "No Infomration: Perspectives is disabled for sites with "
+        + "root-signed certificates");
       return;
     }
   }
