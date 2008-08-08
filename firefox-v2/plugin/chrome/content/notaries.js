@@ -198,7 +198,8 @@ function queryNotaries(cert){
     //obj = Components.classes[cid].createInstance();
     class_obj = Components.classes[cid]; 
     if(!class_obj) { 
-      alert("Perspectives component (" + cid + ") not installed correctly"); 
+      alert("Perspectives component (" + cid + ") not installed correctly."
+        + " Please report this bug to the developers"); 
       return null; 
     } 	
     obj = class_obj.createInstance();
@@ -305,7 +306,9 @@ function updateStatus(uri){
     return;
   } 
   if(onWhitelist(uri.host)){
-    setStatus(STATE_NEUT, "No Information: This site has been whitelisted");
+    setStatus(STATE_NEUT, "No Information: Perspectives intentionally " 
+      + "does not probe " + uri.host + " because this website uses " + 
+      "inconsistent keys in normal operation.");
     return;
   }
 
@@ -336,8 +339,9 @@ function updateStatus(uri){
     }
     else if(!root_prefs.getBoolPref("perspectives.check_good_certificates")){
       setStatus(STATE_NEUT, 
-        "No Infomration: Perspectives is disabled for sites with "
-        + "root-signed certificates");
+        "No Information: Your preferences indicate that Perspectives should" 
+         + " not probe websites with HTTPS certificates already trusted by "
+         + "your browser.");
       return;
     }
   }
