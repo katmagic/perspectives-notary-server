@@ -62,7 +62,6 @@ function selectSecurity(){
     case -1:
       break;
   }
-
 }
 
 //Should open new window because the dialog prevents them from seeing it
@@ -74,48 +73,42 @@ function onHelp(){
   window.open("chrome://perspectives_main/content/help.html");
 }
 
+function switchResultForm(){
+  var sel = document.getElementById("info-radio").selectedIndex;
+  document.getElementById("perspective-svg-box").hidden     = sel;
+  document.getElementById("perspective-description").hidden = !sel;
+}
+
 function addTimeline(svgString){
   parser       = new DOMParser();
   var svgDoc   = parser.parseFromString(svgString, "text/xml");
   var elements = svgDoc.getElementsByTagName("svg");
   var svg      = elements[0];
-  var after    = document.getElementById("perspective-information-box");
+  var after    = document.getElementById("perspective-svg-box");
   after.appendChild(svg);
 }
 
 function LoadInfo(brws, ssl_cache){
-  var info  = document.getElementById("perspective-statusinfo-description");
+  var info  = document.getElementById("perspective-description");
   var liner = document.getElementById("perspective-quorum-duration");
   var host  = document.getElementById("perspective-information-caption");
   var cert  = ssl_cache[brws.currentURI.host];
  
-  host.setAttribute("label", brws.currentURI.host);
+  host.label = brws.currentURI.host;
   selectSecurity();
   if(cert){
-    info.setAttribute("value", cert.summary);
-    liner.setAttribute("value", cert.tooltip);
+    info.value  = cert.summary;
+    liner.value = cert.tooltip;
     if(cert.svg && cert.svg != ""){
-      info.setAttribute("hidden", true);
+      info.hidden = true;
       addTimeline(cert.svg);
+      var radio = document.getElementById("info-radio");
+      radio.hidden=false;
+      radio.selectedIndex = 0;
     }
   }
   return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

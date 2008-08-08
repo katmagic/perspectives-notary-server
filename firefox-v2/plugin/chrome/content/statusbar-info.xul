@@ -44,20 +44,29 @@
 
 <tabpanels>
   <tabpanel id="perspective-information-tab" orient="vertical"> 
-  <groupbox id="perspective-information-box" align="center">
+  <groupbox minheight="235">
     <caption 
       id="perspective-information-caption" 
       label="Detailed Information" 
       style="font-weight: bold"/>
     <label id="perspective-quorum-duration" value="No Quorum Information"/>
-    <textbox id="perspective-statusinfo-description"
-    multiline = "true" 
-    readonly  = "true"
-    rows      = "10"
-    cols      = "60"
-    value     = 
-      "There is no Perspectives information available for this location"/>
+    <textbox id = "perspective-description"
+      multiline = "true" 
+      readonly  = "true"
+      flex      = "1"
+      value     = 
+        "There is no Perspectives information available for this location"/>
+    <!-- svg goes into this box -->
+    <box id = "perspective-svg-box"/>
   </groupbox>
+  <radiogroup 
+    id      = "info-radio" 
+    hidden  = "true"
+    orient  = "horizontal" 
+    onclick = 'switchResultForm()'>
+    <radio  label="Timeline" />
+    <radio  label="Notary Results" selected="true"/>
+  </radiogroup>
   </tabpanel>
 
   <tabpanel id="perspective-preferences-tab" orient="horizontal">
@@ -112,9 +121,9 @@
 </tabbox> 
 
 <hbox> 
-  <button label="Certificates" onclick="openCertificates()"/> 
+  <button label="Certificates"   onclick="openCertificates()"/> 
   <button label="Notary Servers" onclick="openNotaries()"/> 
-  <button label="Help" onclick="onHelp()"/> 
+  <button label="Help"           onclick="onHelp()"/> 
   <spacer flex="1"/>
   <button label="OK" onclick="window.close();"/>
 </hbox>

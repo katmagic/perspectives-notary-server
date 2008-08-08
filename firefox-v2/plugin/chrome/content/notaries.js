@@ -224,8 +224,8 @@ function queryNotaries(cert){
     var info = root_prefs.getCharPref("perspectives.info");
     var is_consistent = root_prefs.getBoolPref("perspectives.is_consistent");
     var str = "Notary Lookup for: " + service_id + "\n";
-    str += "Key = " + cert.md5Fingerprint + "\n\n"; 
-    str += "Results:\n"; 
+    str += "Key = " + cert.md5Fingerprint + "\n"; 
+    str += "Results:\n\n"; 
     str += "Quorum duration: " + quorum_duration + " days\n"; 
     str += "Notary Observations: \n" + info; 
     dump("\n\n" + str + "\n\n");
