@@ -104,29 +104,22 @@ function onWhitelist(host){
   return false;
 }
 
-function get_invalid_cert_SSLStatus(){
-  try {
-    var recentCertsSvc = 
-      Components.classes["@mozilla.org/security/recentbadcerts;1"]
-      .getService(Components.interfaces.nsIRecentBadCertsService);
-    if (!recentCertsSvc)
-      return null;
-
-    var uri = gBrowser.currentURI;
-    var port = uri.port; 
-    if(port == -1) 
-      port = 443; 
-
-    var hostWithPort = uri.host + ":" + port;
-    var gSSLStatus = recentCertsSvc.getRecentBadCert(hostWithPort);
-    if (!gSSLStatus)
-      return null;
-    return gSSLStatus;
-  }
-  catch (e) {
-    alert("exception: " + e); 
+function get_invalid_cert_SSLStatus(uri){
+  var recentCertsSvc = 
+    Components.classes["@mozilla.org/security/recentbadcerts;1"]
+    .getService(Components.interfaces.nsIRecentBadCertsService);
+  if (!recentCertsSvc)
     return null;
-  }
+
+  var port = uri.port; 
+  if(port == -1) 
+    port = 443; 
+
+  var hostWithPort = uri.host + ":" + port;
+  var gSSLStatus = recentCertsSvc.getRecentBadCert(hostWithPort);
+  if (!gSSLStatus)
+    return null;
+  return gSSLStatus;
 }
 
 function cert_from_SSLStatus(gSSLStatus){
@@ -135,8 +128,8 @@ function cert_from_SSLStatus(gSSLStatus){
 }
 
 // gets current certificat, if it FAILED the security check 
-function psv_get_invalid_cert() { 
-  var gSSLStatus = get_invalid_cert_SSLStatus();
+function psv_get_invalid_cert(uri) { 
+  var gSSLStatus = get_invalid_cert_SSLStatus(uri);
   if(!gSSLStatus){
     return null;
   }
@@ -160,10 +153,10 @@ function psv_get_valid_cert() {
   }
 } 
 
-function getCertificate(){
+function getCertificate(uri){
   var cert = psv_get_valid_cert();
   if(!cert){
-    cert = psv_get_invalid_cert();  
+    cert = psv_get_invalid_cert(uri);  
   }
 
   if(!cert) {
@@ -257,7 +250,7 @@ function do_override(uri, cert) {
     return;
   }
 
-  gSSLStatus = get_invalid_cert_SSLStatus();
+  gSSLStatus = get_invalid_cert_SSLStatus(uri);
   var flags = 0;
   if(gSSLStatus.isUntrusted)
     flags |= overrideService.ERROR_UNTRUSTED;
@@ -322,7 +315,7 @@ function updateStatus(uri){
 
   dump("Update Status: " + uri.spec + "\n");
   broken         = false;
-  var cert       = getCertificate();
+  var cert       = getCertificate(uri);
   if(!cert){
     return;
   }

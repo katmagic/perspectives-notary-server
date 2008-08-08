@@ -69,9 +69,9 @@
   </radiogroup>
   </tabpanel>
 
-  <tabpanel id="perspective-preferences-tab" orient="horizontal">
+  <tabpanel id="perspective-preferences-tab" align="start" orient="horizontal">
   <spacer flex="1"/>
-  <groupbox> 
+  <groupbox > 
     <caption label="Security Settings" style="font-weight: bold"/>
     <menulist id="secset"  
       preference = "security-settings"
