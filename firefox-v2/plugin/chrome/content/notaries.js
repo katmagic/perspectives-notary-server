@@ -422,6 +422,10 @@ function updateStatus(uri, has_user_permission){
     var needs_perm = root_prefs.getBoolPref("perspectives.require_user_permission"); 
     if(needs_perm && !has_user_permission) { 
       notifyNeedsPermission();
+      var text = "No Information:  Your preferences indicate that Perspectives "
+		+ "should not contact Notaries without your permission";
+      setStatus(STATE_NEUT,text); 
+      other_cache["reason"] = text;  
       return; 
     } 
 
