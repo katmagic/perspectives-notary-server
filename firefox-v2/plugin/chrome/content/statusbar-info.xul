@@ -5,7 +5,7 @@
 	title          = "Perspectives"
 	xmlns          = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	buttons        = ","
-	onload         = "LoadInfo(window.arguments[0], window.arguments[1])">
+	onload         = "LoadInfo(window.arguments[0], window.arguments[1],window.arguments[2])">
 
 <prefpane id="perspective-main-prefpane"> 
 <preferences> 
@@ -33,12 +33,16 @@
     id="check-good"
     name="perspectives.check_good_certificates"
     type="bool"/>
+  <preference 
+    id="require-user-permission"
+    name="perspectives.require_user_permission"
+    type="bool"/>
 </preferences>
 
 <dialogheader title="Perspectives" />
 <tabbox> 
 <tabs> 
-  <tab label="Information"/> 
+  <tab label="Notary Results"/> 
   <tab label="Preferences"/> 
 </tabs> 
 
@@ -111,8 +115,11 @@
   <groupbox>
     <caption label="Other Options" style="font-weight: bold"/>
     <checkbox
-      label="Also Query on Root-Signed Certificates" 
+      label="Contact Notaries for all HTTPS sites, even if certificate is trusted." 
       preference="check-good"/>
+   <checkbox
+      label="Always ask before contacting Notaries" 
+      preference="require-user-permission"/> 
   </groupbox> 
   </vbox>
   <spacer flex="1"/>

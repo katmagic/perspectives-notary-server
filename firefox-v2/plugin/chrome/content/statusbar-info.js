@@ -88,7 +88,7 @@ function addTimeline(svgString){
   after.appendChild(svg);
 }
 
-function LoadInfo(brws, ssl_cache){
+function LoadInfo(brws, ssl_cache,other_cache){
   var info  = document.getElementById("perspective-description");
   var liner = document.getElementById("perspective-quorum-duration");
   var host  = document.getElementById("perspective-information-caption");
@@ -106,7 +106,9 @@ function LoadInfo(brws, ssl_cache){
       radio.hidden=false;
       radio.selectedIndex = 0;
     }
-  }
+  } else if (other_cache["reason"]) {
+    info.value = other_cache["reason"]; 
+  } 
   return true;
 }
 

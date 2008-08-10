@@ -2,8 +2,8 @@ To build the platform specific binaries follow the instructions in xp_src or
 win_xp_src depending on the target platform.
 
 To build an xpi simply type make.  This copy the plugin files and the dist files
-to the build directory and makes the xpi.  Depending on the platform this might
-get upset on at you if you have binaries in the plugin directory so beware
+to the build directory and makes the xpi.  Depending on the platform, the 
+script may yell at you if you have binaries in the plugin directory so beware
 
 To push an update follow these instructions.
 Updating an extension is relatively simple.  We need to make an xpi, an

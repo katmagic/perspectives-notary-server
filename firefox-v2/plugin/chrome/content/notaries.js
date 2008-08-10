@@ -8,6 +8,14 @@ var overrideService =
   .getService(Components.interfaces.nsICertOverrideService);
 var broken = false;
 
+// if the tab changes to a webpage that has no notary
+// results, set the 'reason' property of this object to explain why.  
+// I use this hack b/c ssl_cache only caches info for sites we have
+// probed, wherease we want to communicate info to the status pop-up
+// about sites we haven't probed. 
+var other_cache = {}; 
+
+
 const STATE_SEC   = 0;
 const STATE_NSEC  = 1;
 const STATE_NEUT  = 2;
@@ -39,7 +47,9 @@ function notifyOverride(){
     + "connection to this website and has bypassed Firefox's "
     + "security error page";
   var buttons = [{
+    accessKey : "", 
     label: "Learn More", 
+    accessKey : "", 
     callback: function() {
       gBrowser.loadOneTab(
       "chrome://perspectives_main/content/help.html", null, null,
@@ -68,11 +78,63 @@ function notifyFailed(){
   /* Uncomment when we have some sort of system
   var buttons = [{
     label: "Report This", 
+    accessKey : "", 
     callback: function() {
       alert("Do Stuff");
     }
   }];
   */
+  notificationBox.appendNotification(message, "Perspectives", null,
+    priority, buttons);
+}
+
+// this is the drop down which is shown if preferences indicate
+// that notaries should only be queried with user permission
+function notifyNeedsPermission(){
+  var notificationBox = gBrowser.getNotificationBox(browser);
+
+  var oldNotification = 
+    notificationBox.getNotificationWithValue("Perspectives");
+  if(oldNotification != null){
+    notificationBox.removeNotification(oldNotification);
+  }
+
+  var priority = notificationBox.PRIORITY_WARNING_HIGH;
+  var message = 
+    "Perspectives may be able to override this security error " +
+    " by contacting Network Notary servers, but needs your permission.";
+  var buttons = null;
+  var buttons = [
+    {
+    label: "Yes, contact Notaries", 
+    accessKey : "", 
+    callback: function() {
+      try { 
+            var nbox = gBrowser.getNotificationBox();
+            nbox.removeCurrentNotification();
+        } catch (err) {
+          // sometimes, this doesn't work.  why?
+          // well, we'll just have to remove them all
+          try { 
+            nbox.removeAllNotifications(); 
+          } catch (err2) { 
+            dump("error2:" + err2); 
+          } 
+          dump("error1: " + err); 
+        } 
+      // run probe
+      var uri = gBrowser.currentURI;
+      updateStatus(uri,true); 
+    }},
+    { 
+    label: "Learn More",
+    accessKey : "", 
+    callback: function() {
+      gBrowser.loadOneTab(
+      "chrome://perspectives_main/content/help.html", null, null,
+      null, false);
+    } 
+  }];
   notificationBox.appendNotification(message, "Perspectives", null,
     priority, buttons);
 }
@@ -297,18 +359,24 @@ function setStatus(state, tooltip){
 
 /* Updates the status of the current page */
 //Make this a bit more efficient when I get a chance
-function updateStatus(uri){
+// 'has_user_permission' indicates whether the user
+// explicitly pressed a button to launch this query,
+// by default this is not the case
+function updateStatus(uri, has_user_permission){
 
   if(!uri || uri.scheme != "https"){
-    setStatus(STATE_NEUT,
-     "No Information:  Perspectives only provides information about" +
-     " HTTPS enabled websites");
+     var text = "No Information:  Perspectives only provides information about" +
+     " HTTPS enabled websites";
+    setStatus(STATE_NEUT,text); 
+    other_cache["reason"] = text; 
     return;
   } 
   if(onWhitelist(uri.host)){
-    setStatus(STATE_NEUT, "No Information: Perspectives intentionally " 
+    var text = "No Information: Perspectives intentionally " 
       + "does not probe " + uri.host + " because this website uses " + 
-      "inconsistent keys in normal operation.");
+      "inconsistent keys in normal operation.";
+    setStatus(STATE_NEUT,text); 
+    other_cache["reason"] = text; 
     return;
   }
 
@@ -338,10 +406,11 @@ function updateStatus(uri){
       broken = true; 
     }
     else if(!root_prefs.getBoolPref("perspectives.check_good_certificates")){
-      setStatus(STATE_NEUT, 
-        "No Information: Your preferences indicate that Perspectives should" 
+      var text =  "No Information: Your preferences indicate that Perspectives should" 
          + " not probe websites with HTTPS certificates already trusted by "
-         + "your browser.");
+         + "your browser.";
+      setStatus(STATE_NEUT,text); 
+      other_cache["reason"] = text; 
       return;
     }
   }
@@ -350,6 +419,12 @@ function updateStatus(uri){
   var firstLook = false;
   if(!ssl_cache[uri.host] || ssl_cache[uri.host].md5 != md5){
     firstLook = true;
+    var needs_perm = root_prefs.getBoolPref("perspectives.require_user_permission"); 
+    if(needs_perm && !has_user_permission) { 
+      notifyNeedsPermission();
+      return; 
+    } 
+
     var resp = queryNotaries(cert);
     if(!resp){
       dump("\nNotary Query Failed\n");
@@ -390,7 +465,9 @@ function updateStatus(uri){
     if (broken){
       broken = false;
       do_override(uri, cert);
-      if(firstLook){
+      // don't give drop-down if user gave explicit
+      // permission to query notaries
+      if(firstLook && !has_user_permission){
         notifyOverride();
       }
     }
@@ -405,14 +482,14 @@ var notaryListener = {
    * redirecting */
   onLocationChange: function(aWebProgress, aRequest, aURI) {
       dump("Location change " + aURI.spec + "\n");
-      updateStatus(aURI);
+      updateStatus(aURI,false);
   },
 
 	onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) { 
     var uri = gBrowser.currentURI;
     dump("State change " + uri.spec + "\n");
     if(aFlag & STATE_STOP){
-      updateStatus(uri);
+      updateStatus(uri,false);
     }
   },
 
