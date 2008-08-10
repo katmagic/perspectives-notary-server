@@ -107,18 +107,18 @@
   </groupbox> 
   <vbox>
   <groupbox>
-    <caption  label="Invalid Certficate Exceptions" style="font-weight: bold"/>
-    <checkbox label="Enable Exceptions" preference="exception-enabled"/>
-    <checkbox label="Permanent Exceptions" preference="exception-perm"/>
+    <caption  label="Overriding Firefox Security Errors" style="font-weight: bold"/>
+    <checkbox label="Allow Perspectives to automatically override security errors" preference="exception-enabled"/>
+    <checkbox label="Permanently trust certificates validated by Perspectives." preference="exception-perm"/>
   </groupbox>
 
   <groupbox>
-    <caption label="Other Options" style="font-weight: bold"/>
+    <caption label="When to Contact Notaries" style="font-weight: bold"/>
     <checkbox
       label="Contact Notaries for all HTTPS sites, even if certificate is trusted." 
       preference="check-good"/>
    <checkbox
-      label="Always ask before contacting Notaries" 
+      label="Always ask the user before contacting Notaries" 
       preference="require-user-permission"/> 
   </groupbox> 
   </vbox>
