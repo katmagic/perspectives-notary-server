@@ -39,11 +39,11 @@ function d_print(line) {
 	other_cache["debug"] += line; 
 } 
 
-function clear_existing_banner() { 
+function clear_existing_banner(value_text) { 
   try { 
   	var notificationBox = gBrowser.getNotificationBox(browser);
   	var oldNotification = 
-    	notificationBox.getNotificationWithValue("Perspectives");
+    	notificationBox.getNotificationWithValue(value_text);
   	if(oldNotification != null)
     		notificationBox.removeNotification(oldNotification);
  	} catch (err) { 
@@ -53,7 +53,7 @@ function clear_existing_banner() {
 
 function notifyOverride(){
   var notificationBox = gBrowser.getNotificationBox(browser);
-  clear_existing_banner(); 
+  clear_existing_banner("Perspectives"); 
 
   var priority = notificationBox.PRIORITY_INFO_LOW;
   var message = 
@@ -78,7 +78,7 @@ function notifyOverride(){
 function notifyFailed(){
   var notificationBox = gBrowser.getNotificationBox(browser);
 
-  clear_existing_banner(); 
+  clear_existing_banner("Perspectives"); 
 
   var priority = notificationBox.PRIORITY_CRITICAL_LOW;
   var message = 
@@ -103,7 +103,7 @@ function notifyFailed(){
 function notifyNeedsPermission(){
   var notificationBox = gBrowser.getNotificationBox(browser);
 
-  clear_existing_banner(); 
+  clear_existing_banner("Perspectives-Permission"); 
   var priority = notificationBox.PRIORITY_WARNING_HIGH;
   var message = 
     "Perspectives may be able to override this security error " +
@@ -142,7 +142,7 @@ function notifyNeedsPermission(){
       null, false);
     } 
   }];
-  notificationBox.appendNotification(message, "Perspectives", null,
+  notificationBox.appendNotification(message, "Perspectives-Permission", null,
     priority, buttons);
 }
 
@@ -427,8 +427,8 @@ function updateStatus(uri, has_user_permission){
   var check_good = root_prefs.getBoolPref("perspectives.check_good_certificates"); 
 
   if(state & STATE_IS_SECURE) { 
-	d_print("clearing any existing banners\n"); 
-  	clear_existing_banner(); 
+	d_print("clearing any existing permission banners\n"); 
+  	clear_existing_banner("Perspecives-Permission"); 
   }
 
   // see if the browser has this cert installed prior to this browser session
