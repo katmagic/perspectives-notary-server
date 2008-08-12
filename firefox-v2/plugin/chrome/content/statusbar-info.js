@@ -88,6 +88,8 @@ function addTimeline(svgString){
   after.appendChild(svg);
 }
 
+
+
 function LoadInfo(brws, ssl_cache,other_cache){
   var info  = document.getElementById("perspective-description");
   var liner = document.getElementById("perspective-quorum-duration");
@@ -109,8 +111,9 @@ function LoadInfo(brws, ssl_cache,other_cache){
   } else if (other_cache["reason"]) {
     info.value = other_cache["reason"]; 
   } 
+  document.getElementById("perspective-debug").value = other_cache["debug"];
+  
   return true;
 }
-
 
 

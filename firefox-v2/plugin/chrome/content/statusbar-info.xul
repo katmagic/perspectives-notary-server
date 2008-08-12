@@ -43,7 +43,9 @@
 <tabbox> 
 <tabs> 
   <tab label="Notary Results"/> 
-  <tab label="Preferences"/> 
+  <tab label="Preferences"/>
+    <!-- remove this tab for production -->
+<!--   <tab label="Debug" />  --> 
 </tabs> 
 
 <tabpanels>
@@ -123,7 +125,14 @@
   </groupbox> 
   </vbox>
   <spacer flex="1"/>
-</tabpanel> 
+</tabpanel>
+<tabpanel id="perspective-debug-tab" orient="vertical"> 
+    <textbox id = "perspective-debug"
+      multiline = "true" 
+      readonly  = "true"
+      flex      = "1"
+      value     = ""/>
+</tabpanel>  
 </tabpanels> 
 </tabbox> 
 
