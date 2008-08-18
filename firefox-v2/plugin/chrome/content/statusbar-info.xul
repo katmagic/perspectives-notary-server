@@ -116,9 +116,14 @@
 
   <groupbox>
     <caption label="When to Contact Notaries" style="font-weight: bold"/>
-    <checkbox
+    <radiogroup preference="check-good">
+      <radio label="Contact Notaries for all HTTPS sites" value="true"/>
+      <radio label="Contact Notaries only when a website's certificate causes a
+        security error" value="false"/>
+    </radiogroup>
+    <!-- checkbox
       label="Contact Notaries for all HTTPS sites, even if certificate is trusted." 
-      preference="check-good"/>
+      preference="check-good"/ -->
    <checkbox
       label="Always ask the user before contacting Notaries" 
       preference="require-user-permission"/> 
@@ -137,10 +142,10 @@
 </tabbox> 
 
 <hbox> 
-  <button label="Certificates"   onclick="openCertificates()"/> 
-  <button label="Notary Servers" onclick="openNotaries()"/> 
-  <button label="Help"           onclick="onHelp()"/> 
-  <spacer flex="1"/>
+  <button label = "Certificates"   onclick="openCertificates()"/> 
+  <button label = "Notary Servers" onclick="openNotaries()"/> 
+  <button label = "Help"           onclick="onHelp()"/> 
+  <spacer flex  = "1"/>
   <button label="OK" onclick="window.close();"/>
 </hbox>
 
