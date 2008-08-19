@@ -110,8 +110,10 @@
   <vbox>
   <groupbox>
     <caption  label="Overriding Firefox Security Errors" style="font-weight: bold"/>
-    <checkbox label="Allow Perspectives to automatically override security errors" preference="exception-enabled"/>
-    <checkbox label="Permanently trust certificates validated by Perspectives." preference="exception-perm"/>
+    <checkbox label="Allow Perspectives to automatically override security errors" 
+      preference="exception-enabled"/>
+    <checkbox label="Permanently trust certificates validated by Perspectives." 
+      preference="exception-perm"/>
   </groupbox>
 
   <groupbox>
@@ -146,7 +148,7 @@
   <button label = "Notary Servers" onclick="openNotaries()"/> 
   <button label = "Help"           onclick="onHelp()"/> 
   <spacer flex  = "1"/>
-  <button label="OK" onclick="window.close();"/>
+  <button label="OK" onclick="acceptDialog(); window.close()"/>
 </hbox>
 
 </prefpane>

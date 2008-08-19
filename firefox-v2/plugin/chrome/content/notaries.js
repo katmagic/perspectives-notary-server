@@ -39,9 +39,9 @@ function d_print(line) {
 	other_cache["debug"] += line; 
 } 
 
-function clear_existing_banner(value_text) { 
+function clear_existing_banner(browser, value_text) { 
   try { 
-  	var notificationBox = gBrowser.getNotificationBox(browser);
+  	var notificationBox = browser.getNotificationBox(browser);
   	var oldNotification = 
     	notificationBox.getNotificationWithValue(value_text);
   	if(oldNotification != null)
@@ -51,9 +51,9 @@ function clear_existing_banner(value_text) {
    	} 
 } 
 
-function notifyOverride(){
-  var notificationBox = gBrowser.getNotificationBox(browser);
-  clear_existing_banner("Perspectives"); 
+function notifyOverride(b){
+  var notificationBox = b.getNotificationBox(browser);
+  clear_existing_banner(b, "Perspectives"); 
 
   var priority = notificationBox.PRIORITY_INFO_LOW;
   var message = 
@@ -65,7 +65,7 @@ function notifyOverride(){
     label: "Learn More", 
     accessKey : "", 
     callback: function() {
-      gBrowser.loadOneTab(
+      b.loadOneTab(
       "chrome://perspectives_main/content/help.html", null, null,
       null, false);
     }
@@ -75,10 +75,10 @@ function notifyOverride(){
     priority, buttons);
 }
 
-function notifyFailed(){
-  var notificationBox = gBrowser.getNotificationBox(browser);
+function notifyFailed(browser){
+  var notificationBox = browser.getNotificationBox(browser);
 
-  clear_existing_banner("Perspectives"); 
+  clear_existing_banner(browser, "Perspectives"); 
 
   var priority = notificationBox.PRIORITY_CRITICAL_LOW;
   var message = 
@@ -100,10 +100,10 @@ function notifyFailed(){
 
 // this is the drop down which is shown if preferences indicate
 // that notaries should only be queried with user permission
-function notifyNeedsPermission(){
-  var notificationBox = gBrowser.getNotificationBox(browser);
+function notifyNeedsPermission(browser){
+  var notificationBox = browser.getNotificationBox(browser);
 
-  clear_existing_banner("Perspectives-Permission"); 
+  clear_existing_banner(browser, "Perspectives-Permission"); 
   var priority = notificationBox.PRIORITY_WARNING_HIGH;
   var message = 
     "Perspectives may be able to override this security error " +
@@ -115,7 +115,7 @@ function notifyNeedsPermission(){
     accessKey : "", 
     callback: function() {
       try { 
-            var nbox = gBrowser.getNotificationBox();
+            var nbox = browser.getNotificationBox();
             nbox.removeCurrentNotification();
         } catch (err) {
           // sometimes, this doesn't work.  why?
@@ -130,14 +130,14 @@ function notifyNeedsPermission(){
         } 
       // run probe
       d_print("User gives probe permission\n"); 
-      var uri = gBrowser.currentURI;
-      updateStatus(uri,true); 
+      var uri = browser.currentURI;
+      updateStatus(browser,true); 
     }},
     { 
     label: "Learn More",
     accessKey : "", 
     callback: function() {
-      gBrowser.loadOneTab(
+      browser.loadOneTab(
       "chrome://perspectives_main/content/help.html", null, null,
       null, false);
     } 
@@ -205,9 +205,8 @@ function psv_get_invalid_cert(uri) {
 } 
 
 // gets current certificate, if it PASSED the browser check 
-function psv_get_valid_cert() { 
+function psv_get_valid_cert(ui) { 
   try { 
-    var ui = gBrowser.securityUI; 
     ui.QueryInterface(Components.interfaces.nsISSLStatusProvider); 
     if(!ui.SSLStatus) 
       return null; 
@@ -219,8 +218,10 @@ function psv_get_valid_cert() {
   }
 } 
 
-function getCertificate(uri){
-  var cert = psv_get_valid_cert();
+function getCertificate(browser){
+  var uri = browser.currentURI;
+  var ui  = browser.securityUI;
+  var cert = psv_get_valid_cert(ui);
   if(!cert){
     cert = psv_get_invalid_cert(uri);  
   }
@@ -232,7 +233,7 @@ function getCertificate(uri){
 }
 
 /* Takes an SslCert Returns a Notary Response*/
-function queryNotaries(cert){
+function queryNotaries(cert, uri){
 
   root_prefs.setCharPref("perspectives.info", "");
   root_prefs.setBoolPref("perspectives.is_consistent", true);
@@ -240,11 +241,10 @@ function queryNotaries(cert){
   root_prefs.setCharPref("perspectives.svg", "");
 
   if(!cert) { 
-    d_print("No certificate found for: " + gBrowser.currentURI.host); 
+    d_print("No certificate found for: " + uri.host); 
     return null; 
   } 
 
-  uri = gBrowser.currentURI;  
   var port = uri.port; 
   if(port == -1) 
     port = 443; 
@@ -309,7 +309,8 @@ function queryNotaries(cert){
 /* There is a bug here.  Sometimes it gets into a browser reload 
  * loop.  Come back to this later */
 
-function do_override(uri, cert) { 
+function do_override(browser, cert) { 
+  var uri = browser.currentURI;
   d_print("Do Override\n");
   if(!root_prefs.getBoolPref("perspectives.exceptions.enabled")){
     return;
@@ -329,7 +330,7 @@ function do_override(uri, cert) {
 			uri.asciiHost, uri.port, cert, flags, isTemp);
 
   setTimeout(function (){ 
-    gBrowser.loadURIWithFlags(uri.spec, flags);}, 25);
+    browser.loadURIWithFlags(uri.spec, flags);}, 25);
   return true;
 }
 
@@ -360,20 +361,29 @@ function setStatus(state, tooltip){
   return true;
 }
 
+
 /* Updates the status of the current page */
 //Make this a bit more efficient when I get a chance
 // 'has_user_permission' indicates whether the user
 // explicitly pressed a button to launch this query,
 // by default this is not the case
-function updateStatus(uri, has_user_permission){
-
+function updateStatus(browser, has_user_permission){
+  d_print("Update Status\n");
+  if(!browser){
+    dump("No Browser!!\n");
+    return;
+  }
+  var uri = browser.currentURI;
   if(!uri) { 
     var text = "No Information:  Perspectives received an empty URI for " + 
-                                  "this connection. Try hitting refresh.";
+      "this connection. Try hitting refresh.";
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text;
     return;
   } 
+  if(!uri.host){
+    return;
+  }
   d_print("Update Status: " + uri.spec + "\n");
 
   if(uri.scheme != "https"){
@@ -392,12 +402,8 @@ function updateStatus(uri, has_user_permission){
     return;
   }
 
-  if(uri.host != gBrowser.currentURI.host){
-    d_print("\n---------------THE WORLD HAS ENDED------------\n");
-  }
-
   broken         = false;
-  var cert       = getCertificate(uri);
+  var cert       = getCertificate(browser);
   if(!cert){
     var text = "No Information: Perspectives was unable to " 
       + "retrieve a certificate for: " + uri.host;  
@@ -406,46 +412,35 @@ function updateStatus(uri, has_user_permission){
     return;
   }
   var md5        = cert.md5Fingerprint;
-  var state      = gBrowser.securityUI.state;
+  var state      = browser.securityUI.state;
   var gSSLStatus = null;
   var duration   = 
     root_prefs.getIntPref("perspectives.required_duration") / 100.0;
-
-  if((state & STATE_IS_BROKEN)) { 
-    d_print("state = STATE_IS_BROKEN\n");
-  } 
-
-  if((state & STATE_IS_INSECURE)) { 
-    d_print("State = STATE_IS_INSECURE\n");
-  } 
-  if((state & STATE_IS_SECURE)) { 
-    d_print("State = STATE_IS_SECURE\n");
-  } 
 
   var is_override_cert = overrideService.isCertUsedForOverrides(cert, true, true);
   d_print("is_override_cert = " + is_override_cert + "\n"); 
   var check_good = root_prefs.getBoolPref("perspectives.check_good_certificates"); 
 
   if(state & STATE_IS_SECURE) { 
-	d_print("clearing any existing permission banners\n"); 
-  	clear_existing_banner("Perspecives-Permission"); 
+    d_print("clearing any existing permission banners\n"); 
+    clear_existing_banner(browser, "Perspecives-Permission"); 
   }
 
   // see if the browser has this cert installed prior to this browser session
   var already_trusted = (state & STATE_IS_SECURE) && 
-		  !(is_override_cert && ssl_cache[uri.host]); 
+    !(is_override_cert && ssl_cache[uri.host]); 
   if(!check_good && already_trusted) {
-      var text =  "No Information: Your preferences indicate that Perspectives should" 
-         + " not probe websites with HTTPS certificates already trusted by "
-         + "your browser.";
-      setStatus(STATE_NEUT,text); 
-      other_cache["reason"] = text; 
-      return;
+    var text =  "No Information: Your preferences indicate that Perspectives should" 
+      + " not probe websites with HTTPS certificates already trusted by "
+      + "your browser.";
+    setStatus(STATE_NEUT,text); 
+    other_cache["reason"] = text; 
+    return;
   } 
 
   if(!is_override_cert && state & STATE_IS_INSECURE){
-      d_print("state is STATE_IS_INSECURE, we need an override\n");
-      broken = true; 
+    d_print("state is STATE_IS_INSECURE, we need an override\n");
+    broken = true; 
   }
 
   //Update ssl cache cert
@@ -456,32 +451,31 @@ function updateStatus(uri, has_user_permission){
     var needs_perm = root_prefs.getBoolPref("perspectives.require_user_permission"); 
     if(needs_perm && !has_user_permission) {
       d_print("needs user permission\n");  
-      notifyNeedsPermission();
+      notifyNeedsPermission(browser);
       var text = "No Information:  Your preferences indicate that Perspectives "
-		+ "should not contact Notaries without your permission.";
+        + "should not contact Notaries without your permission.";
       setStatus(STATE_NEUT,text); 
       other_cache["reason"] = text;  
       return; 
     } 
     d_print("Contacting notary\n"); 
-    var resp = queryNotaries(cert);
+    var resp = queryNotaries(cert, uri);
     if(!resp){
       var text = "Perspectives experienced an internal error: " + resp; 
       setStatus(STATE_NSEC, text);
       return;
     }
     var temp = new SslCert(uri.host, 
-      uri.port, md5, resp.summary, null, resp.svg, resp.duration, resp.consistent);
+        uri.port, md5, resp.summary, null, resp.svg, resp.duration, resp.consistent);
     ssl_cache[uri.host] = temp;
   }
 
   cache_cert = ssl_cache[uri.host];
-
   if(!cache_cert.secure){
     cache_cert.tooltip = "Warning: Key has NOT been seen consistently";
     setStatus(STATE_NSEC, cache_cert.tooltip);
     if(broken && firstLook){
-      notifyFailed();
+      notifyFailed(browser);
     }
   }
   else if(cache_cert.duration < duration){
@@ -490,7 +484,7 @@ function updateStatus(uri, has_user_permission){
       " days, threshold is " + duration + " days";
     setStatus(STATE_NSEC, cache_cert.tooltip);
     if(broken && firstLook){
-      notifyFailed();
+      notifyFailed(browser);
     }
   }
   else { //Its secure
@@ -500,11 +494,11 @@ function updateStatus(uri, has_user_permission){
     setStatus(STATE_SEC, cache_cert.tooltip);
     if (broken){
       broken = false;
-      do_override(uri, cert);
+      do_override(browser, cert);
       // don't give drop-down if user gave explicit
       // permission to query notaries
       if(firstLook && !has_user_permission){
-        notifyOverride();
+        notifyOverride(browser);
       }
     }
   }
@@ -519,22 +513,22 @@ var notaryListener = {
   onLocationChange: function(aWebProgress, aRequest, aURI) {
       try { 
       	d_print("Location change " + aURI.spec + "\n");
-      	updateStatus(aURI,false);
-      } catch (err) { 
+      	updateStatus(gBrowser,false);
+      } catch (err) {
         d_print("Perspectives had an internal exception: " + err);
       } 
   },
 
    onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) { 
-    var uri = gBrowser.currentURI;
-    d_print("State change " + uri.spec + "\n");
-    if(aFlag & STATE_STOP){
-      try { 
-        updateStatus(uri,false);
-      } catch (err) { 
-        d_print("Perspectives had an internal exception: " + err);
-      } 
-    }
+     var uri = gBrowser.currentURI;
+     d_print("State change " + uri.spec + "\n");
+     if(aFlag & STATE_STOP){
+       try { 
+         updateStatus(gBrowser,false);
+       } catch (err) { 
+         d_print("Perspectives had an internal exception: " + err);
+       } 
+     }
   },
 
 	onSecurityChange:    function() { },
@@ -569,6 +563,20 @@ function init_whitelist(){
   }
 }
 
+function requeryAllTabs(){
+  dump("\nRequeryAllTabs\n");
+  var num = gBrowser.browsers.length;
+  for (var i = 0; i < num; i++) {
+    var browser = gBrowser.getBrowserAtIndex(i);
+    dump("Reload: " + browser.currentURI.spec + "\n");
+    if(browser.currentURI.scheme != "https"){
+      continue;
+    }
+    updateStatus(browser, false);
+  }
+  dump("\n");
+}
+
 function initNotaries(){
   dump("\nPerspectives Initialization\n");
   document.getElementById("perspective-status-image")
@@ -576,5 +584,6 @@ function initNotaries(){
   init_whitelist();
   getBrowser().addProgressListener(notaryListener, 
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
+  setTimeout(function (){ requeryAllTabs(); }, 1200);
   dump("Perspectives Finished Initialization\n\n");
 }
