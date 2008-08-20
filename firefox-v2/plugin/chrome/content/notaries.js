@@ -41,7 +41,7 @@ function d_print(line) {
 
 function clear_existing_banner(b, value_text) { 
   try { 
-  	var notificationBox = b.getNotificationBox(browser);
+  	var notificationBox = b.getNotificationBox();
   	var oldNotification = 
     	notificationBox.getNotificationWithValue(value_text);
   	if(oldNotification != null)
@@ -52,7 +52,7 @@ function clear_existing_banner(b, value_text) {
 } 
 
 function notifyOverride(b){
-  var notificationBox = b.getNotificationBox(browser);
+  var notificationBox = b.getNotificationBox();
   clear_existing_banner(b, "Perspectives"); 
 
   var priority = notificationBox.PRIORITY_INFO_LOW;
@@ -76,7 +76,7 @@ function notifyOverride(b){
 }
 
 function notifyFailed(b){
-  var notificationBox = b.getNotificationBox(browser);
+  var notificationBox = b.getNotificationBox();
 
   clear_existing_banner(b, "Perspectives"); 
 
@@ -101,7 +101,7 @@ function notifyFailed(b){
 // this is the drop down which is shown if preferences indicate
 // that notaries should only be queried with user permission
 function notifyNeedsPermission(b){
-  var notificationBox = b.getNotificationBox(browser);
+  var notificationBox = b.getNotificationBox();
 
   clear_existing_banner(b, "Perspectives-Permission"); 
   var priority = notificationBox.PRIORITY_WARNING_HIGH;
