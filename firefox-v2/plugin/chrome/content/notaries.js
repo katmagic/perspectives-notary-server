@@ -41,7 +41,10 @@ function d_print(line) {
 
 function clear_existing_banner(b, value_text) { 
   try { 
-  	var notificationBox = b.getNotificationBox();
+    //Happens on requeryAllTabs
+    if(!b.getNotificationBox){ 
+      return;
+    }
   	var oldNotification = 
     	notificationBox.getNotificationWithValue(value_text);
   	if(oldNotification != null)
@@ -52,6 +55,11 @@ function clear_existing_banner(b, value_text) {
 } 
 
 function notifyOverride(b){
+
+  //Happens on requeryAllTabs
+  if(!b.getNotificationBox){ 
+    return;
+  }
   var notificationBox = b.getNotificationBox();
   clear_existing_banner(b, "Perspectives"); 
 
@@ -76,6 +84,11 @@ function notifyOverride(b){
 }
 
 function notifyFailed(b){
+
+  //Happens on requeryAllTabs
+  if(!b.getNotificationBox){ 
+    return;
+  }
   var notificationBox = b.getNotificationBox();
 
   clear_existing_banner(b, "Perspectives"); 
@@ -101,6 +114,11 @@ function notifyFailed(b){
 // this is the drop down which is shown if preferences indicate
 // that notaries should only be queried with user permission
 function notifyNeedsPermission(b){
+
+  //Happens on requeryAllTabs
+  if(!b.getNotificationBox){ 
+    return;
+  }
   var notificationBox = b.getNotificationBox();
 
   clear_existing_banner(b, "Perspectives-Permission"); 
@@ -115,19 +133,26 @@ function notifyNeedsPermission(b){
     accessKey : "", 
     callback: function() {
       try { 
-            var nbox = b.getNotificationBox();
-            nbox.removeCurrentNotification();
-        } catch (err) {
-          // sometimes, this doesn't work.  why?
-          // well, we'll just have to remove them all
-          try { 
-            nbox.removeAllNotifications();
-	    d_print("successfully removed all notifications\n");  
-          } catch (err2) { 
-            d_print("probe_permission error2:" + err2 + "\n"); 
-          } 
-          d_print("probe_permission error1: " + err + "\n"); 
+
+        //Happens on requeryAllTabs
+        if(!b.getNotificationBox){ 
+          return;
+        }
+        var nbox = b.getNotificationBox();
+        nbox.removeCurrentNotification();
+      } 
+      catch (err) {
+        // sometimes, this doesn't work.  why?
+        // well, we'll just have to remove them all
+        try { 
+          nbox.removeAllNotifications();
+          d_print("successfully removed all notifications\n");  
         } 
+        catch (err2) { 
+          d_print("probe_permission error2:" + err2 + "\n"); 
+        } 
+        d_print("probe_permission error1: " + err + "\n"); 
+      } 
       // run probe
       d_print("User gives probe permission\n"); 
       var uri = b.currentURI;
@@ -584,6 +609,6 @@ function initNotaries(){
   init_whitelist();
   getBrowser().addProgressListener(notaryListener, 
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
-  setTimeout(function (){ requeryAllTabs(); }, 1200);
+  setTimeout(function (){ requeryAllTabs(); }, 4000);
   dump("Perspectives Finished Initialization\n\n");
 }
