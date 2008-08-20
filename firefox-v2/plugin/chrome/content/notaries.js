@@ -39,9 +39,9 @@ function d_print(line) {
 	other_cache["debug"] += line; 
 } 
 
-function clear_existing_banner(browser, value_text) { 
+function clear_existing_banner(b, value_text) { 
   try { 
-  	var notificationBox = browser.getNotificationBox(browser);
+  	var notificationBox = b.getNotificationBox(browser);
   	var oldNotification = 
     	notificationBox.getNotificationWithValue(value_text);
   	if(oldNotification != null)
@@ -75,10 +75,10 @@ function notifyOverride(b){
     priority, buttons);
 }
 
-function notifyFailed(browser){
-  var notificationBox = browser.getNotificationBox(browser);
+function notifyFailed(b){
+  var notificationBox = b.getNotificationBox(browser);
 
-  clear_existing_banner(browser, "Perspectives"); 
+  clear_existing_banner(b, "Perspectives"); 
 
   var priority = notificationBox.PRIORITY_CRITICAL_LOW;
   var message = 
@@ -100,10 +100,10 @@ function notifyFailed(browser){
 
 // this is the drop down which is shown if preferences indicate
 // that notaries should only be queried with user permission
-function notifyNeedsPermission(browser){
-  var notificationBox = browser.getNotificationBox(browser);
+function notifyNeedsPermission(b){
+  var notificationBox = b.getNotificationBox(browser);
 
-  clear_existing_banner(browser, "Perspectives-Permission"); 
+  clear_existing_banner(b, "Perspectives-Permission"); 
   var priority = notificationBox.PRIORITY_WARNING_HIGH;
   var message = 
     "Perspectives may be able to override this security error " +
@@ -115,7 +115,7 @@ function notifyNeedsPermission(browser){
     accessKey : "", 
     callback: function() {
       try { 
-            var nbox = browser.getNotificationBox();
+            var nbox = b.getNotificationBox();
             nbox.removeCurrentNotification();
         } catch (err) {
           // sometimes, this doesn't work.  why?
@@ -130,14 +130,14 @@ function notifyNeedsPermission(browser){
         } 
       // run probe
       d_print("User gives probe permission\n"); 
-      var uri = browser.currentURI;
-      updateStatus(browser,true); 
+      var uri = b.currentURI;
+      updateStatus(b,true); 
     }},
     { 
     label: "Learn More",
     accessKey : "", 
     callback: function() {
-      browser.loadOneTab(
+      b.loadOneTab(
       "chrome://perspectives_main/content/help.html", null, null,
       null, false);
     } 
