@@ -6,4 +6,5 @@ pref("perspectives.exceptions.enabled", true);
 pref("perspectives.exceptions.enabled", true);
 pref("perspectives.check_good_certificates", false);
 pref("perspectives.require_user_permission", false);
+pref("perspectives.show_label", true);
 pref("perspectives.svg", "");
