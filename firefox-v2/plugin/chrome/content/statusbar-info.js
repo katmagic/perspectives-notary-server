@@ -1,6 +1,6 @@
 var root_prefs = Components.classes["@mozilla.org/preferences-service;1"].
 getService(Components.interfaces.nsIPrefBranch);
-const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+//const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 var browser;
 
@@ -79,6 +79,10 @@ function switchResultForm(){
   document.getElementById("perspective-description").hidden = !sel;
 }
 
+function requery(){
+  requeryAllTabs(browser);
+}
+
 function addTimeline(svgString){
   parser       = new DOMParser();
   var svgDoc   = parser.parseFromString(svgString, "text/xml");
@@ -88,13 +92,12 @@ function addTimeline(svgString){
   after.appendChild(svg);
 }
 
-
-
-function LoadInfo(brws, ssl_cache,other_cache){
+function LoadInfo(brws, ssl_cache, other_cache){
   var info  = document.getElementById("perspective-description");
   var liner = document.getElementById("perspective-quorum-duration");
   var host  = document.getElementById("perspective-information-caption");
   var cert  = ssl_cache[brws.currentURI.host];
+  browser   = brws;
  
   host.label = brws.currentURI.host;
   selectSecurity();
@@ -115,5 +118,4 @@ function LoadInfo(brws, ssl_cache,other_cache){
   
   return true;
 }
-
 

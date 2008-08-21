@@ -1,4 +1,5 @@
 content perspectives chrome/content/
 content perspectives_main .
 
-overlay	chrome://browser/content/browser.xul                chrome://perspectives/content/statusbar.xul
+overlay	chrome://browser/content/browser.xul chrome://perspectives/content/statusbar.xul
+overlay	chrome://browser/content/browser.xul chrome://perspectives/content/initialize.xul

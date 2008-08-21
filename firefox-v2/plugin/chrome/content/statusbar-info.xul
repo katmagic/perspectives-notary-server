@@ -45,7 +45,7 @@
   <tab label="Notary Results"/> 
   <tab label="Preferences"/>
     <!-- remove this tab for production -->
-<!--   <tab label="Debug" />  --> 
+    <!-- <tab label="Debug" />  --> 
 </tabs> 
 
 <tabpanels>
@@ -144,16 +144,19 @@
 </tabbox> 
 
 <hbox> 
+  <button label = "Requery"        onclick="requery()"/>
   <button label = "Certificates"   onclick="openCertificates()"/> 
   <button label = "Notary Servers" onclick="openNotaries()"/> 
   <button label = "Help"           onclick="onHelp()"/> 
   <spacer flex  = "1"/>
-  <button label="OK" onclick="acceptDialog(); window.close()"/>
+  <button label = "OK" onclick="acceptDialog(); window.close()"/>
 </hbox>
 
 </prefpane>
-<script type="application/x-javascript" src="statusbar-info.js"/>
-<script type="application/x-javascript" src="notaries.js"/>
 
 <!--Bug in docs makes me put it here -->
+<script type = "application/x-javascript" src="statusbar-info.js"/>
+<script type = "application/x-javascript" src="notaries.js"/>
+<script type = "application/x-javascript" src="statusbar.js"/>
+
 </prefwindow> 

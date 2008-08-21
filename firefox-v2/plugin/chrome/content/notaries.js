@@ -1,3 +1,10 @@
+var STATE_IS_BROKEN   = 
+  Components.interfaces.nsIWebProgressListener.STATE_IS_BROKEN;
+var STATE_IS_INSECURE = 
+  Components.interfaces.nsIWebProgressListener.STATE_IS_INSECURE;
+var STATE_IS_SECURE = 
+  Components.interfaces.nsIWebProgressListener.STATE_IS_SECURE;
+
 /* Data */
 var whitelist     = new Array();
 var ssl_cache     = new Object();
@@ -15,20 +22,6 @@ var broken = false;
 // about sites we haven't probed. 
 var other_cache = {}; 
 other_cache["debug"] = ""; 
-
-const STATE_SEC   = 0;
-const STATE_NSEC  = 1;
-const STATE_NEUT  = 2;
-const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
-const STATE_STOP  = Components.interfaces.nsIWebProgressListener.STATE_STOP;
-const STATE_IS_BROKEN   = 
-  Components.interfaces.nsIWebProgressListener.STATE_IS_BROKEN;
-const STATE_IS_INSECURE = 
-  Components.interfaces.nsIWebProgressListener.STATE_IS_INSECURE;
-const STATE_IS_SECURE = 
-  Components.interfaces.nsIWebProgressListener.STATE_IS_SECURE;
-
-
 
 function clear_cache(){
   ssl_cache = new Object();
@@ -55,7 +48,6 @@ function clear_existing_banner(b, value_text) {
 } 
 
 function notifyOverride(b){
-
   //Happens on requeryAllTabs
   if(!b.getNotificationBox){ 
     return;
@@ -359,32 +351,6 @@ function do_override(browser, cert) {
   return true;
 }
 
-function setStatus(state, tooltip){
-  var i = document.getElementById("perspective-status-image");
-  var t = document.getElementById("perspective-status");
-  if(!tooltip){
-    tooltip = "Perspectives";
-  }
-  t.setAttribute("tooltiptext", tooltip);
-  switch(state){
-    case STATE_SEC:
-      d_print("Secure Status\n");
-      i.setAttribute("hidden", "false");
-      i.setAttribute("src", "chrome://perspectives/content/good.png");
-      break;
-    case STATE_NSEC:
-      d_print("Unsecure Status\n");
-      i.setAttribute("hidden", "false");
-      i.setAttribute("src", "chrome://perspectives/content/bad.png");
-      break;
-    case STATE_NEUT:
-      d_print("Neutral Status\n");
-      i.setAttribute("hidden", "true");
-      break;
-  }
-  d_print("changing tooltip to: " + tooltip + "\n"); 
-  return true;
-}
 
 
 /* Updates the status of the current page */
@@ -536,10 +502,11 @@ var notaryListener = {
   /* Note can use state is broken to listen if we need to do special stuff for
    * redirecting */
   onLocationChange: function(aWebProgress, aRequest, aURI) {
-      try { 
+      try{ 
       	d_print("Location change " + aURI.spec + "\n");
       	updateStatus(gBrowser,false);
-      } catch (err) {
+      } 
+      catch(err){
         d_print("Perspectives had an internal exception: " + err);
       } 
   },
@@ -588,27 +555,20 @@ function init_whitelist(){
   }
 }
 
-function requeryAllTabs(){
-  dump("\nRequeryAllTabs\n");
-  var num = gBrowser.browsers.length;
+function requeryAllTabs(b){
+  var num = b.browsers.length;
   for (var i = 0; i < num; i++) {
-    var browser = gBrowser.getBrowserAtIndex(i);
-    dump("Reload: " + browser.currentURI.spec + "\n");
-    if(browser.currentURI.scheme != "https"){
-      continue;
-    }
+    var browser = b.getBrowserAtIndex(i);
     updateStatus(browser, false);
   }
-  dump("\n");
 }
 
 function initNotaries(){
   dump("\nPerspectives Initialization\n");
-  document.getElementById("perspective-status-image")
-    .setAttribute("hidden", "true");
+  setStatus(STATE_NEUT, "");
   init_whitelist();
   getBrowser().addProgressListener(notaryListener, 
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
-  setTimeout(function (){ requeryAllTabs(); }, 4000);
+  setTimeout(function (){ requeryAllTabs(gBrowser); }, 4000);
   dump("Perspectives Finished Initialization\n\n");
 }
