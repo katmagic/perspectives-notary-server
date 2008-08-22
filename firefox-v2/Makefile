@@ -5,6 +5,7 @@ all:
 	cp -fr plugin/* build/
 	cp -fr dist/* build/
 	sh -c "cd build/ && zip -r ../Perspectives.xpi *"
+	rm -rf build	
 
 test:
 	chdir dist

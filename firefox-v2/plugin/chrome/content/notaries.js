@@ -471,7 +471,9 @@ function updateStatus(browser, has_user_permission){
   }
 
   cache_cert = ssl_cache[uri.host];
-  if(!broken && !cache_cert.identityText){
+  if( !broken && 
+      !cache_cert.identityText &&
+      getFaviconText().indexOf("Perspectives") < 0){
     cache_cert.identityText = 
     setFaviconText(getFaviconText() + "\n\n" + 
     "Perspectives has validated this site");
