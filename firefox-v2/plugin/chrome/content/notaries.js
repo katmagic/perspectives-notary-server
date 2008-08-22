@@ -32,6 +32,15 @@ function d_print(line) {
 	other_cache["debug"] += line; 
 } 
 
+//Sets the tooltip and the text of the favicon popup on https sites
+function setFaviconText(str){
+  document.getElementById("identity-box").tooltipText = str;
+}
+
+function getFaviconText(){
+  return document.getElementById("identity-box").tooltipText;
+}
+
 function clear_existing_banner(b, value_text) { 
   try { 
     //Happens on requeryAllTabs
@@ -462,6 +471,12 @@ function updateStatus(browser, has_user_permission){
   }
 
   cache_cert = ssl_cache[uri.host];
+  if(!broken && !cache_cert.identityText){
+    cache_cert.identityText = 
+    setFaviconText(getFaviconText() + "\n\n" + 
+    "Perspectives has validated this site");
+  }
+
   if(!cache_cert.secure){
     cache_cert.tooltip = "Warning: Key has NOT been seen consistently";
     setStatus(STATE_NSEC, cache_cert.tooltip);
@@ -486,6 +501,8 @@ function updateStatus(browser, has_user_permission){
     if (broken){
       broken = false;
       do_override(browser, cert);
+      cache_cert.identityText = 
+        "Perspectives has added a security exception for this site";
       // don't give drop-down if user gave explicit
       // permission to query notaries
       if(firstLook && !has_user_permission){
@@ -493,6 +510,11 @@ function updateStatus(browser, has_user_permission){
       }
     }
   }
+
+  if(cache_cert.identityText){
+    setFaviconText(cache_cert.identityText);
+  }
+
   broken = false;
 }
 
@@ -550,7 +572,7 @@ function init_whitelist(){
     req.send(null);
   }
   catch(e){
-    dump(e + "\n");
+    d_print(e + "\n");
     return;
   }
 }
