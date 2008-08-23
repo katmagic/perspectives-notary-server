@@ -44,7 +44,11 @@ function getFaviconText(){
 function clear_existing_banner(b, value_text) { 
   try { 
     //Happens on requeryAllTabs
-    if(!b.getNotificationBox){ 
+
+    try{
+      var notificationBox = b.getNotificationBox();
+    }
+    catch(e){
       return;
     }
   	var oldNotification = 
@@ -58,7 +62,11 @@ function clear_existing_banner(b, value_text) {
 
 function notifyOverride(b){
   //Happens on requeryAllTabs
-  if(!b.getNotificationBox){ 
+
+  try{
+    var notificationBox = b.getNotificationBox();
+  }
+  catch(e){
     return;
   }
   var notificationBox = b.getNotificationBox();
@@ -87,7 +95,11 @@ function notifyOverride(b){
 function notifyFailed(b){
 
   //Happens on requeryAllTabs
-  if(!b.getNotificationBox){ 
+
+  try{
+    var notificationBox = b.getNotificationBox();
+  }
+  catch(e){
     return;
   }
   var notificationBox = b.getNotificationBox();
@@ -116,11 +128,13 @@ function notifyFailed(b){
 // that notaries should only be queried with user permission
 function notifyNeedsPermission(b){
 
-  //Happens on requeryAllTabs
-  if(!b.getNotificationBox()){ 
+  //Happens on requeryAllTabs 
+  try{
+    var notificationBox = b.getNotificationBox();
+  }
+  catch(e){
     return;
   }
-  var notificationBox = b.getNotificationBox();
 
   clear_existing_banner(b, "Perspectives-Permission"); 
   var priority = notificationBox.PRIORITY_WARNING_HIGH;
@@ -135,10 +149,15 @@ function notifyNeedsPermission(b){
     callback: function() {
       try { 
 
+
         //Happens on requeryAllTabs
-        if(!b.getNotificationBox()){ 
+        try{
+          var notificationBox = b.getNotificationBox();
+        }
+        catch(e){
           return;
         }
+
         var nbox = b.getNotificationBox();
         nbox.removeCurrentNotification();
       } 
