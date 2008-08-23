@@ -117,7 +117,7 @@ function notifyFailed(b){
 function notifyNeedsPermission(b){
 
   //Happens on requeryAllTabs
-  if(!b.getNotificationBox){ 
+  if(!b.getNotificationBox()){ 
     return;
   }
   var notificationBox = b.getNotificationBox();
@@ -136,7 +136,7 @@ function notifyNeedsPermission(b){
       try { 
 
         //Happens on requeryAllTabs
-        if(!b.getNotificationBox){ 
+        if(!b.getNotificationBox()){ 
           return;
         }
         var nbox = b.getNotificationBox();
