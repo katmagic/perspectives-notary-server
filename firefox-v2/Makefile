@@ -4,7 +4,7 @@ all:
 	mkdir build
 	cp -fr plugin/* build/
 	cp -fr dist/* build/
-	sh -c "cd build/ && zip -r ../Perspectives.xpi *"
+	sh -c "cd build/ && zip -r ../Perspectives.xpi * -x *\.svn*" 
 	rm -rf build	
 
 test:
