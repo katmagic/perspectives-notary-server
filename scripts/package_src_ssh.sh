@@ -14,7 +14,7 @@ make clean
 cd ../notary-client
 make clean
 
-cd ../openssh-4.4p1
+cd ../openssh-5.0p1-psv
 make clean 
 rm Makefile
 

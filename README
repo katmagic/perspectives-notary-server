@@ -31,6 +31,9 @@ ssh-scanner : source for binary invoked by 'notary_scanner' to
 ssl-scanner : source for binary invoked by 'notary_scanner' to 
               retrieve SSL keys (modified OpenSSL code). 
 
+firefox-v2 : source code for firefox extension, including 
+	     C++, javascript, and config.
+
 utilities : many simple binaries to help with notary tasks, largely
             utilities to deal with notary databases, as well as 
             some basic programs to test client functionality. 
@@ -45,6 +48,11 @@ bin : created by the build process, holds the resulting binaries
 
 log :  created when server/scanner is run, holds output dumps that
        may be useful for debugging.  
+
+********************** Building Firefox Extension **************
+
+The firefox-v2 contains a README describing how to build the 
+firefox extension.  
 
 ********************** Building SSH client *******************
 

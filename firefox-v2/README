@@ -1,18 +1,46 @@
-To build the platform specific binaries follow the instructions in xp_src or
-win_xp_src depending on the target platform.
+***********************************************************************
+			Building the Firefox Extension 
+***********************************************************************
 
-To build an xpi simply type make.  This copy the plugin files and the dist files
-to the build directory and makes the xpi.  Depending on the platform, the 
-script may yell at you if you have binaries in the plugin directory so beware
+The Firefox build is a bit complicated, so it currently is not 
+automated with a script.  The firefox-v2 directory contains both
+C++ and javascript code for the extension.  These directions 
+describe how to build the perspectives extension for a single 
+platform.  
 
-To push an update follow these instructions.
-Updating an extension is relatively simple.  We need to make an xpi, an
-update.rdf file, and put those on the server.  To generate the update.rdf we use
+For Linux/OS X, cd to notarycode/common and make. Then cd to notarycode/notary-client and make.
+Then, download the xul-runner SDK for your 
+platform at http://releases.mozilla.org/pub/mozilla.org/xulrunner/releases/1.9.0.1/sdk/
+Unzip this file, name it 'xulrunner-sdk' and place it inside the firefox-v2 directory,
+so the path is notarycode/firefox-v2/xulrunner-sdk.  
+
+Then cd into notarycode/firefox-v2/xp_src . Copy the Makefile.* file for your platform
+to Makefile and type make.  This will build the C++ component for your platform. 
+Copy the library (.so,.dylib) to notarycode/firefox-v2/dist/platform/<platform string>/components/ 
+
+Then cd to notarycode/firefox-v2 and type make, which creates a Perspectives.xpi file in 
+the same directory.  This make will add all binaries in dist into the XPI.  
+
+If you need to modify the javascript, it is in the firefox-v2/plugin/chrome/content .  
+
+For WINDOWS:
+The setup assumes Visual C++ 2008 Express Edition, which is a free download: 
+http://www.microsoft.com/express/download/#webInstall
+
+To open the project, click on notarycode/firefox-v2/win_xp_src/Perspectives.sln 
+It assumes that xulrunner sdk 1.9 is in notarycode\firefox-v2\xulrunner-sdk\ 
+
+Pushing an Update:
+
+(Needed only to release official versions of perspectives)
+
+Dependencies: openssl, unzip, and the following perl modules: 
+Convert::ASN1, XML::Parser, RDF::Core
+
+To generate the update.rdf we use
 a gpl script found here.  http://www.softlights.net/projects/mexumgen/
 1) Make sure you have necessary dependencies.
-  Dependencies include (but are not necessarily limited to) openssl unzip and
-  the following perl modules: Convert::ASN1, XML::Parser, RDF::Core
-2) Update the version in the install.rdf and make the xpi
+2) Update the version in the install.rdf and make the xpi as described above.
 3) Get hold of the private key
 4) sh genupdate.sh <private key> <perspectives.xpi>
 5) put the xpi and the update.rdf on the web servers
