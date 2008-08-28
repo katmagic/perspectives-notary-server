@@ -22,6 +22,8 @@
 #include "contact_notary.h"
 #include "notary_local.h"
 
+PRBool verify_signature(char *buf, int msg_len, char *server_key);
+
 void send_single_query(server_list *server, PRFileDesc *fd,  
                            notary_header *hdr) {
 
@@ -117,18 +119,23 @@ void fetch_notary_observations(SSHNotary *notary,
 				ip_2_str(server->ip_addr), server->port);
 		server->received_reply = 1; // got something, even if its invalid
 
-		first_reply = server->notary_results == NULL; 
-		server->notary_results = parse_message(recv_buf, recv_len, server->public_key);
-
-
-		// count only if the server returned results.
-		// This isn't great, but it stops us from quitting early during
-		// on demand probes, which is a big problem.  Eventually, the server
-		// should be sure to never return an empty result if an on-demand 
-		// probe is in progress. 
-		if(server->notary_results && first_reply) {  
-			DPRINTF(DEBUG_SOCKET,"new valid reply received ****** \n"); 
-			++reply_count;
+		first_reply = server->notary_results == NULL;
+		if(!verify_signature(recv_buf, recv_len, server->public_key)) {
+			DPRINTF(DEBUG_ERROR, "Droppy reply from %s:%d because of bad signature\n",
+					ip_2_str(server->ip_addr), server->port); 
+			server->notary_results = NULL;
+		} else {  
+			server->notary_results = parse_message(recv_buf, recv_len);
+		 
+			// count only if the server returned results.
+			// This isn't great, but it stops us from quitting early during
+			// on demand probes, which is a big problem.  Eventually, the server
+			// should be sure to never return an empty result if an on-demand 
+			// probe is in progress. 
+			if(server->notary_results && first_reply) {  
+				DPRINTF(DEBUG_SOCKET,"new valid reply received ****** \n"); 
+				++reply_count;
+			} 
 		} 
 	}
     }else {

@@ -15,7 +15,7 @@
 #include "notary_local.h"
 #include "str_buffer.h" 
 
-ssh_key_info_list* parse_message(char *buf, int msg_len, RSA* pub_key) {
+ssh_key_info_list* parse_message(char *buf, int msg_len) {
    notary_header *hdr = (notary_header*)buf;
    int hdr_len = HEADER_SIZE(hdr);
    char *serviceid = (char*) (hdr + 1);
@@ -32,11 +32,6 @@ ssh_key_info_list* parse_message(char *buf, int msg_len, RSA* pub_key) {
       return NULL; 
    }
    int data_len = total_len - hdr_len;
-   if(!verify_message_signature(hdr, pub_key)) {
-      DPRINTF(DEBUG_ERROR, "**** Signature is invalid **** \n");
-      return NULL;
-   }
-
    return list_from_data(data, data_len, SIGNATURE_LEN);
 }
 
@@ -59,7 +54,7 @@ notary_header* create_request(char*hostname, uint16_t service_type) {
 }
 
 void add_notary_server(SSHNotary *notary, uint32_t ip_address, uint16_t port, 
-                              RSA* key){
+                              char* key){
 	server_list *tmp = (server_list*)malloc(sizeof(server_list));
 	tmp->ip_addr = ip_address;
         tmp->notary_results = NULL; // this is set after data is received + parsed 
@@ -105,8 +100,11 @@ void free_ssh_notary(SSHNotary* notary){
 	struct list_head *pos, *q;
 	list_for_each_safe(pos, q, &notary->notary_servers.list){
 		server = list_entry(pos, server_list, list);
-                if(server->public_key) 
-                  RSA_free(server->public_key);
+                // Firefox, free base64 key
+		if(server->public_key) { 
+                //  RSA_free(server->public_key);
+			free(server->public_key); 
+		} 
 		list_del(&server->list);
 		free(server);
 	}
@@ -286,31 +284,38 @@ char *read_single_pubkey(char *input_buf, char *output_buf, int max_len, int *by
         BOOL key_started = FALSE; 
   
         char *ptr = input_buf; 
-	while( (ptr = get_line(ptr, line, 1024)) != NULL) {
-            if(strcmp(PEM_PUB_START, line) == 0)
+		while( (ptr = get_line(ptr, line, 1024)) != NULL) {
+			int line_len; 
+			if(strcmp(PEM_PUB_START, line) == 0){
               key_started = TRUE;
-
+			  continue;
+			}
             if(!key_started) 
               continue;
 
-            int line_len = strlen(line);
+            line_len = strlen(line);
             if(offset + line_len > max_len){
               DPRINTF(DEBUG_ERROR, "error, pubkey file larger than buf \n");
               exit(1);
             }
+
+            if(strcmp(PEM_PUB_END, line) == 0) {
+              *bytes_read = offset; 
+			  output_buf[offset] = 0x0; 
+              return ptr;
+            }
+
             // don't copy null terminator
             memcpy(output_buf + offset, line, line_len);
             offset += line_len;
 
-            if(strcmp(PEM_PUB_END, line) == 0) {
-              *bytes_read = offset; 
-              return ptr;
-            }
+
         }
         DPRINTF(DEBUG_ERROR, "Error: reached EOF before finished reading key \n");
         exit(1);
         return NULL; // shutup compiler
 }
+
 
 #define MAX_FILE_SIZE 100000 
 #define MAX_LINE_LENGTH 1024
@@ -362,10 +367,11 @@ void load_notary_servers(SSHNotary *notary, char* data, int buf_len){
                 char buf2[1024];
                 int key_len = -1; 
                 ptr = read_single_pubkey(ptr, buf2, 1024, &key_len);
-                RSA * pub_key = key_from_buf(buf2, key_len, FALSE);
+                // RSA * pub_key = key_from_buf(buf2, key_len, FALSE);
                 DPRINTF(DEBUG_INFO, "loaded key for server '%s' : %d \n", 
                           ip_2_str(ip_addr), port);
-		add_notary_server(notary, ip_addr, port, pub_key);
+		// TODO: strdup base64 key
+		add_notary_server(notary, ip_addr, port, strdup(buf2));
 	}
 }
   

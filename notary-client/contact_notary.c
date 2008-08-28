@@ -108,8 +108,12 @@ void fetch_notary_observations(SSHNotary *notary,
           DPRINTF(DEBUG_INFO, "Parsing message from: %s : %d \n", 
               ip_2_str(server->ip_addr), server->port);
           server->received_reply = 1; // got something, even if its invalid
-	  first_reply = server->notary_results == NULL; 
-          server->notary_results = parse_message(recv_buf, recv_len, server->public_key);
+	  first_reply = server->notary_results == NULL;
+		
+	  printf("************ this was changed to be compatible with FF code **\n"); 
+	  exit(1); 
+ 
+          //server->notary_results = parse_message(recv_buf, recv_len, server->public_key);
           // count only if the server returned new results.
 	  // This isn't great, but it stops us from quitting early during
 	  // on demand probes, which is a big problem.  Eventually, the server

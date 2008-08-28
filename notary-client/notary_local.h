@@ -15,7 +15,8 @@ typedef struct {
 	// server info
 	uint32_t ip_addr;
 	uint16_t port;
-        RSA* public_key; 
+        //RSA* public_key; 
+        char* public_key; // base64 encoded null-terminated string 
 
 	// result data
 	ssh_key_info_list *notary_results;
@@ -47,7 +48,7 @@ void print_notary_reply(FILE *f, SSHNotary *notary);
 
 notary_header* create_request(char*hostname, uint16_t service_type);
 
-ssh_key_info_list* parse_message(char *buf, int msg_len, RSA* pub_key);
+ssh_key_info_list* parse_message(char *buf, int msg_len);
 
 server_list * find_server(SSHNotary* notary, uint32_t server_ip, uint16_t server_port);
 
