@@ -25,7 +25,7 @@ TARGET = Perspectives.dylib
 build:
 	$(GECKO_SDK_PATH)/bin/xpidl -m header -I$(GECKO_SDK_PATH)/idl IPerspectives.idl 
 	$(GECKO_SDK_PATH)/bin/xpidl -m typelib -I$(GECKO_SDK_PATH)/idl IPerspectives.idl 
-	$(CXX) -Wall -Os -o $(TARGET) -lssl -lcrypto $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) -bundle $(CXXFLAGS) $(FILES) $(GECKO_LDFLAGS) 
+	$(CXX) -Wall -Os -o $(TARGET) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) -bundle $(CXXFLAGS) $(FILES) $(GECKO_LDFLAGS) 
 	chmod +x $(TARGET)
  
 clean: 
