@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Perspectives Firewall/Proxy Help</title>
+</head>
+
+<body>
+<h1>Perspectives Firewall/Proxy Help</h1>
+
+<h3> Why do firewalls and proxies cause Perspectives to fail? </h3> 
+
+<p> 
+Many corporate and university networks use firewalls or proxies to limit the set of protocols you are 
+allowed to use on the Internet.  Since Perspectives is new and communicates over the "non-standard" 
+UDP port 15217, many firewalls and proxies unintentionally drop the packets Perspectives sends to 
+query the network notaries.  You can contact your network administrator to find out whether 
+Perspectives traffic is likely being dropped by a proxy or firewall.  
+</p> 
+
+<h3> Does that mean it is safe to ignore this warning and manually override the security error? </h3>
+<p> 
+NO.  When Perspectives is unable to reach the notary servers, it does not receive the data necessary 
+to distinguish between a valid and an invalid certificate.  In fact, just proceeding without notary 
+validation is dangerous, because it may be the case that an attacker is intentionally dropping your 
+notary queries.  
+<p> 
+
+<p> 
+In the future, we are looking to add simple HTTP querying functionality to Perspectives servers to get 
+around this issue. If you are interested in helping out, let us know. 
+</p> 
+</html> 

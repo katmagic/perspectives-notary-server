@@ -110,10 +110,10 @@ void fetch_notary_observations(SSHNotary *notary,
           server->received_reply = 1; // got something, even if its invalid
 	  first_reply = server->notary_results == NULL;
 		
-	  printf("************ this was changed to be compatible with FF code **\n"); 
-	  exit(1); 
+	//  printf("************ this was changed to be compatible with FF code **\n"); 
+	//  printf("************ this code is insecure **\n"); 
  
-          //server->notary_results = parse_message(recv_buf, recv_len, server->public_key);
+          server->notary_results = parse_message(recv_buf, recv_len);
           // count only if the server returned new results.
 	  // This isn't great, but it stops us from quitting early during
 	  // on demand probes, which is a big problem.  Eventually, the server

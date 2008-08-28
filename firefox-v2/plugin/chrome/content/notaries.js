@@ -191,6 +191,39 @@ function notifyNeedsPermission(b){
     priority, buttons);
 }
 
+// this is the drop down which is shown if the repsonse
+// receive no notary replies.  
+function notifyNoReplies(b){
+
+  //Happens on requeryAllTabs 
+  try{
+    var notificationBox = b.getNotificationBox();
+  }
+  catch(e){
+    return;
+  }
+
+  clear_existing_banner(b, "Perspectives-Permission"); 
+  clear_existing_banner(b, "Perspectives"); 
+  var priority = notificationBox.PRIORITY_CRITICAL_LOW;
+  var message = 
+    "Warning: Perspectives received no notary replies. " +
+    "This may be an attack or you may be behind a firewall/proxy that blocks notary requests.";
+  var buttons = null;
+  var buttons = [
+    { 
+    label: "Firewall/Proxy Help",
+    accessKey : "", 
+    callback: function() {
+      b.loadOneTab(
+      "chrome://perspectives_main/content/firewall.html", null, null,
+      null, false);
+    } 
+  }];
+  notificationBox.appendNotification(message, "Perspectives", null,
+    priority, buttons);
+}
+
 //certificate used in caching
 function SslCert(host, port, md5, summary, tooltip, svg, duration, secure){
   this.host     = host;
@@ -498,7 +531,13 @@ function updateStatus(browser, has_user_permission){
     "Perspectives has validated this site");
   }
 
-  if(!cache_cert.secure){
+  if (cache_cert.summary.indexOf("ssl key") == -1) { 
+    	cache_cert.tooltip = "Warning: No Notary replies received";
+    	setStatus(STATE_NSEC, cache_cert.tooltip);
+	if(broken) { 
+	  notifyNoReplies(browser); 
+	} 
+  } else if(!cache_cert.secure){
     cache_cert.tooltip = "Warning: Key has NOT been seen consistently";
     setStatus(STATE_NSEC, cache_cert.tooltip);
     if(broken && firstLook){
