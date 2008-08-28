@@ -144,7 +144,7 @@
 </tabbox> 
 
 <hbox> 
-  <button label = "Requery"        onclick="requery()"/>
+<!--  <button label = "Requery"        onclick="requery()"/> --> 
   <button label = "Certificates"   onclick="openCertificates()"/> 
   <button label = "Notary Servers" onclick="openNotaries()"/> 
   <button label = "Help"           onclick="onHelp()"/> 
