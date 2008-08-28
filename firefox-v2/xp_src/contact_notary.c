@@ -121,7 +121,7 @@ void fetch_notary_observations(SSHNotary *notary,
 
 		first_reply = server->notary_results == NULL;
 		if(!verify_signature(recv_buf, recv_len, server->public_key)) {
-			DPRINTF(DEBUG_ERROR, "Droppy reply from %s:%d because of bad signature\n",
+			DPRINTF(DEBUG_ERROR, "Dropping reply from %s:%d because of bad signature\n",
 					ip_2_str(server->ip_addr), server->port); 
 			server->notary_results = NULL;
 		} else {  
