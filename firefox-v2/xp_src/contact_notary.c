@@ -36,10 +36,10 @@ void send_single_query(server_list *server, PRFileDesc *fd,
     //int length=sizeof(struct sockaddr_in);
     int len = PR_ntohs(hdr->total_len);
     int n = PR_SendTo(fd, hdr, len ,0, &addr, timeout);
-    PR_fprintf(PR_STDERR, "sent %d bytes to %s : %d \n", n, 
+    DPRINTF(DEBUG_INFO, "sent %d bytes to %s : %d \n", n, 
                 ip_2_str(*(int*) &server->ip_addr), PR_ntohs(addr.inet.port));
    if (n < 0) 
-       PR_fprintf(PR_STDERR,"Failed to send in socket\n" );
+       DPRINTF(DEBUG_ERROR,"Failed to send in socket\n" );
 }
 
 int recv_single_reply( PRFileDesc *fd, char *buf, int buf_len, 
@@ -48,9 +48,9 @@ int recv_single_reply( PRFileDesc *fd, char *buf, int buf_len,
     PRIntervalTime timeout = PR_INTERVAL_NO_TIMEOUT;
     int n = PR_RecvFrom(fd,buf,buf_len,0, from, timeout);
     if (n < 0){ 
-        PR_fprintf(PR_STDERR,"Failed to recvfrom in socket\n" );
+        DPRINTF(DEBUG_ERROR,"Failed to recvfrom in socket\n" );
     } else {
-        PR_fprintf(PR_STDERR,"Recved from socket %d bytes\n", n );
+        DPRINTF(DEBUG_INFO,"Received from socket %d bytes\n", n );
    }
    return n;
 }
@@ -73,7 +73,7 @@ void fetch_notary_observations(SSHNotary *notary,
    PRIntervalTime start = PR_IntervalNow(); 
 
 
-   PR_fprintf(PR_STDERR,"creating request for '%s'\n", service_id);
+   DPRINTF(DEBUG_INFO,"creating request for '%s'\n", service_id);
    notary_header* hdr = create_request(service_id, 9 /*ignore*/);
 
    // loop through each server, send each a request

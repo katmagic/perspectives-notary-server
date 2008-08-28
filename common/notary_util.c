@@ -248,19 +248,15 @@ int get_key_info_timespans(char *response, int *response_len, int max_len, ssh_k
     time_t start_time = (time_t) t_start;
     time_t end_time = (time_t) t_end; 
     if(*response_len >= max_len) {
-	printf("bailing from get_key_info_timespans 1\n"); 
-    	printf("response_len = %d  max_len = %d \n", *response_len, max_len); 
+	DPRINTF(DEBUG_ERROR,"bailing from get_key_info_timespans 1\n"); 
 	return 0; 
     }
-    //printf("ts1:  response_len = %d  max_len = %d \n", *response_len, max_len); 
     n = snprintf(response + *response_len, max_len - *response_len, "start:\t %d - %s", t_start, ctime((const time_t*)&start_time));
     *response_len += n;
     if(*response_len >= max_len) {
-	printf("bailing from get_key_info_timespans 2\n"); 
-    	printf("response_len = %d  max_len = %d \n", *response_len, max_len); 
+	DPRINTF(DEBUG_INFO, "bailing from get_key_info_timespans 2\n"); 
 	return 0; 
     } 
-    //printf("ts2:  response_len = %d  max_len = %d \n", *response_len, max_len); 
     n = snprintf(response + *response_len, max_len - *response_len, "end:\t %d - %s", t_end, ctime((const time_t*)&end_time));
     *response_len += n;
     timespans += 2;
@@ -325,7 +321,6 @@ int get_key_info_list(char *response, int *response_len, int max_len, ssh_key_in
           n = snprintf(response + *response_len, max_len - *response_len, "%s key: %s \n", keytype_2_str(cur->info->key_type),
                                   str);
           *response_len += n;                        
-	  printf("after key: n = %d response_len = %d \n", n, *response_len); 
           free(str);
           get_key_info_timespans(response, response_len, max_len, cur->info);
 	  if(*response_len >= max_len) {
@@ -334,7 +329,6 @@ int get_key_info_list(char *response, int *response_len, int max_len, ssh_key_in
  	  } 
           n = snprintf(response + *response_len, max_len - *response_len, "\n");
           *response_len += n;
-	  printf("after timespans: n = %d response_len = %d \n", n, *response_len); 
         } 
         return 0;
 }

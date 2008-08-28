@@ -69,7 +69,7 @@ char *read_file(const char *ext_dir, const char *file_name, int *buf_len){
   nsCString path;
   file->GetNativePath (path);
 
-  PR_fprintf(PR_STDERR, "File Path %s \n", path.get());
+  DPRINTF(DEBUG_INFO, "File Path %s \n", path.get());
 
   PRBool exists; 
   rv = file->Exists(&exists); 
@@ -195,34 +195,34 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
     snprintf(buf,255,"Did not query notaries because client supplied" 
         " a RFC 1918 private address: %s \n", host);  
     set_status(buf,"",  0.0, 0);
-    printf("skipping probing because of RFC 1918 address: %s \n", host); 
+    DPRINTF(DEBUG_ERROR,"skipping probing because of RFC 1918 address: %s \n", host); 
     free(host); 
     return NS_OK; 
   }  
 
   free(host); 
-  printf("Perspectives received service_id = '%s' and fingerprint = '%s'\n",
+  DPRINTF(DEBUG_INFO,"Perspectives received service_id = '%s' and fingerprint = '%s'\n",
       service_id, fingerprint);
   SSHNotary *notary = init_ssh_notary(); 
-  printf("initialized notary \n"); 
   file_buf = read_file(local_dir, "notary_list.txt", &file_buf_len);       
 
   if(file_buf == NULL){
-    printf("Cannot Open notary_list.txt from Profile Folder \n");
+    DPRINTF(DEBUG_ERROR,"Cannot Open notary_list.txt from Profile Folder \n");
     return result;
   }
 
-  PR_fprintf(PR_STDERR, "Read the config File \n");
   load_notary_servers(notary, file_buf, file_buf_len);
-  PR_fprintf(PR_STDERR, "Loaded Notary Servers \n");
+  DPRINTF(DEBUG_INFO, "Loaded Notary Servers \n");
   fetch_notary_observations(notary, (char*)service_id, TIMEOUT, NUM_RETRIES);
-  print_notary_reply(stderr, notary);
-  PR_fprintf(PR_STDERR, "MD5 Finger Print is %s\n", fingerprint);
+  if(notary_debug & DEBUG_INFO) { 
+  	print_notary_reply(stderr, notary);
+  } 
+  DPRINTF(DEBUG_INFO, "MD5 Finger Print is %s\n", fingerprint);
 
   char *binary_key = (char*)malloc(KEY_LEN); 
   PRInt32 len_out = hexstr_2_buf((char*)fingerprint, binary_key, KEY_LEN); 
   if(len_out != KEY_LEN) {
-    printf("error, only read %d key bytes, expected %d \n",
+    DPRINTF(DEBUG_ERROR, "error, only read %d key bytes, expected %d \n",
         len_out, KEY_LEN);
     return NS_OK;
   }
@@ -258,14 +258,14 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
   char *svg = get_reply_as_svg(service_id, notary, 30);
 
   float qd_days = SEC2DAY(quorum_duration); 
-  PR_fprintf(PR_STDERR, "QS = %d \nQD = %f days \n", quorum_size, qd_days);
+  DPRINTF(DEBUG_INFO, "QS = %d \nQD = %f days \n", quorum_size, qd_days);
 
   // get text of notary response
   response = get_notary_reply(notary);
   int res = set_status(response, svg, qd_days, is_cur_consistent);
   free(svg);
   if(res) { 
-    PR_fprintf(PR_STDERR, "Error setting status \n"); 
+    DPRINTF(DEBUG_ERROR, "Error setting status \n"); 
   } 
 
   free(response);

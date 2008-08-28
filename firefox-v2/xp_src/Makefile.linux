@@ -16,7 +16,8 @@ NOTARY_CLIENT = ../../notary-client
 GECKO_INCLUDES = -I $(GECKO_SDK_PATH)/include  -I $(GECKO_SDK_PATH)/sdk/include -I $(NOTARY_COMMON) -I $(NOTARY_CLIENT) 
 
  
-GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/lib -L$(GECKO_SDK_PATH)/bin -Wl,-rpath-link,$(GECKO_SDK_PATH)/bin -lxpcomglue_s -lxpcom -lxul -lnss3 -lnssutil 
+GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/lib -L$(GECKO_SDK_PATH)/bin -Wl,-rpath-link,$(GECKO_SDK_PATH)/bin -lxpcomglue_s -lxpcom -lxul -lnss -lnssutil 
+
 
 FILES = Perspectives.cpp PerspectivesModule.cpp moz_crypto.cpp $(NOTARY_CLIENT)/notary_local.c $(NOTARY_COMMON)/net_util.c $(NOTARY_COMMON)/notary_util.c contact_notary.c $(NOTARY_CLIENT)/client_policy.c $(NOTARY_COMMON)/flex_queue.c
 

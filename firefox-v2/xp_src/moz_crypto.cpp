@@ -50,13 +50,13 @@ PRBool VerifyData(unsigned char *data, unsigned int data_len,
     if (!arena)
         return false;
 
-	printf("Verify sees key = '%s' \n", key64); 
+    DPRINTF(DEBUG_INFO, "Verify sees key = '%s' \n", key64); 
 
     // Base 64 decode the key
     SECItem keyItem;
     PORT_Memset(&keyItem, 0, sizeof(SECItem));
     if (!NSSBase64_DecodeBuffer(arena, &keyItem,key64,key64_len)) {
-		printf("bad key b64 decode \n"); 
+	DPRINTF(DEBUG_ERROR, "bad key b64 decode \n"); 
         PORT_FreeArena(arena, PR_FALSE);
         return false;
     }
@@ -65,7 +65,7 @@ PRBool VerifyData(unsigned char *data, unsigned int data_len,
     CERTSubjectPublicKeyInfo *pki = SECKEY_DecodeDERSubjectPublicKeyInfo(&keyItem);
     if (!pki) {
         PORT_FreeArena(arena, PR_FALSE);
-		printf("bad key DER decode \n"); 
+	DPRINTF(DEBUG_ERROR, "bad key DER decode \n"); 
         return false;
     }
     SECKEYPublicKey *publicKey = SECKEY_ExtractPublicKey(pki);
@@ -74,11 +74,11 @@ PRBool VerifyData(unsigned char *data, unsigned int data_len,
     
     if (!publicKey) {
         PORT_FreeArena(arena, PR_FALSE);
-		printf("bad key extract\n"); 
+	DPRINTF(DEBUG_ERROR, "bad key extract\n"); 
         return false;
     }
 
-	printf("key len = %d \n", publicKey->u.rsa.modulus.len); 
+    DPRINTF(DEBUG_INFO, "key len = %d \n", publicKey->u.rsa.modulus.len); 
     
    SECItem sig_item;
    sig_item.type = siBuffer;
@@ -110,7 +110,7 @@ PRBool verify_signature(char *buf, int msg_len, char *server_key) {
     int data_len = ntohs(hdr->total_len) - sig_len - sizeof(notary_header);
     unsigned char* data = (unsigned char*)(hdr + 1);
     unsigned char *sig = (unsigned char*) (data + data_len);
-    printf("msg verify: data_len = %d sig_len = %d \n",data_len, sig_len);
+    DPRINTF(DEBUG_INFO, "msg verify: data_len = %d sig_len = %d \n",data_len, sig_len);
 
     return VerifyData(data, data_len, sig, sig_len, server_key, strlen(server_key)); 
 } 
