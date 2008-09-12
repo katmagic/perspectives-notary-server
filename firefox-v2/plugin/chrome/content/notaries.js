@@ -55,6 +55,10 @@ var overrideService =
   .getService(Components.interfaces.nsICertOverrideService);
 var broken = false;
 
+// flag to make sure we only show component load failed alert once
+// per firefox session.  Otherwise, the user gets flooded with it.  
+var show_component_failed = true; 
+
 // if the tab changes to a webpage that has no notary
 // results, set the 'reason' property of this object to explain why.  
 // I use this hack b/c ssl_cache only caches info for sites we have
@@ -379,9 +383,12 @@ function queryNotaries(cert, uri){
     const cid = "@cs.cmu.edu/Perspectives;1";
     //obj = Components.classes[cid].createInstance();
     class_obj = Components.classes[cid]; 
-    if(!class_obj) { 
-      alert("Perspectives component (" + cid + ") not installed correctly."
-        + " Please report information about your platform to developers"); 
+    if(!class_obj) {
+      if(show_component_failed) {  
+      	alert("Perspectives component (" + cid + ") not installed correctly."
+         + " Please see: http://www.cs.cmu.edu/~perspectives/component_load_failed.html"); 
+      	show_component_failed = false; 
+      } 
       return null; 
     } 	
     
