@@ -5,6 +5,46 @@ var STATE_IS_INSECURE =
 var STATE_IS_SECURE = 
   Components.interfaces.nsIWebProgressListener.STATE_IS_SECURE;
 
+var nonrouted_ips = [ "^192\.168\.", "^10.", "^172\.1[6-9]\.", 
+			"^172\.2[0-9]\.", "172\.3[0-1]\.", "^169\.254\.", 
+			"^127\.0\.0\.1$"]; // could add many more
+
+
+function is_nonrouted_ip(ip_str) { 
+	for each (regex in nonrouted_ips) { 
+		if(ip_str.match(RegExp(regex))) { 
+			return true; 
+		}
+	} 
+	return false; 
+} 
+
+function getdns() {
+	var cls = Components.classes['@mozilla.org/network/dns-service;1'];
+        var iface = Components.interfaces.nsIDNSService;
+        return cls.getService(iface);
+}
+
+var dns = getdns(); 
+
+// it is likely that all IPs are reachable, or none are,
+// but we are conservative and continue even if a single 
+// IP seems routable
+function host_is_unreachable(hostname) {  
+  var ip_str = "";
+  var ips = Array();  
+  var nsrecord = dns.resolve(hostname,true); 
+  while (nsrecord && nsrecord.hasMore()) 
+	ips[ips.length] = nsrecord.getNextAddrAsString(); 
+  for each (ip_str in ips) { 
+  	if(!is_nonrouted_ip(ip_str)) { 
+		return null; 
+	}
+	d_print("unreachable ip = " + ip_str + "\n");  
+  }
+  return ips; 
+} 
+
 /* Data */
 var whitelist     = new Array();
 var ssl_cache     = new Object();
@@ -344,6 +384,7 @@ function queryNotaries(cert, uri){
         + " Please report information about your platform to developers"); 
       return null; 
     } 	
+    
     obj = class_obj.createInstance();
     comp = obj.QueryInterface(Components.interfaces.IPerspectives);
     res = comp.do_notary_check(service_id,cert.md5Fingerprint,dir.path); 
@@ -422,12 +463,12 @@ function do_override(browser, cert) {
 function updateStatus(browser, has_user_permission){
   d_print("Update Status\n");
   if(!browser){
-    dump("No Browser!!\n");
+    d_print("No Browser!!\n");
     return;
   }
   var uri = browser.currentURI;
   if(!uri) { 
-    var text = "No Information:  Perspectives received an empty URI for " + 
+    var text = "Perspectives: No Data. Browser provided an empty URI for " + 
       "this connection. Try hitting refresh.";
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text;
@@ -439,26 +480,34 @@ function updateStatus(browser, has_user_permission){
   d_print("Update Status: " + uri.spec + "\n");
 
   if(uri.scheme != "https"){
-    var text = "No Information:  Perspectives only provides information about HTTPS " +
-      "enabled websites.  Your connection to " + uri.host + " uses " + uri.scheme + " .";
+    var text = "Perspectives:  Notaries are only contacted for HTTPS " +
+      "enabled websites.  Your connection to " + uri.host + " uses '" + uri.scheme + "'.";
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text;
     return;
   } 
   if(onWhitelist(uri.host)){
-    var text = "No Information: Perspectives intentionally " 
-      + "does not probe " + uri.host + " because this website uses " + 
-      "inconsistent keys in normal operation.";
+    var text = "Perspectives: " + uri.host + " is known to use " + 
+      "inconsistent keys in normal operation, so Perspectives is configured ignore it.";
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
   }
+  var unreachable = host_is_unreachable(uri.host); 
+  if(unreachable) { 
+    var text = "Perspectives: No Information. " 
+      + "All IPs (" + unreachable + ") associated with " + uri.host + 
+	" are in a private local network.";
+    setStatus(STATE_NEUT,text); 
+    other_cache["reason"] = text; 
+    return;
+  } 
 
   broken         = false;
   var cert       = getCertificate(browser);
   if(!cert){
-    var text = "No Information: Perspectives was unable to " 
-      + "retrieve a certificate for: " + uri.host;  
+    var text = "Perspectives: No information.  The browser was unable to " 
+      + "retrieve a certificate for " + uri.host;  
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
@@ -482,9 +531,8 @@ function updateStatus(browser, has_user_permission){
   var already_trusted = (state & STATE_IS_SECURE) && 
     !(is_override_cert && ssl_cache[uri.host]); 
   if(!check_good && already_trusted) {
-    var text =  "No Information: Your preferences indicate that Perspectives should" 
-      + " not probe websites with HTTPS certificates already trusted by "
-      + "your browser.";
+    var text =  "Perspectives: No Information. Your preferences are set to query notaries "
+	+ "only for HTTPS certificates that fail browser security checks.";
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
@@ -504,7 +552,7 @@ function updateStatus(browser, has_user_permission){
     if(needs_perm && !has_user_permission) {
       d_print("needs user permission\n");  
       notifyNeedsPermission(browser);
-      var text = "No Information:  Your preferences indicate that Perspectives "
+      var text = "Perspectives: No Information. Your preferences indicate that Perspectives "
         + "should not contact Notaries without your permission.";
       setStatus(STATE_NEUT,text); 
       other_cache["reason"] = text;  
@@ -513,8 +561,8 @@ function updateStatus(browser, has_user_permission){
     d_print("Contacting notary\n"); 
     var resp = queryNotaries(cert, uri);
     if(!resp){
-      var text = "Perspectives experienced an internal error: " + resp; 
-      setStatus(STATE_NSEC, text);
+      var text = "Perspectives: An internal error occurred: " + resp; 
+      setStatus(STATE_ERROR, text);
       return;
     }
     var temp = new SslCert(uri.host, 
@@ -532,13 +580,13 @@ function updateStatus(browser, has_user_permission){
   }
 
   if (cache_cert.summary.indexOf("ssl key") == -1) { 
-    	cache_cert.tooltip = "Warning: No Notary replies received";
+    	cache_cert.tooltip = "Warning: Perspectives received no Notary replies.";
     	setStatus(STATE_NSEC, cache_cert.tooltip);
 	if(broken) { 
 	  notifyNoReplies(browser); 
 	} 
   } else if(!cache_cert.secure){
-    cache_cert.tooltip = "Warning: Key has NOT been seen consistently";
+    cache_cert.tooltip = "Warning: Perspectives has NOT seen this certificate consistently";
     setStatus(STATE_NSEC, cache_cert.tooltip);
     if(broken && firstLook){
       notifyFailed(browser);
@@ -546,8 +594,8 @@ function updateStatus(browser, has_user_permission){
   }
   else if(cache_cert.duration < duration){
     cache_cert.tooltip = 
-      "Warning: Key seen consistently for only " + cache_cert.duration + 
-      " days, threshold is " + duration + " days";
+      "Warning: Perspectives has seen this certificate consistently for only " 
+	+ cache_cert.duration + " days, threshold is " + duration + " days";
     setStatus(STATE_NSEC, cache_cert.tooltip);
     if(broken && firstLook){
       notifyFailed(browser);
@@ -555,7 +603,7 @@ function updateStatus(browser, has_user_permission){
   }
   else { //Its secure
     cache_cert.tooltip = 
-      "Key Verified: Key seen consistently for " + cache_cert.duration +
+      "Verified: Perpsectives has seen this certificate consistently for " + cache_cert.duration +
       " days, threshold is " + duration + " days";
     setStatus(STATE_SEC, cache_cert.tooltip);
     if (broken){
@@ -587,9 +635,9 @@ var notaryListener = {
       try{ 
       	d_print("Location change " + aURI.spec + "\n");
       	updateStatus(gBrowser,false);
-      } 
-      catch(err){
+      } catch(err){
         d_print("Perspectives had an internal exception: " + err);
+	setStatus(STATE_ERROR, "Perspectives: an internal error occurred: " + err); 
       } 
   },
 
@@ -601,6 +649,7 @@ var notaryListener = {
          updateStatus(gBrowser,false);
        } catch (err) { 
          d_print("Perspectives had an internal exception: " + err);
+	 setStatus(STATE_ERROR, "Perspectives: an internal error occurred: " + err); 
        } 
      }
   },

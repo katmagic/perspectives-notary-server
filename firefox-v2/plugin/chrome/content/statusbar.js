@@ -1,3 +1,4 @@
+const STATE_ERROR   = -1;
 const STATE_SEC   = 0;
 const STATE_NSEC  = 1;
 const STATE_NEUT  = 2;
@@ -25,17 +26,19 @@ function setStatus(state, tooltip){
   switch(state){
     case STATE_SEC:
       d_print("Secure Status\n");
-      i.setAttribute("hidden", "false");
       i.setAttribute("src", "chrome://perspectives/content/good.png");
       break;
     case STATE_NSEC:
       d_print("Unsecure Status\n");
-      i.setAttribute("hidden", "false");
       i.setAttribute("src", "chrome://perspectives/content/bad.png");
       break;
     case STATE_NEUT:
       d_print("Neutral Status\n");
-      i.setAttribute("hidden", "true");
+      i.setAttribute("src", "chrome://perspectives/content/default.png");
+      break;
+    case STATE_ERROR:
+      d_print("Error Status\n");
+      i.setAttribute("src", "chrome://perspectives/content/error.png");
       break;
   }
   d_print("changing tooltip to: " + tooltip + "\n"); 
