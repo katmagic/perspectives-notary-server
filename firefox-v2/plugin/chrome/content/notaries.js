@@ -5,11 +5,12 @@ var STATE_IS_INSECURE =
 var STATE_IS_SECURE = 
   Components.interfaces.nsIWebProgressListener.STATE_IS_SECURE;
 
+var strbundle = null; // this isn't loaded when things are intialized
+
 var nonrouted_ips = [ "^192\.168\.", "^10.", "^172\.1[6-9]\.", 
 			"^172\.2[0-9]\.", "172\.3[0-1]\.", "^169\.254\.", 
 			"^127\.0\.0\.1$"]; // could add many more
-
-
+ 
 function is_nonrouted_ip(ip_str) { 
 	for each (regex in nonrouted_ips) { 
 		if(ip_str.match(RegExp(regex))) { 
@@ -117,17 +118,14 @@ function notifyOverride(b){
   clear_existing_banner(b, "Perspectives"); 
 
   var priority = notificationBox.PRIORITY_INFO_LOW;
-  var message = 
-    "Perspectives has verified the security of your "
-    + "connection to this website and has bypassed Firefox's "
-    + "security error page";
+  var message = strbundle.getString("verificationSuccess");  
   var buttons = [{
     accessKey : "", 
-    label: "Learn More", 
+    label: strbundle.getString("learnMore"), 
     accessKey : "", 
     callback: function() {
       b.loadOneTab(
-      "chrome://perspectives_main/content/help.html", null, null,
+      "chrome://perspectives/locale/help.html", null, null,
       null, false);
     }
   }];
@@ -151,13 +149,11 @@ function notifyFailed(b){
   clear_existing_banner(b, "Perspectives"); 
 
   var priority = notificationBox.PRIORITY_CRITICAL_LOW;
-  var message = 
-    "Suspected attack: Perspectives was unable to verify the "
-    + "security of your connection to this website";
+  var message = strbundle.getString("unableToVerify");  
   var buttons = null;
   /* Uncomment when we have some sort of system
   var buttons = [{
-    label: "Report This", 
+    label: strbundle.getString("reportThis"), 
     accessKey : "", 
     callback: function() {
       alert("Do Stuff");
@@ -182,13 +178,11 @@ function notifyNeedsPermission(b){
 
   clear_existing_banner(b, "Perspectives-Permission"); 
   var priority = notificationBox.PRIORITY_WARNING_HIGH;
-  var message = 
-    "Perspectives may be able to override this security error " +
-    " by contacting Network Notary servers, but needs your permission.";
+  var message = strbundle.getString("needsPermission");  
   var buttons = null;
   var buttons = [
     {
-    label: "Yes, contact Notaries", 
+    label: strbundle.getString("yesContactNotaries"), 
     accessKey : "", 
     callback: function() {
       try { 
@@ -223,7 +217,7 @@ function notifyNeedsPermission(b){
       updateStatus(b,true); 
     }},
     { 
-    label: "Learn More",
+    label: strbundle.getString("learnMore"),
     accessKey : "", 
     callback: function() {
       b.loadOneTab(
@@ -250,13 +244,11 @@ function notifyNoReplies(b){
   clear_existing_banner(b, "Perspectives-Permission"); 
   clear_existing_banner(b, "Perspectives"); 
   var priority = notificationBox.PRIORITY_CRITICAL_LOW;
-  var message = 
-    "Warning: Perspectives received no notary replies. " +
-    "This may be an attack or you may be behind a firewall/proxy that blocks notary requests.";
+  var message = strbundle.getString("noRepliesReceived");  
   var buttons = null;
   var buttons = [
     { 
-    label: "Firewall/Proxy Help",
+    label: strbundle.getString("firewallHelp"),
     accessKey : "", 
     callback: function() {
       b.loadOneTab(
@@ -385,8 +377,7 @@ function queryNotaries(cert, uri){
     class_obj = Components.classes[cid]; 
     if(!class_obj) {
       if(show_component_failed) {  
-      	alert("Perspectives component (" + cid + ") not installed correctly."
-         + " Please see: http://www.cs.cmu.edu/~perspectives/component_load_failed.html"); 
+      	alert(strbundle.getString("componentLoadFailed")); 
       	show_component_failed = false; 
       } 
       return null; 
@@ -468,6 +459,11 @@ function do_override(browser, cert) {
 // explicitly pressed a button to launch this query,
 // by default this is not the case
 function updateStatus(browser, has_user_permission){
+
+if(strbundle == null) 
+   strbundle = document.getElementById("fuck_this");
+
+
   d_print("Update Status\n");
   if(!browser){
     d_print("No Browser!!\n");
@@ -475,8 +471,7 @@ function updateStatus(browser, has_user_permission){
   }
   var uri = browser.currentURI;
   if(!uri) { 
-    var text = "Perspectives: No Data. Browser provided an empty URI for " + 
-      "this connection. Try hitting refresh.";
+    var text = strbundle.getString("noDataError"); 
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text;
     return;
@@ -487,24 +482,20 @@ function updateStatus(browser, has_user_permission){
   d_print("Update Status: " + uri.spec + "\n");
 
   if(uri.scheme != "https"){
-    var text = "Perspectives:  Notaries are only contacted for HTTPS " +
-      "enabled websites.  Your connection to " + uri.host + " uses '" + uri.scheme + "'.";
+    var text = strbundle.getFormattedString("nonHTTPSError", [ uri.host, uri.scheme ]);
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text;
     return;
   } 
   if(onWhitelist(uri.host)){
-    var text = "Perspectives: " + uri.host + " is known to use " + 
-      "inconsistent keys in normal operation, so Perspectives is configured ignore it.";
+    var text = strbundle.getFormattedString("whitelistError", [uri.host] ); 
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
   }
   var unreachable = host_is_unreachable(uri.host); 
   if(unreachable) { 
-    var text = "Perspectives: No Information. " 
-      + "All IPs (" + unreachable + ") associated with " + uri.host + 
-	" are in a private local network.";
+    var text = strbundle.getFormattedString("rfc1918Error", [ uri.host ])
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
@@ -513,8 +504,7 @@ function updateStatus(browser, has_user_permission){
   broken         = false;
   var cert       = getCertificate(browser);
   if(!cert){
-    var text = "Perspectives: No information.  The browser was unable to " 
-      + "retrieve a certificate for " + uri.host;  
+    var text = strbundle.getFormattedString("noCertError", [ uri.host ])
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
@@ -538,8 +528,7 @@ function updateStatus(browser, has_user_permission){
   var already_trusted = (state & STATE_IS_SECURE) && 
     !(is_override_cert && ssl_cache[uri.host]); 
   if(!check_good && already_trusted) {
-    var text =  "Perspectives: No Information. Your preferences are set to query notaries "
-	+ "only for HTTPS certificates that fail browser security checks.";
+    var text = strbundle.getString("noProbeRequestedError"); 
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
@@ -559,8 +548,7 @@ function updateStatus(browser, has_user_permission){
     if(needs_perm && !has_user_permission) {
       d_print("needs user permission\n");  
       notifyNeedsPermission(browser);
-      var text = "Perspectives: No Information. Your preferences indicate that Perspectives "
-        + "should not contact Notaries without your permission.";
+      var text = strbundle.getString("needsPermission"); 
       setStatus(STATE_NEUT,text); 
       other_cache["reason"] = text;  
       return; 
@@ -568,7 +556,7 @@ function updateStatus(browser, has_user_permission){
     d_print("Contacting notary\n"); 
     var resp = queryNotaries(cert, uri);
     if(!resp){
-      var text = "Perspectives: An internal error occurred: " + resp; 
+      var text = strbundle.getFormattedString("internalError", [ resp ] ); 
       setStatus(STATE_ERROR, text);
       return;
     }
@@ -587,37 +575,34 @@ function updateStatus(browser, has_user_permission){
   }
 
   if (cache_cert.summary.indexOf("ssl key") == -1) { 
-    	cache_cert.tooltip = "Warning: Perspectives received no Notary replies.";
+    	cache_cert.tooltip = strbundle.getString("noRepliesWarning");
     	setStatus(STATE_NSEC, cache_cert.tooltip);
 	if(broken) { 
 	  notifyNoReplies(browser); 
 	} 
   } else if(!cache_cert.secure){
-    cache_cert.tooltip = "Warning: Perspectives has NOT seen this certificate consistently";
+    cache_cert.tooltip = strbundle.getString("inconsistentWarning");
     setStatus(STATE_NSEC, cache_cert.tooltip);
     if(broken && firstLook){
       notifyFailed(browser);
     }
   }
   else if(cache_cert.duration < duration){
-    cache_cert.tooltip = 
-      "Warning: Perspectives has seen this certificate consistently for only " 
-	+ cache_cert.duration + " days, threshold is " + duration + " days";
+    cache_cert.tooltip = strbundle.getFormattedString("thresholdWarning", 
+		[ cache_cert.duration, duration]);
     setStatus(STATE_NSEC, cache_cert.tooltip);
     if(broken && firstLook){
       notifyFailed(browser);
     }
   }
   else { //Its secure
-    cache_cert.tooltip = 
-      "Verified: Perpsectives has seen this certificate consistently for " + cache_cert.duration +
-      " days, threshold is " + duration + " days";
+    cache_cert.tooltip = strbundle.getFormattedString("verifiedMessage", 
+		[ cache_cert.duration, duration]);
     setStatus(STATE_SEC, cache_cert.tooltip);
     if (broken){
       broken = false;
       do_override(browser, cert);
-      cache_cert.identityText = 
-        "Perspectives has added a security exception for this site";
+      cache_cert.identityText = strbundle.getString("exceptionAdded");  
       // don't give drop-down if user gave explicit
       // permission to query notaries
       if(firstLook && !has_user_permission){

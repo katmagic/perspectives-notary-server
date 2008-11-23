@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<!DOCTYPE prefwindow SYSTEM "chrome://perspectives/locale/statusbar-info.dtd">
 
 <prefwindow id = "statusbar-settings" 
 	title          = "Perspectives"
@@ -42,8 +43,8 @@
 <dialogheader title="Perspectives" />
 <tabbox> 
 <tabs> 
-  <tab label="Notary Results"/> 
-  <tab label="Preferences"/>
+  <tab label="&NotaryResults;"/> 
+  <tab label="&Preferences;"/>
     <!-- remove this tab for production -->
     <!-- <tab label="Debug" />  --> 
 </tabs> 
@@ -55,13 +56,12 @@
       id="perspective-information-caption" 
       label="Detailed Information" 
       style="font-weight: bold"/>
-    <label id="perspective-quorum-duration" value="No Quorum Information"/>
+	<label id="perspective-quorum-duration" value="&NoQuorumInformation;"/>
     <textbox id = "perspective-description"
       multiline = "true" 
       readonly  = "true"
       flex      = "1"
-      value     = 
-        "There is no Perspectives information available for this location"/>
+      value     = "&ThereisnoPerspectivesinformationavailableforthislocation;"/>
     <!-- svg goes into this box -->
     <box id = "perspective-svg-box"/>
   </groupbox>
@@ -70,37 +70,37 @@
     hidden  = "true"
     orient  = "horizontal" 
     onclick = 'switchResultForm()'>
-    <radio  label="Timeline" />
-    <radio  label="Notary Results" selected="true"/>
+    <radio  label="&Timeline;" />
+    <radio  label="&NotaryResults;" selected="true"/>
   </radiogroup>
   </tabpanel>
 
   <tabpanel id="perspective-preferences-tab" align="start" orient="horizontal">
   <spacer flex="1"/>
   <groupbox > 
-    <caption label="Security Settings" style="font-weight: bold"/>
+    <caption label="&SecuritySettings;" style="font-weight: bold"/>
     <menulist id="secset"  
       preference = "security-settings"
       oncommand  = "selectSecurity()"> 
       <menupopup>
-      <menuitem label="High Security"        value="2"/> 
-      <menuitem label="Medium Security"      value="1"/>
-      <menuitem label="High Availability"    value="0"/>
-      <menuitem label="Manual Configuration" value="-1"/>
+      <menuitem label="&HighSecurity;"        value="2"/> 
+      <menuitem label="&MediumSecurity;"      value="1"/>
+      <menuitem label="&HighAvailability;"    value="0"/>
+      <menuitem label="&ManualConfiguration;" value="-1"/>
       </menupopup> 
     </menulist>
     <label 
-      value="Percentage of notaries that must agree"/>
+	value="&Percentageofnotariesthatmustagree;"/>
     <hbox align="right">
-      <label value="Quorum %" /> 
+      <label value="&QuorumPercentage;" /> 
       <spacer flex="1"/>
       <textbox id="pref-thresh" 
         size="4"
         oninput='setQuorum(parseInt(this.value)); setManual();'/>
     </hbox>
-    <label value="Length of time quorum must be achieved"/>
+	<label value="&Lengthoftimequorummustbeachieved;"/>
     <hbox align="right">
-      <label value="Duration (Days)" />
+      <label value="&DurationDays;" />
       <spacer flex="1"/>
       <textbox id="pref-duration" 
         size="4" 
@@ -109,25 +109,21 @@
   </groupbox> 
   <vbox>
   <groupbox>
-    <caption  label="Overriding Firefox Security Errors" style="font-weight: bold"/>
-    <checkbox label="Allow Perspectives to automatically override security errors" 
+    <caption  label="&OverridingFirefoxSecurityErrors;" style="font-weight: bold"/>
+    <checkbox label="&AllowPerspectivestoautomaticallyoverridesecurityerrors;" 
       preference="exception-enabled"/>
-    <checkbox label="Permanently trust certificates validated by Perspectives." 
+    <checkbox label="&PermanentlytrustcertificatesvalidatedbyPerspectives;" 
       preference="exception-perm"/>
   </groupbox>
 
   <groupbox>
-    <caption label="When to Contact Notaries" style="font-weight: bold"/>
+    <caption label="&WhentoContactNotaries;" style="font-weight: bold"/>
     <radiogroup preference="check-good">
-      <radio label="Contact Notaries for all HTTPS sites" value="true"/>
-      <radio label="Contact Notaries only when a website's certificate causes a
-        security error" value="false"/>
+      <radio label="&ContactNotariesforallHTTPSsites;" value="true"/>
+     <radio label="&ContactNotariesonlywhenawebsitescertificatecausesasecurityerror;" value="false"/>
     </radiogroup>
-    <!-- checkbox
-      label="Contact Notaries for all HTTPS sites, even if certificate is trusted." 
-      preference="check-good"/ -->
    <checkbox
-      label="Always ask the user before contacting Notaries" 
+      label="&AlwaysasktheuserbeforecontactingNotaries;" 
       preference="require-user-permission"/> 
   </groupbox> 
   </vbox>
@@ -145,14 +141,15 @@
 
 <hbox> 
 <!--  <button label = "Requery"        onclick="requery()"/> --> 
-  <button label = "Certificates"   onclick="openCertificates()"/> 
-  <button label = "Notary Servers" onclick="openNotaries()"/> 
-  <button label = "Help"           onclick="onHelp()"/> 
+  <button label = "&Certificates;"   onclick="openCertificates()"/> 
+  <button label = "&Servers;" onclick="openNotaries()"/> 
+  <button label = "&Help;"           onclick="onHelp()"/> 
   <spacer flex  = "1"/>
-  <button label = "OK" onclick="acceptDialog(); window.close()"/>
+  <button label = "&OK;" onclick="acceptDialog(); window.close()"/>
 </hbox>
 
 </prefpane>
+
 
 <!--Bug in docs makes me put it here -->
 <script type = "application/x-javascript" src="statusbar-info.js"/>
