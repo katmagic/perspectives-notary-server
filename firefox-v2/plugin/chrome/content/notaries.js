@@ -10,6 +10,7 @@ var strbundle = null; // this isn't loaded when things are intialized
 var nonrouted_ips = [ "^192\.168\.", "^10.", "^172\.1[6-9]\.", 
 			"^172\.2[0-9]\.", "172\.3[0-1]\.", "^169\.254\.", 
 			"^127\.0\.0\.1$"]; // could add many more
+
  
 function is_nonrouted_ip(ip_str) { 
 	for each (regex in nonrouted_ips) { 
@@ -221,7 +222,7 @@ function notifyNeedsPermission(b){
     accessKey : "", 
     callback: function() {
       b.loadOneTab(
-      "chrome://perspectives_main/content/help.html", null, null,
+      "chrome://perspectives/locale/help.html", null, null,
       null, false);
     } 
   }];
@@ -461,7 +462,7 @@ function do_override(browser, cert) {
 function updateStatus(browser, has_user_permission){
 
 if(strbundle == null) 
-   strbundle = document.getElementById("fuck_this");
+   strbundle = document.getElementById("notary_strings");
 
 
   d_print("Update Status\n");
@@ -685,6 +686,42 @@ function requeryAllTabs(b){
     updateStatus(browser, false);
   }
 }
+ 
+// Use Ajax to update the notary_list.txt file stored in the extension directory
+// this is called on start-up  
+function update_notarylist() { 
+  try {
+      var request = new XMLHttpRequest();
+      request.open("GET","https://www.networknotary.org:444/notary_list.txt",true);
+      request.onload = {
+        handleEvent : 
+		function(evt) {
+    			var psv_id = "perspectives@cmu.edu"; 
+    			var em = Components.classes["@mozilla.org/extensions/manager;1"].
+         getService(Components.interfaces.nsIExtensionManager);
+			var file = em.getInstallLocation(psv_id).getItemFile(psv_id, "notary_list.txt");
+			// file is nsIFile, data is a string
+			var t = request.responseText; 
+			var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
+
+			// use 0x02 | 0x10 to open file for appending.
+			foStream.init(file, 0x02 | 0x08 | 0x20, 0666, 0); 
+			foStream.write(t, t.length);
+			foStream.close();
+                }
+        };
+      request.onerror = {
+        handleEvent : function(evt) {
+                                d_print("failed to update notary_list.txt");
+                      }
+        };
+
+  request.send("");
+
+  } catch (e) {
+        d_print("error updating notary_list.txt: " + e);
+  }
+} 
 
 function initNotaries(){
   dump("\nPerspectives Initialization\n");
@@ -694,4 +731,5 @@ function initNotaries(){
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
   setTimeout(function (){ requeryAllTabs(gBrowser); }, 4000);
   dump("Perspectives Finished Initialization\n\n");
+
 }

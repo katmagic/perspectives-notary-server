@@ -4,7 +4,7 @@
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
 <stringbundleset id="stringbundleset">
-	<stringbundle id="fuck_this" src="chrome://perspectives/locale/notaries.properties" insertbefore="1"/>
+	<stringbundle id="notary_strings" src="chrome://perspectives/locale/notaries.properties" insertbefore="1"/>
 </stringbundleset> 
 
 
