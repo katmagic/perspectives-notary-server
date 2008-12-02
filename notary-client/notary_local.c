@@ -663,3 +663,64 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
 	return str; 
 }
 
+char* get_reply_as_json(SSHNotary *notary) {
+	int i; 
+	server_list *server;
+	struct list_head *outer_pos, *inner_pos;
+        char buf[1024]; 
+  	str_buffer *b = str_buffer_new(1024);   
+	ssh_key_info *info; 
+        char *key_buf, first_server = 1;
+
+	// loop through each reply list to draw each valid timespan 
+	list_for_each(outer_pos,&notary->notary_servers.list){
+		char first_obj = 1; 
+                ssh_key_info_list *list_elem;
+		server = list_entry(outer_pos, server_list, list);
+                if(first_server) { 
+                    str_buffer_append(b,"[ { "); 
+                    first_server = 0; 
+                }else 
+                    str_buffer_append(b,", { "); 
+                str_buffer_append(b,"\"server\" : \""); 
+                str_buffer_append(b,ip_2_str(server->ip_addr)); 
+                str_buffer_append(b,"\"\n , \"obs\" : ["); 
+		
+		if(server->notary_results == NULL) { 
+                        str_buffer_append(b," ] }\n"); 
+			continue; 
+                }
+		
+                list_for_each(inner_pos,&server->notary_results->list) {
+			list_elem = list_entry(inner_pos, ssh_key_info_list, list);
+			info = list_elem->info; 
+                        if(first_obj) 
+                          first_obj = 0; 
+                        else
+                          str_buffer_append(b," , "); 
+			key_buf = (char*)(list_elem->info + 1);
+                        char *key_str = buf_2_hexstr(key_buf,KEY_LEN);
+                        str_buffer_append(b,"{ \"key\" : \""); 
+                        str_buffer_append(b,key_str); 
+                        str_buffer_append(b,"\",\n \"timestamps\" : ["); 
+			int len = ntohs(info->key_len_bytes);
+			int *timespans = (int*)(key_buf + len);
+			int num_spans = ntohs(info->num_timespans);
+			for(i = 0; i < num_spans; i++){
+                                if(i != 0) 
+                                  str_buffer_append(b,", "); 
+                                uint32_t t_start = ntohl(timespans[0]);
+                                uint32_t t_end = ntohl(timespans[1]);
+                                snprintf(buf, 1024, "{ \"start\" : %d , \"end\" : %d }",t_start, t_end);
+                                str_buffer_append(b,buf); 
+				timespans += 2;
+			}
+                        str_buffer_append(b,"] }\n"); // end timespans list and obs object
+		}
+                str_buffer_append(b,"] }\n"); // end observation list and server object
+	}
+	str_buffer_append(b,"]\n"); // end response list
+  	char *str = str_buffer_get(b); 
+  	str_buffer_free(b); 
+	return str; 
+}
