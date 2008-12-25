@@ -34,6 +34,8 @@
 #define MAX_STALE_SEC (DAY2SEC(5))  
 #define KEY_LEN 16
 
+
+
 // TODO: put these helper functions in a utility class 
 
 char *read_file(const char *ext_dir, const char *file_name, int *buf_len){
@@ -156,7 +158,7 @@ int set_status(char *info, char *svg, float qd_days, BOOL is_cur_consistent)
 
 
 
-unsigned int notary_debug = DEBUG_ERROR; // | DEBUG_SOCKET | DEBUG_ALL; 
+unsigned int notary_debug = DEBUG_ERROR;// | DEBUG_SOCKET | DEBUG_ALL; 
 
 NS_IMPL_ISUPPORTS1(Perspectives, IPerspectives)
 
@@ -183,7 +185,7 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
   if(colon){
     *colon = 0; // get just host portion of the string 
   }
-
+  
   const char myResult[] = "";
   if(!_retval) return NS_ERROR_NULL_POINTER;
 
@@ -213,6 +215,7 @@ NS_IMETHODIMP Perspectives::Do_notary_check(const char *service_id,
 
   load_notary_servers(notary, file_buf, file_buf_len);
   DPRINTF(DEBUG_INFO, "Loaded Notary Servers \n");
+ 
   fetch_notary_observations(notary, (char*)service_id, TIMEOUT, NUM_RETRIES);
   if(notary_debug & DEBUG_INFO) { 
   	print_notary_reply(stderr, notary);
