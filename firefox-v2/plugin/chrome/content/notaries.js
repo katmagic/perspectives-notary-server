@@ -7,6 +7,15 @@ var STATE_IS_SECURE =
 
 var strbundle = null; // this isn't loaded when things are intialized
 
+function d_print(line) {
+	dump(line); 
+	other_cache["debug"] += line;
+        // if firebug is installed, log to that console too
+        if(Firebug && Firebug.Console && Firebug.Console.log) 
+	  Firebug.Console.log(line); 
+} 
+
+
 var nonrouted_ips = [ "^192\.168\.", "^10.", "^172\.1[6-9]\.", 
 			"^172\.2[0-9]\.", "172\.3[0-1]\.", "^169\.254\.", 
 			"^127\.0\.0\.1$"]; // could add many more
@@ -72,11 +81,6 @@ other_cache["debug"] = "";
 function clear_cache(){
   ssl_cache = new Object();
 }
-
-function d_print(line) { 
-	dump(line); 
-	other_cache["debug"] += line; 
-} 
 
 //Sets the tooltip and the text of the favicon popup on https sites
 function setFaviconText(str){
@@ -661,9 +665,9 @@ function init_whitelist(){
       return;
     }
     whitelist = req.responseText.split("\n");
-    dump("Whitelist length " + whitelist.length + "\n");
+    d_print("Whitelist length " + whitelist.length + "\n");
     for(var i = 0; i < whitelist.length; i++){
-      dump("(" + whitelist[i] + ")" + "\n");
+      d_print("(" + whitelist[i] + ")" + "\n");
     }
   } 
 
@@ -692,7 +696,7 @@ function requeryAllTabs(b){
 function update_notarylist() { 
   try {
       var request = new XMLHttpRequest();
-      request.open("GET","https://www.networknotary.org:444/notary_list.txt",true);
+      request.open("GET","https://www.networknotary.org/notary_list.txt",true);
       request.onload = {
         handleEvent : 
 		function(evt) {
@@ -701,7 +705,9 @@ function update_notarylist() {
          getService(Components.interfaces.nsIExtensionManager);
 			var file = em.getInstallLocation(psv_id).getItemFile(psv_id, "notary_list.txt");
 			// file is nsIFile, data is a string
-			var t = request.responseText; 
+			var t = request.responseText;
+			d_print("updating notary list to:"); 
+			d_print(t);  
 			var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
 
 			// use 0x02 | 0x10 to open file for appending.
@@ -724,12 +730,14 @@ function update_notarylist() {
 } 
 
 function initNotaries(){
-  dump("\nPerspectives Initialization\n");
+  d_print("\nPerspectives Initialization\n");
   setStatus(STATE_NEUT, "");
+  update_notarylist(); 
   init_whitelist();
   getBrowser().addProgressListener(notaryListener, 
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
   setTimeout(function (){ requeryAllTabs(gBrowser); }, 4000);
-  dump("Perspectives Finished Initialization\n\n");
+  d_print("Perspectives Finished Initialization\n\n");
 
 }
+

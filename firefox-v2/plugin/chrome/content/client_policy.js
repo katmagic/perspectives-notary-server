@@ -1,3 +1,9 @@
+/* 
+ This file implements a lot of the client side policy functionality 
+ assuming JSON formatted data.  We will probably have to tweak this code
+ to use XML, not JSON.  Also, we will need to add the signature checks.
+*/ 
+
 function sort_number_list_desc(list){ 
 	function sortNumber(a,b){ return b - a; }
 	list.sort(sortNumber); 
