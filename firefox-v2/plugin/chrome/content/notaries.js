@@ -10,9 +10,11 @@ var strbundle = null; // this isn't loaded when things are intialized
 function d_print(line) {
 	dump(line); 
 	other_cache["debug"] += line;
-        // if firebug is installed, log to that console too
-        if(Firebug && Firebug.Console && Firebug.Console.log) 
-	  Firebug.Console.log(line); 
+	try { 
+	   Firebug.Console.log(line); 
+	} catch(e) { 
+	   /* ignore, this will blow up if Firebug is not installed */  
+	}
 } 
 
 

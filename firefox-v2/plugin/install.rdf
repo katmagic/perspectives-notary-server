@@ -7,7 +7,7 @@
     <!-- Required Items -->
 		<em:id>perspectives@cmu.edu</em:id>
 		<em:name>Perspectives</em:name>
-		<em:version>2.1.5</em:version>
+		<em:version>2.2</em:version>
 		<em:targetApplication>        <!-- Firefox -->
 			<Description>
 				<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
@@ -27,7 +27,10 @@
     <em:localized> 
 	<Description> 
 	 <em:locale>en-US</em:locale> 
-    		<em:description>A secure way to verify encrypted websites and bypass security warnings </em:description>
+    		<em:description>Securely bypasses Firefox HTTPS security 
+		 errors by verifying certificates using a collection of 
+		 Network Notaries.  See http://www.cs.cmu.edu/~perspectives/ 
+		</em:description>
 	 </Description> 
     </em:localized> 
     <em:localized> 
