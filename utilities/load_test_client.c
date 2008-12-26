@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
         if(num_fds) {
           recv_len = recv_single_reply(sock, recv_buf, MAX_PACKET_LEN, &reply_addr);
           /*
-          ssh_key_info_list* list = parse_message(recv_buf, recv_len, pub_key);
+          ssh_key_info_list* list = parse_message(recv_buf, recv_len);
           print_key_info_list(stdout, list);
           printf("\n");
           free_key_info_list(list);

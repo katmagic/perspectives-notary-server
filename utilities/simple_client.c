@@ -60,7 +60,9 @@ int main(int argc, char *argv[])
    char recv_buf[MAX_PACKET_LEN];
    struct sockaddr_in reply_addr;
    int recv_len = recv_single_reply(sock, recv_buf, MAX_PACKET_LEN, &reply_addr);
-   ssh_key_info_list* list = parse_message(recv_buf, recv_len, pub_key);
+	
+   //FIXME:  Disabling signature check b/c of API change
+   ssh_key_info_list* list = parse_message(recv_buf, recv_len);
    if(list == NULL) {
       printf("Failed to parse message and create list of keys \n");
       exit(1);
