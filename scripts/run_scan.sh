@@ -16,6 +16,11 @@ if [ $# = 3 ] ; then
   cd $3
 fi
 
+if ! [ -x python ] ; then
+  echo "could not find 'python' in path. python must be installed"
+  exit 1
+fi 
+
 if ! [ -d "bin" ] ; then 
   echo "must be invoked from the top level of the notary package"
   exit 1
@@ -47,7 +52,7 @@ if [ $1 = "db" ]; then
     exit 1
   fi
 
-  bin/db2file $db_env_fname $db_fname | grep "Start Host" | awk -F "'" '{print $2}' > log/scan_list_$time.txt
+  python scripts/list_by_last_obs $db_env_fname $db_fname newer 10 | awk '{print $1}' > log/scan_list_$time.txt
 
   file=log/scan_list_$time.txt
 
