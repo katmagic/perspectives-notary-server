@@ -10,24 +10,24 @@
 // represents a single notary server and its reply on the 
 // client side
 typedef struct {
-	struct list_head list;
-	
-	// server info
-	uint32_t ip_addr;
-	uint16_t port;
-        //RSA* public_key; 
-        char* public_key; // base64 encoded null-terminated string 
+  struct list_head list;
 
-	// result data
-	ssh_key_info_list *notary_results;
-	uint8_t received_reply;
-        uint32_t consistent_secs;	
+  // server info
+  uint32_t ip_addr;
+  uint16_t port;
+  //RSA* public_key; 
+  char* public_key; // base64 encoded null-terminated string 
+
+  // result data
+  ssh_key_info_list *notary_results;
+  uint8_t received_reply;
+  uint32_t consistent_secs;	
 } server_list;
 
 // master handle given to client 
 typedef struct {
-	server_list notary_servers;
-        int num_servers;
+  server_list notary_servers;
+  int num_servers;
 } SSHNotary;
 
 typedef SSHNotary Notary; 
@@ -56,6 +56,8 @@ char *get_notary_reply(SSHNotary *notary);
 
 char* get_reply_as_svg(const char* service_id, SSHNotary *notary,uint32_t show_len_sec); 
 char* get_reply_as_json(SSHNotary *notary); 
+
+char* get_reply_as_xml(SSHNotary *notary); 
 
 int get_number_of_notaries(SSHNotary *notary);
 
