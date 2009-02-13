@@ -706,8 +706,12 @@ char* get_reply_as_xml(SSHNotary *notary) {
       for(i = 0; i < num_spans; i++){
         uint32_t t_start = ntohl(timespans[0]);
         uint32_t t_end   = ntohl(timespans[1]);
-        snprintf(buf, 1024, "\t\t<start> %d </start>\n\t\t<end> %d </end>\n",
-            t_start, t_end);
+        snprintf(buf, 1024, 
+                "\t\t<timestamp>\n"
+                "\t\t\t<start> %d </start>\n"
+                "\t\t\t<end>   %d </end>\n"
+                "\t\t</timestamp>\n",
+                t_start, t_end);
         str_buffer_append(b, buf); 
         timespans += 2;
       }

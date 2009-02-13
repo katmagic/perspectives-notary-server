@@ -23,7 +23,7 @@ unsigned int notary_debug = DEBUG_ERROR;
 
 int main(int argc, char *argv[]){
   if (argc < 3 || argc > 4) { 
-    printf("Usage: <notary-file> <service-id> <text|svg|json>\n");
+    printf("Usage: <notary-file> <service-id> <text|svg|xml|json>\n");
     exit(1);
   }
   SSHNotary *notary = init_ssh_notary();
