@@ -28,10 +28,10 @@ echo "notarycode/firefox-v2/Perspectives.xpi" >> exclude
 echo "notarycode/firefox-v2/ff_with_log.sh" >> exclude
 echo "notarycode/firefox-v2/xulrunner-sdk" >> exclude
 echo "notarycode/firefox-v2/build" >> exclude
-echo "notarycode/firefox-v2/dist" >> exclude
+#echo "notarycode/firefox-v2/dist" >> exclude
 find notarycode -type d -print | egrep '\.svn' >> exclude
 
-tar czfX notarycode/$fname exclude notarycode/firefox-v2 notarycode/common notarycode/notary-client notarycode/COPYING notarycode/README
+tar czfX notarycode/$fname exclude notarycode/firefox-v2 notarycode/common notarycode/notary-client notarycode/COPYING notarycode/README notarycode/config/notary_list.txt
 
 rm exclude
 
