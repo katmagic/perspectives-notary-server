@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<overlay id="persp-statusbar"  
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <script type="application/x-javascript" src="query.js" />
+	<statusbar id = "status-bar">
+        <statusbarpanel id="j-status" tooltiptext="J"
+            onclick="query();">
+            <label value="Hello" />
+        </statusbarpanel> 
+    </statusbar>
+</overlay>
+
+
