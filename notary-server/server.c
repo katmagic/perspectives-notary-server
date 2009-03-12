@@ -14,16 +14,10 @@
 #include "net_util.h"
 #include "keyscan_util.h"
 #include "list.h" 
+#include "server_common.h"
 
 #define MAX_ONDEMAND_WAIT_SEC 3
 #define ONDEMAND_CHECK_INTERVAL_SEC 1
-
-typedef struct {
-	uint16_t port;
-	uint32_t ip_addr;
-	char *db_env_fname;
-	char *db_fname;
-} server_config;
 
 typedef struct {
   notary_header *hdr;
@@ -33,49 +27,6 @@ typedef struct {
   int addr_len; 
   struct list_head list; // for linked-list
 } ondemand_probe; 
-
-void parse_config_file(server_config *conf, char* fname){
-  char buf[1024];
-  FILE *f;
-  assert(fname);
-
-  f = fopen(fname, "r");
-  if(f == NULL) {
-    fprintf(stderr,"Notary Error: Invalid conf file %s \n", fname);
-    return;
-  }
-
-  while(fgets(buf, 1023,f) != NULL) {
-    if(*buf == '\n') continue;
-    if(*buf == '#') continue;
-    int size = strlen(buf);
-    buf[size - 1] = 0x0; // replace '\n' with NULL
-    char *delim = strchr(buf,'=');
-    if(delim == NULL) {
-      DPRINTF(DEBUG_ERROR, 
-          "Ignoring malformed line: %s \n", buf);
-      continue;
-    }
-    *delim = 0x0;
-
-    char *value = delim + 1;
-    DPRINTF(DEBUG_INFO, "key = '%s' value = '%s' \n", 
-        buf, value);
-    if(strcmp(buf,"ip_addr") == 0) { 
-      conf->ip_addr = str_2_ip(value);
-    } else if(strcmp(buf, "port") == 0) {
-      conf->port = atoi(value);
-    } else if(strcmp(buf, "db_env_fname") == 0){
-      conf->db_env_fname = strdup(value);
-    } else if(strcmp(buf, "db_fname") == 0) {
-      conf->db_fname = strdup(value);
-    } else {
-      DPRINTF(DEBUG_ERROR, "Unknown config value %s : %s \n",
-          buf, value);
-    }
-  }		
-}
-
 
 
 BOOL parse_header(notary_header *hdr, int recv_len, char** hostname_out, 
@@ -223,7 +174,7 @@ void check_ondemand_list(DB *db, ondemand_probe *ondemand_list,
 
 
 
-void server_loop(DB *db, uint32_t ip_addr, uint16_t port) {
+void server_loop(DB *db, uint32_t ip_addr, uint16_t port){
 
    unsigned int fromlen;
    int sock, length, n;
