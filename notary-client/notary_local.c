@@ -64,8 +64,10 @@ void add_notary_server(SSHNotary *notary, uint32_t ip_address, uint16_t port,
   tmp->consistent_secs = 0;
   __list_add(&tmp->list,&(notary->notary_servers.list),
       (notary->notary_servers.list.next));
+  /*
   DPRINTF(DEBUG_INFO, "Adding notary server: %s : %d \n",
       inet_ntoa(*(struct in_addr*)&ip_address), tmp->port);
+      */
   ++(notary->num_servers);
 }
 
