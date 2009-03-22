@@ -9,7 +9,7 @@ int parse_begin(char **place, char *request){
 
     *place = *place + 1; //skip the ?
 
-    tmp = strpbrk(*place, "\r\n");//Only parse one line
+    tmp = strpbrk(*place, " \r\n");//Only parse one line
     if (tmp != NULL){
         *tmp = '\0';
     }
