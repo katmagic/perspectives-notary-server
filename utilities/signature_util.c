@@ -15,7 +15,7 @@ unsigned int notary_debug = DEBUG_ERROR;
 // if 'create' is true, then 'key' is a private key
 // and we will regenerate all DB entries.  
 // otherwise, 'key' is a public key and we just verify all entries
-void loop_over(DB *db, RSA* crypto_key, BOOL create_sig){
+void loop_over(DB *db, RSA* crypto_key, BOOL create_sig, char* sig_type){
     DBC *cursorp;
     DBT key,data;
     int ret; 
@@ -44,15 +44,26 @@ void loop_over(DB *db, RSA* crypto_key, BOOL create_sig){
             int input_len = key.size + data.size - SIGNATURE_LEN;
             unsigned int sig_len = -1;
             unsigned char sig_buf[SIGNATURE_LEN];
-            int ret = get_signature(name_start, input_len, crypto_key,
+            int ret = 0; 
+	    if(strcmp(sig_type,"sha256") == 0) { 
+		ret = get_signature_rsa_sha256(name_start, input_len, 
+			crypto_key, sig_buf, &sig_len);
+	    } else { 
+		ret = get_signature(name_start, input_len, crypto_key,
                         sig_buf, &sig_len);
+	    } 
             if(ret || sig_len != SIGNATURE_LEN) {
                   DPRINTF(DEBUG_ERROR, "problem calculating sig \n");
                   continue;
             }
 
-            ret = verify_signature(name_start, input_len, crypto_key,
+	    if(strcmp(sig_type,"sha256") == 0) { 
+            	ret = verify_signature_rsa_sha256(name_start, input_len, 
+			crypto_key, sig_buf, sig_len);
+            } else {
+		ret = verify_signature(name_start, input_len, crypto_key,
                                       sig_buf, sig_len);
+	    }
             if(ret){ 
               char *sig_start = name_start + input_len;
               memcpy(sig_start, sig_buf, sig_len);
@@ -106,8 +117,8 @@ int
 main(int argc, char** argv)
 {
 
-      if(argc != 5) {
-        printf("usage: <c|v> <db-env> <db-file> <key>\n");
+      if(argc != 6) {
+        printf("usage: <c|v> <db-env> <db-file> <key> <md5|sha256>\n");
         exit(1);
       }
 
@@ -130,7 +141,7 @@ main(int argc, char** argv)
           exit(1);
       }
 
-      loop_over(db, key, create_keys);
+      loop_over(db, key, create_keys, argv[5]);
 
       bdb_close(db);
       return 0;

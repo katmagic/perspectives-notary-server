@@ -76,7 +76,6 @@ PRBool verify_signature_with_header(char *der_header, int der_header_len,
     sig_str.Assign(sig64, strlen(sig64));    
     key_str.Assign(server_key, strlen(server_key));    
     data_str.Assign((char*)data, data_len);
-     
     rv = sigVerifier->VerifyData(data_str,sig_str,key_str,&ret);   
     
     if (NS_FAILED(rv)) { 
@@ -111,8 +110,8 @@ PRBool verify_signature(char *buf, int msg_len, char *server_key) {
 	0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 
 	0x0d, 0x01, 0x01, 0x04, 0x05, 0x00, 0x03, 0x81, 0xad, 0x00 };
     char der_header_sha256[DER_HEADER_LEN] = { 0x30, 0x81, 0xbf, 
-	0x30, 0x0a, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 
-	0x0a, 0x01, 0x01, 0x0b, 0x05, 0x00, 0x03, 0x81, 0xad, 0x00 };
+	0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 
+	0x0d, 0x01, 0x01, 0x0b, 0x05, 0x00, 0x03, 0x81, 0xad, 0x00 };
     int sig_len = SIGNATURE_LEN;  
     notary_header *hdr = (notary_header*)buf;
     int data_len = ntohs(hdr->total_len) - sig_len - sizeof(notary_header);
@@ -123,18 +122,10 @@ PRBool verify_signature(char *buf, int msg_len, char *server_key) {
     res = verify_signature_with_header(der_header_sha256, DER_HEADER_LEN, sig, 
 					sig_len, data, data_len, 
 					server_key);
-    if(res) { 
-      DPRINTF(DEBUG_ERROR, "SHA256 verification succeeded\n"); 
-      return res; 
-    }
-    DPRINTF(DEBUG_ERROR, "SHA256 verification failed\n"); 
-    res = verify_signature_with_header(der_header_md5, DER_HEADER_LEN, sig, 
-					sig_len, data, data_len, 
-					server_key);
     if(!res) { 
-      DPRINTF(DEBUG_ERROR, "MD5 verification failed\n"); 
+    	res = verify_signature_with_header(der_header_md5, DER_HEADER_LEN, sig, 
+					sig_len, data, data_len, server_key);
     }
-    DPRINTF(DEBUG_ERROR, "MD5 verification succeeded\n"); 
     return res; 
 }
 

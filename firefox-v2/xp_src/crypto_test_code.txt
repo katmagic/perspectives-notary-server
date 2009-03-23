@@ -89,7 +89,7 @@ PRBool VerifyData(unsigned char *data, unsigned int data_len,
 		SEC_OID_PKCS1_MD5_WITH_RSA_ENCRYPTION,NULL); 
     SECStatus rv = DER_Encode(arena, &result, CERTSignedDataTemplate, &sd); 
     if(rv) 
-	printf("fuck, encode failed\n"); 
+	printf("encode failed\n"); 
     else  { 
 	for(int i = 0; i < 30; i++) { 
           printf("%02x, ", result.data[i]); 

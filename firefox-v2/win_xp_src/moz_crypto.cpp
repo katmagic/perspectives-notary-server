@@ -37,7 +37,8 @@
 
 PRBool VerifyData(unsigned char *data, unsigned int data_len,
                   unsigned char *sig, unsigned int sig_len,
-                  char *key64, unsigned int key64_len)
+                  char *key64, unsigned int key64_len, 
+		  SECOidTag oidTag)
 
 {
     // Allocate an arena to handle the majority of the allocations
@@ -83,12 +84,12 @@ PRBool VerifyData(unsigned char *data, unsigned int data_len,
    sig_item.len = sig_len; 
     
    SECAlgorithmID algID; 
-   SECOID_SetAlgorithmID(arena,&algID,SEC_OID_PKCS1_MD5_WITH_RSA_ENCRYPTION,NULL); 
+   SECOID_SetAlgorithmID(arena,&algID, oidTag,NULL); 
 
     ss = VFY_VerifyDataWithAlgorithmID(data,
                                        data_len, publicKey,
                                        &sig_item,
-									   &algID,
+				       &algID,
                                        NULL, NULL);
         
 
@@ -107,9 +108,16 @@ PRBool verify_signature(char *buf, int msg_len, char *server_key) {
     int data_len = ntohs(hdr->total_len) - sig_len - sizeof(notary_header);
     unsigned char* data = (unsigned char*)(hdr + 1);
     unsigned char *sig = (unsigned char*) (data + data_len);
+    PRBool res; 
     printf("msg verify: data_len = %d sig_len = %d \n",data_len, sig_len);
 
-    return VerifyData(data, data_len, sig, sig_len, server_key, strlen(server_key)); 
+    res = VerifyData(data, data_len, sig, sig_len, server_key, 
+	strlen(server_key), SEC_OID_PKCS1_SHA256_WITH_RSA_ENCRYPTION); 
+    if(!res) { 
+    	res =  VerifyData(data, data_len, sig, sig_len, server_key, 
+	   strlen(server_key), SEC_OID_PKCS1_MD5_WITH_RSA_ENCRYPTION); 
+    }  
+    return res; 
 } 
 
 /*

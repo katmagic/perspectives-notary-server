@@ -18,7 +18,7 @@ FILE *f;
 #define MAX_DATA_SIZE 10000
 #define KEY_DATA_SIZE 16
 
-void parse_file(RSA* priv_key){
+void parse_file(RSA* priv_key, char* sig_type){
   char buf[1024];
 
   char hostname[512];
@@ -102,11 +102,16 @@ void parse_file(RSA* priv_key){
 
     } // done while(1) reading all keys for a single host
 
-    if(priv_key != NULL) {
+    if(priv_key != NULL && sig_type != NULL) {
       unsigned char sig_buf[SIGNATURE_LEN];
       unsigned int sig_len;
-      int sig_ret = get_signature(data, offset, priv_key, 
-          sig_buf, &sig_len); 
+      int sig_ret; 
+      if(strcmp(sig_type, "sha256") == 0) { 
+      	sig_ret = get_signature_rsa_sha256(data, offset, 
+				priv_key,sig_buf, &sig_len); 
+      } else { 
+	sig_ret = get_signature(data, offset, priv_key,sig_buf, &sig_len); 
+      } 
       if(sig_ret || sig_len != SIGNATURE_LEN) {
         printf("Error calculating signature \n");
         continue; 
@@ -142,8 +147,8 @@ void close_db(int signal) {
 
 int main(int argc, char** argv) {
                  
-      if(argc != 5 && argc != 4) {
-        printf("usage:<file-in>  <db-env> <db-filename> <priv-key> \n");
+      if(argc != 6 && argc != 4) {
+        printf("usage:<file-in>  <db-env> <db-filename> <priv-key> <md5|sha256>\n");
         printf("if no private key is given, DB signatures will be invalid\n");
         exit(1);
       }
@@ -167,15 +172,17 @@ int main(int argc, char** argv) {
       }
 
       RSA *priv_key = NULL;
-      if(argc == 5) {  
+      char *sig_type = NULL; 
+      if(argc == 6) {  
         priv_key = load_private_key(argv[4]);
         if(priv_key == NULL) {
           DPRINTF(DEBUG_ERROR, "failed to load private key '%s' \n", argv[3]);
           exit(1);
         }
+	sig_type = argv[5]; 
       }
 
-      parse_file(priv_key); 
+      parse_file(priv_key,sig_type); 
 
       bdb_close(db);
       fclose(f);

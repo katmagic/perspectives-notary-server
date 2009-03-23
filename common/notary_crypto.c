@@ -70,12 +70,13 @@ RSA* load_public_key(char *filename) {
 }
 
 
- 
-int get_signature(char *buf, unsigned int buf_size, 
-                     RSA *priv_key,
-                     unsigned char *sig_buf, unsigned int *sig_len) {
+// computes an RSA-MD5 signature over 'buf' using 'priv_key'
+// signature data is returned is 'sig_buf' which should be at least
+// SIGNATURE_LEN bytes in size.  
+// Method returns 0 on success.   
+int get_signature(char *buf, unsigned int buf_size, RSA *priv_key,
+                   unsigned char *sig_buf, unsigned int *sig_len) {
 
-  
   unsigned char digest[16];
   unsigned int digest_len = 16;
   MD5_CTX md5;
@@ -84,20 +85,19 @@ int get_signature(char *buf, unsigned int buf_size,
   MD5_Final(digest, &md5);
 
   int ret_val = RSA_sign(NID_md5, digest, digest_len, 
-      sig_buf, sig_len, priv_key);
+			sig_buf, sig_len, priv_key);
   if(!ret_val) {
-      char buf[128];
       unsigned long e = ERR_get_error();
-      ERR_error_string(e, buf);
-      printf("signing error: %s \n", buf);
+      DPRINTF(DEBUG_ERROR,"RSA_sign error: %s", ERR_error_string(e, buf));
       return 1;
   }
  
   return 0;
 }
 
-int verify_signature(char *buf, unsigned int buf_size, 
-                      RSA *pub_key, 
+// verifies a RSA-MD5 signature 'sig_buf' of data 'buf' for signing key
+// 'pub_key'.  Returns 1 if the signature if valid, 0 otherwise.  
+int verify_signature(char *buf, unsigned int buf_size, RSA *pub_key, 
                      unsigned char *sig_buf, unsigned int sig_len) {
 
 
@@ -108,10 +108,47 @@ int verify_signature(char *buf, unsigned int buf_size,
   MD5_Update(&md5, (unsigned char*)buf, buf_size);
   MD5_Final(digest, &md5);
   
-  int ret_val = RSA_verify(NID_md5,digest, digest_len, 
-            sig_buf, sig_len, pub_key);
+  return RSA_verify(NID_md5,digest, digest_len,sig_buf, sig_len, pub_key);
+}
 
-  return ret_val;
+// computes an RSA-SHA256 signature over 'buf' using 'priv_key'
+// signature data is returned is 'sig_buf' which should be at least
+// SIGNATURE_LEN bytes in size.  
+// Method returns 0 on success.   
+int get_signature_rsa_sha256(char *buf, unsigned int buf_size, RSA *priv_key,
+                   unsigned char *sig_buf, unsigned int *sig_len) {
+
+  unsigned char digest[32];
+  unsigned int digest_len = 32;
+  SHA256_CTX ctx;
+  SHA256_Init(&ctx);
+  SHA256_Update(&ctx, (unsigned char*)buf, buf_size);
+  SHA256_Final(digest, &ctx);
+
+  int ret_val = RSA_sign(NID_sha256, digest, digest_len, 
+			sig_buf, sig_len, priv_key);
+  if(!ret_val) {
+      unsigned long e = ERR_get_error();
+      DPRINTF(DEBUG_ERROR,"RSA_sign error: %s", ERR_error_string(e, buf));
+      return 1;
+  }
+ 
+  return 0;
+}
+
+// verifies a RSA-SHA256 signature 'sig_buf' of data 'buf' for signing key
+// 'pub_key'.  Returns 1 if the signature if valid, 0 otherwise.  
+int verify_signature_rsa_sha256(char *buf, unsigned int buf_size, RSA *pub_key, 
+                     unsigned char *sig_buf, unsigned int sig_len) {
+
+  unsigned char digest[32];
+  unsigned int digest_len = 32;
+  SHA256_CTX ctx;
+  SHA256_Init(&ctx);
+  SHA256_Update(&ctx, (unsigned char*)buf, buf_size);
+  SHA256_Final(digest, &ctx);
+
+  return RSA_verify(NID_sha256,digest, digest_len,sig_buf, sig_len, pub_key);
 }
 
 int verify_message_signature(notary_header *hdr, RSA* pub_key) {
