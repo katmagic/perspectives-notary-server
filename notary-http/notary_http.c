@@ -13,6 +13,7 @@
 #include "server_common.h"
 #include "str_buffer.h" 
 #define LISTENQ 1024
+#define XML_RESP_LEN 1024
 
 /* TODO server_config and parse_config_file should be moved to common so the
  * code isn't replicated. Email dan about this */
@@ -25,8 +26,11 @@ void process(DB *db, int sockfd);
 void fatal_error(char *msg);
 char* db_get_xml(DB *db, char *host, char *port, char *service_type);
 
+/*
 unsigned int notary_debug = 
 DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO | DEBUG_CRYPTO;
+*/
+unsigned int notary_debug = 0;
 
 int main(int argc, char **argv){
     DB *db;
@@ -153,11 +157,11 @@ char* db_get_xml(DB *db, char *host, char *port, char *service_type){
     char tmp_buf[MAX_PACKET_LEN];
     char db_data[MAX_PACKET_LEN]; // valid? 
     ssh_key_info_list *info_list, *cur;
-    str_buffer *b = str_buffer_new(1024);   
+    str_buffer *b = str_buffer_new(XML_RESP_LEN);   
    
     snprintf(tmp_buf, sizeof(tmp_buf), 
             "%s:%s,%s", host, port, service_type);
-    printf("service_id = '%s'\n", tmp_buf); 
+    //printf("service_id = '%s'\n", tmp_buf); 
     db_data_len = get_data(db, tmp_buf, db_data, sizeof(db_data));
     if (db_data_len < 0){
         puts("db lookup failed");
@@ -179,7 +183,7 @@ char* db_get_xml(DB *db, char *host, char *port, char *service_type){
     str_buffer_append(b,tmp_buf); 
     char *str = str_buffer_get(b); 
     str_buffer_free(b); 
-    printf("buf: %s\n", str); 
+    //printf("buf: %s\n", str); 
     free(sig64);
     return str;  
 }
