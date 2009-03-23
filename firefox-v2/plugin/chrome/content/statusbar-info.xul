@@ -6,7 +6,7 @@
 	title          = "Perspectives"
 	xmlns          = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	buttons        = ","
-	onload         = "LoadInfo(window.arguments[0], window.arguments[1],window.arguments[2])">
+	onload         = "LoadInfo(window.arguments[0], window.arguments[1],window.arguments[2],window.arguments[3])">
 
 <prefpane id="perspective-main-prefpane"> 
 <preferences> 

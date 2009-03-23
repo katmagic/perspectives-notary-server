@@ -66,6 +66,7 @@ var show_component_failed = true;
 // I use this hack b/c ssl_cache only caches info for sites we have
 // probed, wherease we want to communicate info to the status pop-up
 // about sites we haven't probed. 
+var tab_info_cache = {}; 
 var other_cache = {}; 
 other_cache["debug"] = ""; 
 
@@ -422,12 +423,9 @@ function queryNotaries(cert, uri){
 /* There is a bug here.  Sometimes it gets into a browser reload 
  * loop.  Come back to this later */
 
-function do_override(browser, cert) { 
+function do_override(browser, cert,isTemp) { 
   var uri = browser.currentURI;
   d_print("Do Override\n");
-  if(!root_prefs.getBoolPref("perspectives.exceptions.enabled")){
-    return;
-  }
 
   gSSLStatus = get_invalid_cert_SSLStatus(uri);
   var flags = 0;
@@ -438,8 +436,7 @@ function do_override(browser, cert) {
   if(gSSLStatus.isNotValidAtThisTime)
     flags |= overrideService.ERROR_TIME;
 
-  var isTemp = ! root_prefs.getBoolPref("perspectives.exceptions.permanent");
-	overrideService.rememberValidityOverride(
+  overrideService.rememberValidityOverride(
 			uri.asciiHost, uri.port, cert, flags, isTemp);
 
   setTimeout(function (){ 
@@ -456,9 +453,8 @@ function do_override(browser, cert) {
 // by default this is not the case
 function updateStatus(browser, has_user_permission){
 
-if(strbundle == null) 
-   strbundle = document.getElementById("notary_strings");
-
+  if(strbundle == null) 
+     strbundle = document.getElementById("notary_strings");
 
   d_print("Update Status\n");
   if(!browser){
@@ -475,6 +471,12 @@ if(strbundle == null)
   if(!uri.host){
     return;
   }
+  var ti = tab_info_cache[uri.spec]; 
+  if(!ti) { 
+    ti = {}; 
+    tab_info_cache[uri.spec] = ti; 
+  }
+  
   d_print("Update Status: " + uri.spec + "\n");
 
   if(uri.scheme != "https"){
@@ -511,8 +513,8 @@ if(strbundle == null)
   var duration   = 
     root_prefs.getIntPref("perspectives.required_duration") / 100.0;
 
-  var is_override_cert = overrideService.isCertUsedForOverrides(cert, true, true);
-  d_print("is_override_cert = " + is_override_cert + "\n"); 
+  ti.is_override_cert = overrideService.isCertUsedForOverrides(cert, true, true);
+  d_print("is_override_cert = " + ti.is_override_cert + "\n"); 
   var check_good = root_prefs.getBoolPref("perspectives.check_good_certificates"); 
 
   if(state & STATE_IS_SECURE) { 
@@ -521,16 +523,16 @@ if(strbundle == null)
   }
 
   // see if the browser has this cert installed prior to this browser session
-  var already_trusted = (state & STATE_IS_SECURE) && 
-    !(is_override_cert && ssl_cache[uri.host]); 
-  if(!check_good && already_trusted) {
+  ti.already_trusted = (state & STATE_IS_SECURE) && 
+    !(ti.is_override_cert && ssl_cache[uri.host]); 
+  if(!check_good && ti.already_trusted) {
     var text = strbundle.getString("noProbeRequestedError"); 
     setStatus(STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
   } 
 
-  if(!is_override_cert && state & STATE_IS_INSECURE){
+  if(!ti.is_override_cert && state & STATE_IS_INSECURE){
     d_print("state is STATE_IS_INSECURE, we need an override\n");
     broken = true; 
   }
@@ -561,6 +563,7 @@ if(strbundle == null)
     ssl_cache[uri.host] = temp;
   }
 
+  ti.notary_valid = false; // default 
   cache_cert = ssl_cache[uri.host];
   if( !broken && 
       !cache_cert.identityText &&
@@ -592,17 +595,23 @@ if(strbundle == null)
     }
   }
   else { //Its secure
+    ti.notary_valid = true; 
     cache_cert.tooltip = strbundle.getFormattedString("verifiedMessage", 
 		[ cache_cert.duration, duration]);
     setStatus(STATE_SEC, cache_cert.tooltip);
     if (broken){
       broken = false;
-      do_override(browser, cert);
-      cache_cert.identityText = strbundle.getString("exceptionAdded");  
-      // don't give drop-down if user gave explicit
-      // permission to query notaries
-      if(firstLook && !has_user_permission){
-        notifyOverride(browser);
+      ti.exceptions_enabled = root_prefs.getBoolPref(
+				"perspectives.exceptions.enabled")
+      if(ti.exceptions_enabled) { 
+  	ti.isTemp = !root_prefs.getBoolPref("perspectives.exceptions.permanent");
+	do_override(browser, cert, ti.isTemp);
+      	cache_cert.identityText = strbundle.getString("exceptionAdded");  
+      	// don't give drop-down if user gave explicit
+      	// permission to query notaries
+      	if(firstLook && !has_user_permission){
+        	notifyOverride(browser);
+      	}
       }
     }
   }

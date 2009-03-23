@@ -94,30 +94,54 @@ function addTimeline(svgString){
   after.appendChild(svg);
 }
 
-function LoadInfo(brws, ssl_cache, other_cache){
-  var info  = document.getElementById("perspective-description");
-  var liner = document.getElementById("perspective-quorum-duration");
-  var host  = document.getElementById("perspective-information-caption");
-  var cert  = ssl_cache[brws.currentURI.host];
-  browser   = brws;
- 
-  host.label = brws.currentURI.host;
-  selectSecurity();
-  if(cert){
-    info.value  = cert.summary;
-    liner.value = cert.tooltip;
-    if(cert.svg && cert.svg != ""){
-      info.hidden = true;
-      addTimeline(cert.svg);
-      var radio = document.getElementById("info-radio");
-      radio.hidden=false;
-      radio.selectedIndex = 0;
-    }
-  } else if (other_cache["reason"]) {
-    info.value = other_cache["reason"]; 
-  } 
-  document.getElementById("perspective-debug").value = other_cache["debug"];
+// returns a string that describes whether perspectives installed a security exception 
+function getActionStr(ti) { 
+ if(ti.is_override_cert && ti.already_trusted) 
+   return  "Perspectives has previously installed a security exception for this site."; 
+ if(ti.already_trusted) 
+   return "The browser trusts this site and requires no security exception";  
+ if(ti.is_override_cert && ti.notary_valid && ti.exceptions_enabled && ti.isTemp) 
+   return  "Perspectives installed a temporary security exception for this site."; 
+ if(ti.is_override_cert && ti.notary_valid && ti.exceptions_enabled && !ti.isTemp)  
+   return "Perspectives installed a permanent security exception for this site."; 
+ return "No security exception has been installed"; 
+}
+
+function LoadInfo(brws, ssl_cache, other_cache,tab_info_cache){
+  try { 
+  	selectSecurity();
+  	document.getElementById("perspective-debug").value = other_cache["debug"];
+  	browser   = brws; // save as global
   
+  	var info  = document.getElementById("perspective-description");
+  	var liner = document.getElementById("perspective-quorum-duration");
+  	var host  = document.getElementById("perspective-information-caption");
+  	if(!brws || !brws.currentURI) 
+		return; 
+ 
+  	var uri = brws.currentURI; 
+  	var cert  = ssl_cache[uri.host];
+        var ti = tab_info_cache[uri.spec]; 
+  	host.label = uri.host;
+	if(ti) { 
+		host.label += ": " + getActionStr(ti); 
+	} 
+  	if(cert){
+    		info.value  = cert.summary;
+    		liner.value = cert.tooltip;
+    		if(cert.svg && cert.svg != ""){
+      			info.hidden = true;
+      			addTimeline(cert.svg);
+      			var radio = document.getElementById("info-radio");
+      			radio.hidden=false;
+      			radio.selectedIndex = 0;
+    		}
+  	} else if (other_cache["reason"]) {
+    		info.value = other_cache["reason"]; 
+  	} 
+  } catch(e) { 
+	alert("Error loading Perspectives dialog: " + e); 
+  } 
   return true;
 }
 

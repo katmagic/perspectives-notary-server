@@ -5,9 +5,10 @@ const STATE_NEUT  = 2;
 const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
 const STATE_STOP  = Components.interfaces.nsIWebProgressListener.STATE_STOP;
 
-function ShowInfo(ssl_cache,other_cache) {
+function ShowInfo(ssl_cache,other_cache,tab_info_cache) {
   window.openDialog("chrome://perspectives/content/statusbar-info.xul", 
-    "perspectiveInfo", "centerscreen, chrome, toolbar", gBrowser, ssl_cache,other_cache).focus();
+        "perspectivesInfo", "centerscreen, chrome, toolbar", gBrowser, 
+	ssl_cache,other_cache,tab_info_cache).focus();
 }
 
 function setStatus(state, tooltip){
