@@ -3,10 +3,11 @@
 <overlay id="persp-statusbar"  
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
+  <script type="application/x-javascript" src="base64.js" />
+  <script type="application/x-javascript" src="xml_notary_client.js" />
   <script type="application/x-javascript" src="query.js" />
 	<statusbar id = "status-bar">
-        <statusbarpanel id="j-status" tooltiptext="J"
-            onclick="query();">
+        <statusbarpanel id="j-status" tooltiptext="J" onclick="query();">
             <label value="Hello" />
         </statusbarpanel> 
     </statusbar>
