@@ -4,6 +4,8 @@
 #include "common.h"
 #include <openssl/rsa.h>
 
+char *base64(const unsigned char *input, int length);
+
 RSA *key_from_buf(char *buf, int len, BOOL is_private);
 RSA* load_private_key(char *filename);
 RSA* load_public_key(char *filename);
