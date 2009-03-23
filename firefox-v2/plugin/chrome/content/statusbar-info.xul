@@ -150,10 +150,11 @@
 
 </prefpane>
 
-
-<!--Bug in docs makes me put it here -->
+<script type = "application/x-javascript" src="common.js"/>
 <script type = "application/x-javascript" src="statusbar-info.js"/>
 <script type = "application/x-javascript" src="notaries.js"/>
 <script type = "application/x-javascript" src="statusbar.js"/>
+
+
 
 </prefwindow> 

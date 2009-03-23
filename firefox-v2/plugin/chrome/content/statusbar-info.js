@@ -66,11 +66,13 @@ function selectSecurity(){
 
 //Should open new window because the dialog prevents them from seeing it
 function openNotaries(){
-  window.open("chrome://perspectives_main/content/notary_list.txt");
+  openDialog("chrome://perspectives_main/content/notary_list.txt", 
+		"", "width=600,height=600,resizable=yes");
 }
 
 function onHelp(){
-  window.open("chrome://perspectives_main/content/help.html");
+  openDialog("chrome://perspectives_main/content/help.html","",
+		"width=600,height=600,resizable=yes");
 }
 
 function switchResultForm(){

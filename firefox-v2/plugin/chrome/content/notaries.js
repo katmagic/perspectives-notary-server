@@ -7,17 +7,6 @@ var STATE_IS_SECURE =
 
 var strbundle = null; // this isn't loaded when things are intialized
 
-function d_print(line) {
-	dump(line); 
-	other_cache["debug"] += line;
-	try { 
-	   Firebug.Console.log(line); 
-	} catch(e) { 
-	   /* ignore, this will blow up if Firebug is not installed */  
-	}
-} 
-
-
 var nonrouted_ips = [ "^192\.168\.", "^10.", "^172\.1[6-9]\.", 
 			"^172\.2[0-9]\.", "172\.3[0-1]\.", "^169\.254\.", 
 			"^127\.0\.0\.1$"]; // could add many more
@@ -734,7 +723,11 @@ function update_notarylist() {
 function initNotaries(){
   d_print("\nPerspectives Initialization\n");
   setStatus(STATE_NEUT, "");
-  update_notarylist(); 
+  //NOTE: disabling auto-update of the notary list
+  // b/c it could allow an attacker with a bogus root 
+  // cert to compromise the system.  We should have this
+  // update include a signature. 
+  //update_notarylist(); 
   init_whitelist();
   getBrowser().addProgressListener(notaryListener, 
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
