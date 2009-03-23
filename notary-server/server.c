@@ -173,11 +173,16 @@ void check_ondemand_list(DB *db, ondemand_probe *ondemand_list,
 } 
 
 
+int main_sock; 
+void on_kill(int signal) { 
+	close(main_sock); 
+} 
+
 
 void server_loop(DB *db, uint32_t ip_addr, uint16_t port){
 
    unsigned int fromlen;
-   int sock, length, n;
+   int main_sock, length, n;
    struct sockaddr_in server;
    struct sockaddr_in from;
    char buf[MAX_PACKET_LEN];
@@ -186,14 +191,14 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port){
    ondemand_probe ondemand_list; 
    INIT_LIST_HEAD(&ondemand_list.list); 
 
-   sock=socket(AF_INET, SOCK_DGRAM, 0);
-   if (sock < 0) sock_error("Opening socket");
+   main_sock=socket(AF_INET, SOCK_DGRAM, 0);
+   if (main_sock < 0) sock_error("Opening socket");
    length = sizeof(server);
    bzero(&server,length);
    server.sin_family=AF_INET;
    server.sin_addr.s_addr= ip_addr;
    server.sin_port=htons(port);
-   if (bind(sock,(struct sockaddr *)&server,length)<0) 
+   if (bind(main_sock,(struct sockaddr *)&server,length)<0) 
        sock_error("binding");
    fromlen = sizeof(struct sockaddr_in);
 
@@ -204,14 +209,14 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port){
       timeout.tv_usec = 0; 
 
       FD_ZERO(&readset); 
-      FD_SET(sock, &readset);
-      int result = select(sock+1,&readset,NULL,NULL,&timeout); 
+      FD_SET(main_sock, &readset);
+      int result = select(main_sock+1,&readset,NULL,NULL,&timeout); 
       if(result < 0) { 
         perror("select"); 
       } else if(result > 0) {
         // socket is ready 
-        assert(FD_ISSET(sock,&readset)); 
-        n = recvfrom(sock,buf,MAX_PACKET_LEN,
+        assert(FD_ISSET(main_sock,&readset)); 
+        n = recvfrom(main_sock,buf,MAX_PACKET_LEN,
            0,(struct sockaddr *)&from,&fromlen);
         if (n < 0) sock_error("recvfrom");
        
@@ -228,7 +233,7 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port){
 		ip_2_str(*(uint32_t*)&from.sin_addr.s_addr));
 	*/  
 
-        int bytes = attempt_lookup_and_reply(db,sock,hdr,&from,fromlen,FALSE); 
+        int bytes = attempt_lookup_and_reply(db,main_sock,hdr,&from,fromlen,FALSE); 
   
         // if database did not contain an entry for service-id, request probe 
         if(bytes == 0) 
@@ -236,9 +241,9 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port){
       }
 
       gettimeofday(&now,NULL); 
-      if(last_ondemand_check + ONDEMAND_CHECK_INTERVAL_SEC < now.tv_sec){
+      if(last_ondemand_check + ONDEMAND_CHECK_INTERVAL_SEC < (uint32_t)now.tv_sec){
         last_ondemand_check = now.tv_sec;
-        check_ondemand_list(db, &ondemand_list, sock, now.tv_sec);  
+        check_ondemand_list(db, &ondemand_list, main_sock, now.tv_sec);  
       } 
    } // end while 
  }

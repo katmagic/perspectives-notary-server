@@ -11,6 +11,7 @@
 #include "parse.h"
 #include "bdb_storage.h"
 #include "server_common.h"
+#include "str_buffer.h" 
 #define LISTENQ 1024
 
 /* TODO server_config and parse_config_file should be moved to common so the
@@ -22,8 +23,7 @@ int read_request(int sockfd, char *buf, int buflen);
 void http_server_loop(DB *db, uint32_t ip_addr, uint16_t port);
 void process(DB *db, int sockfd);
 void fatal_error(char *msg);
-int db_get_xml(DB *db, char *buf, int bufsize, char *host, char *port, 
-        char *service_type);
+char* db_get_xml(DB *db, char *host, char *port, char *service_type);
 
 unsigned int notary_debug = 
 DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO | DEBUG_CRYPTO;
@@ -49,29 +49,34 @@ int main(int argc, char **argv){
     bdb_close(db);
 }
 
+int main_sock; 
+void on_kill(int signal) { 
+	close(main_sock); 
+} 
+
 void http_server_loop(DB *db, uint32_t ip_addr, uint16_t port){
-    int sock, connfd, status;
+    int main_sock, connfd, status;
     struct sockaddr_in server, client;
     socklen_t clientlen;
 
     /* Prepare the socket */
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) fatal_error("Opening socket");
+    main_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (main_sock < 0) fatal_error("Opening socket");
 
     memset(&server, 0, sizeof(server));
     server.sin_family      = AF_INET;
     server.sin_addr.s_addr = ip_addr;
     server.sin_port        = htons(port);
 
-    if (bind(sock, (struct sockaddr *)&server, sizeof(server)) < 0){
+    if (bind(main_sock, (struct sockaddr *)&server, sizeof(server)) < 0){
         fatal_error("binding");
     }
 
-    if (listen(sock, LISTENQ) < 0) fatal_error("listen"); 
+    if (listen(main_sock, LISTENQ) < 0) fatal_error("listen"); 
 
     clientlen = sizeof(client);
     while (1){
-        connfd = accept(sock, (struct sockaddr *) &client, &clientlen);
+        connfd = accept(main_sock, (struct sockaddr *) &client, &clientlen);
         if (connfd < 0) fatal_error("accept"); 
 
         if (fork() == 0){
@@ -91,8 +96,7 @@ void http_server_loop(DB *db, uint32_t ip_addr, uint16_t port){
 }
 
 void process(DB *db, int sockfd){
-    int len, xml_buf_len;
-    char xml_buf[MAX_PACKET_LEN];
+    int len;
     char req_buf[2048];
     char *state;
     char *param, *value, *host, *port, *styp;
@@ -122,8 +126,10 @@ void process(DB *db, int sockfd){
         return;
     }
 
-    xml_buf_len = db_get_xml(db, xml_buf, sizeof(xml_buf), host, port, styp);
-    if (xml_buf_len < 0) return; 
+    char* xml_buf = db_get_xml(db, host, port, styp);
+    int xml_buf_len = strlen(xml_buf); 
+    if (xml_buf_len < 0) 
+	goto error; // FIXME: need to return 'no result', don't leave them hanging
 
     len = snprintf(req_buf, sizeof(req_buf), 
             "HTTP/1.0 200 OK\r\n"
@@ -131,40 +137,51 @@ void process(DB *db, int sockfd){
             "Content-length: %d\r\n"
             "Content-type: text/xml\r\n\r\n", xml_buf_len);
 
-    if (send(sockfd, req_buf, len, 0) < 0)         return; 
-    if (send(sockfd, xml_buf, xml_buf_len, 0) < 0) return;
+    if (send(sockfd, req_buf, len, 0) < 0) 
+	goto error; 
+    if (send(sockfd, xml_buf, xml_buf_len, 0) < 0) 
+	goto error;
+    
+    error:
+
+    free(xml_buf); 	
 }
 
-int db_get_xml(DB *db, char *buf, int buf_size, char *host, char *port, 
-        char *service_type){
-    int db_data_len, tmp_len, ret_len;
+char* db_get_xml(DB *db, char *host, char *port, char *service_type){
+    int db_data_len;
     struct list_head *pos, *tmp;
     char tmp_buf[MAX_PACKET_LEN];
-    char db_data[MAX_PACKET_LEN];
+    char db_data[MAX_PACKET_LEN]; // valid? 
     ssh_key_info_list *info_list, *cur;
+    str_buffer *b = str_buffer_new(1024);   
    
-    ret_len = 0;
     snprintf(tmp_buf, sizeof(tmp_buf), 
             "%s:%s,%s", host, port, service_type);
+    printf("service_id = '%s'\n", tmp_buf); 
     db_data_len = get_data(db, tmp_buf, db_data, sizeof(db_data));
     if (db_data_len < 0){
         puts("db lookup failed");
-        return -1; 
+        return NULL; 
     }
 
-    tmp_len = snprintf(buf, buf_size, 
-            "<server>\n");
-    ret_len += tmp_len;
-    buf     += tmp_len;
-    buf_size -= tmp_len;
+    str_buffer_append(b,"<server>"); 
 
     info_list = list_from_data(db_data, db_data_len, SIGNATURE_LEN);
     list_for_each_safe(pos, tmp, &info_list->list){
         cur = list_entry(pos, ssh_key_info_list, list);
+	//FIXME: don't use a fixed size buffer for this call either 
         xml_from_key_info(tmp_buf, sizeof(tmp_buf), cur->info);
+	str_buffer_append(b,tmp_buf); 
     }
-    ret_len += snprintf(buf, buf_size, "%s</server>\n",tmp_buf);
-    return ret_len;
+    char *sig_ptr = db_data + db_data_len - SIGNATURE_LEN;
+    char * sig64 = base64((unsigned char*)sig_ptr, SIGNATURE_LEN); 
+    snprintf(tmp_buf, sizeof(tmp_buf), "<sig>%s</sig>\n</server>\n",sig64);
+    str_buffer_append(b,tmp_buf); 
+    char *str = str_buffer_get(b); 
+    str_buffer_free(b); 
+    printf("buf: %s\n", str); 
+    free(sig64);
+    return str;  
 }
 
 /*O(n^2)!*/
