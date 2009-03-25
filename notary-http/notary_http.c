@@ -173,9 +173,9 @@ char* db_get_xml(DB *db, char *host, char *port, char *service_type){
     info_list = list_from_data(db_data, db_data_len, SIGNATURE_LEN);
     list_for_each_safe(pos, tmp, &info_list->list){
         cur = list_entry(pos, ssh_key_info_list, list);
-	//FIXME: don't use a fixed size buffer for this call either 
-        xml_from_key_info(tmp_buf, sizeof(tmp_buf), cur->info);
-	str_buffer_append(b,tmp_buf); 
+        char *key_info_xml = xml_from_key_info(cur->info);
+	str_buffer_append(b,key_info_xml);
+	free(key_info_xml);  
     }
     char *sig_ptr = db_data + db_data_len - SIGNATURE_LEN;
     char * sig64 = base64((unsigned char*)sig_ptr, SIGNATURE_LEN); 

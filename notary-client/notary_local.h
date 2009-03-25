@@ -59,7 +59,7 @@ char* get_reply_as_json(SSHNotary *notary);
 
 char* get_reply_as_xml(SSHNotary *notary); 
 
-void xml_from_key_info(char *buf, int bufsize, ssh_key_info *info);
+char *xml_from_key_info(ssh_key_info *info);
 
 int get_number_of_notaries(SSHNotary *notary);
 

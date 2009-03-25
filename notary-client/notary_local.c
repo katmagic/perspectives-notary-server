@@ -665,13 +665,12 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
   return str; 
 }
 
+// given a set of server replies, print them in XML
 char* get_reply_as_xml(SSHNotary *notary) {
   server_list *server;
   struct list_head *outer_pos, *inner_pos;
   str_buffer *b = str_buffer_new(1024);   
-  ssh_key_info *info; 
   ssh_key_info_list *list_elem;
-  char buf[1024];
 
   str_buffer_append(b, "<response>\n");
   // loop through each reply list to draw each valid timespan 
@@ -690,10 +689,10 @@ char* get_reply_as_xml(SSHNotary *notary) {
 
     list_for_each(inner_pos, &server->notary_results->list) {
       list_elem = list_entry(inner_pos, ssh_key_info_list, list);
-      info = list_elem->info; 
-      xml_from_key_info(buf, sizeof(buf), info);
+      char *key_info_xml = xml_from_key_info(list_elem->info);
+      str_buffer_append(b,key_info_xml); 
+      free(key_info_xml); 
     }
-    str_buffer_append(b, buf);
     str_buffer_append(b, "</server>\n");
   }
 
@@ -704,35 +703,38 @@ char* get_reply_as_xml(SSHNotary *notary) {
 }
 
 //notary-http needs this so I moved it out of get_reply_as_xml
-void xml_from_key_info(char *buf, int bufsize, ssh_key_info *info){
+char* xml_from_key_info(ssh_key_info *info){
   int i, tmp;
-  char *key_buf;
+  char buf[1024], *key_buf;
+  str_buffer *b = str_buffer_new(1024);   
 
   int len        = ntohs(info->key_len_bytes);
-  key_buf        = (char*)(info + 1); //wha??
+  key_buf        = (char*)(info + 1); 
   char *key_str  = buf_2_hexstr(key_buf,KEY_LEN);
   int *timespans = (int*)(key_buf + len);
   int num_spans  = ntohs(info->num_timespans);
 
-  tmp = snprintf(buf, bufsize, "\t<result>\n\t\t<key>%s</key>\n", key_str);
-  buf     += tmp;
-  bufsize -= tmp;
+  tmp = snprintf(buf, 1024, "\t<result>\n\t\t<key>%s</key>\n", key_str);
+  str_buffer_append(b,buf); 
+  free(key_str); 
 
   for(i = 0; i < num_spans; i++){
     uint32_t t_start = ntohl(timespans[0]);
     uint32_t t_end   = ntohl(timespans[1]);
-    tmp = snprintf(buf, bufsize, 
+    snprintf(buf, 1024, 
         "\t\t<timestamp>\n"
         "\t\t\t<start> %d </start>\n"
         "\t\t\t<end>   %d </end>\n"
         "\t\t</timestamp>\n",
         t_start, t_end);
-    buf       += tmp;
-    bufsize   -= tmp;
+    str_buffer_append(b,buf); 
     timespans += 2;
   }
 
-  snprintf(buf, bufsize, "\t</result>\n");
+  str_buffer_append(b,"\t</result>\n");
+  char *str = str_buffer_get(b); 
+  str_buffer_free(b); 
+  return str; 
 }
 
 char* get_reply_as_json(SSHNotary *notary) {
@@ -774,7 +776,8 @@ char* get_reply_as_json(SSHNotary *notary) {
       key_buf = (char*)(list_elem->info + 1); //wha??
       char *key_str = buf_2_hexstr(key_buf,KEY_LEN);
       str_buffer_append(b,"{ \"key\" : \""); 
-      str_buffer_append(b,key_str); 
+      str_buffer_append(b,key_str);
+      free(key_str);  
       str_buffer_append(b,"\",\n \"timestamps\" : ["); 
       int len = ntohs(info->key_len_bytes);
       int *timespans = (int*)(key_buf + len);
