@@ -12,6 +12,8 @@
 #include "bdb_storage.h"
 #include "server_common.h"
 #include "str_buffer.h" 
+#include "pthread.h"
+
 #define LISTENQ 1024
 #define XML_RESP_LEN 1024
 
@@ -21,20 +23,22 @@
 //TODO look for memory leaks try valgrind
 
 int read_request(int sockfd, char *buf, int buflen);
-void http_server_loop(DB *db, uint32_t ip_addr, uint16_t port);
-void process(DB *db, int sockfd);
+void http_server_loop(uint32_t ip_addr, uint16_t port);
+void process(int sockfd);
 void fatal_error(char *msg);
+void* thread_start(void *connfd);
 int send404(int sock);
-char* db_get_xml(DB *db, char *host, char *port, char *service_type);
+char* db_get_xml(char *host, char *port, char *service_type);
+
 
 /*
 unsigned int notary_debug = 
 DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO | DEBUG_CRYPTO;
 */
 unsigned int notary_debug = 0;
+DB *db;
 
 int main(int argc, char **argv){
-    DB *db;
     uint32_t env_flags;
     server_config conf;
 
@@ -50,7 +54,7 @@ int main(int argc, char **argv){
     if(db == NULL) fatal_error("bdb_open failed");
     warm_db(db);
 
-    http_server_loop(db, conf.ip_addr, conf.port);
+    http_server_loop(conf.ip_addr, conf.port);
     bdb_close(db);
 }
 
@@ -59,10 +63,11 @@ void on_kill(int signal) {
 	close(main_sock); 
 } 
 
-void http_server_loop(DB *db, uint32_t ip_addr, uint16_t port){
-    int main_sock, connfd, status;
+void http_server_loop(uint32_t ip_addr, uint16_t port){
+    int main_sock, connfd;
     struct sockaddr_in server, client;
     socklen_t clientlen;
+    pthread_t tid;
 
     /* Prepare the socket */
     main_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -84,23 +89,20 @@ void http_server_loop(DB *db, uint32_t ip_addr, uint16_t port){
         connfd = accept(main_sock, (struct sockaddr *) &client, &clientlen);
         if (connfd < 0) fatal_error("accept"); 
 
-        if (fork() == 0){
-            process(db, connfd);
-            if (close(connfd) < 0){ 
-                fatal_error("Failed Socket Close");
-            }
-            bdb_close(db);
-            close(connfd);
-            exit(0);
-        }
-        close(connfd);
-
-        //Reap children
-        while(waitpid(-1, &status, WNOHANG) > 0);
+        pthread_create(&tid, NULL, thread_start, (void *)connfd);
+        pthread_detach(tid);
     }
 }
 
-void process(DB *db, int sockfd){
+void* thread_start(void *connfd){
+    process((int)connfd);
+    if (close((int)connfd) < 0){ 
+        fatal_error("Failed Socket Close");
+    }
+    return NULL;
+}
+
+void process(int sockfd){
     int len, xml_buf_len;
     char req_buf[2048];
     char *state, *xml_buf;
@@ -110,7 +112,10 @@ void process(DB *db, int sockfd){
         return;
     }
 
-    if (parse_begin(&state, req_buf) < 0) return; 
+    if (parse_begin(&state, req_buf) < 0){
+        send404(sockfd);//TODO seend 400 instead
+        return; 
+    }
 
     host = NULL;
     port = NULL;
@@ -132,7 +137,7 @@ void process(DB *db, int sockfd){
         return;
     }
 
-    xml_buf = db_get_xml(db, host, port, styp);
+    xml_buf = db_get_xml(host, port, styp);
     xml_buf_len = strlen(xml_buf); 
 
     if (xml_buf_len < 0){
@@ -172,7 +177,7 @@ int send404(int sockfd){
     return 0;
 }
 
-char* db_get_xml(DB *db, char *host, char *port, char *service_type){
+char* db_get_xml(char *host, char *port, char *service_type){
     int db_data_len;
     struct list_head *pos, *tmp;
     char tmp_buf[MAX_PACKET_LEN];

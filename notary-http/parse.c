@@ -5,7 +5,7 @@ int parse_begin(char **place, char *request){
     char *tmp;
 
     *place = strchr(request, '?');
-    if (place == NULL) return -1; 
+    if (*place == NULL) return -1; 
 
     *place = *place + 1; //skip the ?
 
