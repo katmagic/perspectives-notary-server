@@ -24,6 +24,7 @@ int read_request(int sockfd, char *buf, int buflen);
 void http_server_loop(DB *db, uint32_t ip_addr, uint16_t port);
 void process(DB *db, int sockfd);
 void fatal_error(char *msg);
+int send404(int sock);
 char* db_get_xml(DB *db, char *host, char *port, char *service_type);
 
 /*
@@ -100,9 +101,9 @@ void http_server_loop(DB *db, uint32_t ip_addr, uint16_t port){
 }
 
 void process(DB *db, int sockfd){
-    int len;
+    int len, xml_buf_len;
     char req_buf[2048];
-    char *state;
+    char *state, *xml_buf;
     char *param, *value, *host, *port, *styp;
 
     if ((len = read_request(sockfd, req_buf, sizeof(req_buf))) <= 0){
@@ -126,14 +127,18 @@ void process(DB *db, int sockfd){
         }
     }
 
-    if (!host || !port || !styp){
+    if (!(host && port && styp)){
+        send404(sockfd);
         return;
     }
 
-    char* xml_buf = db_get_xml(db, host, port, styp);
-    int xml_buf_len = strlen(xml_buf); 
-    if (xml_buf_len < 0) 
-	goto error; // FIXME: need to return 'no result', don't leave them hanging
+    xml_buf = db_get_xml(db, host, port, styp);
+    xml_buf_len = strlen(xml_buf); 
+
+    if (xml_buf_len < 0){
+        send404(sockfd);
+        goto error;
+    }
 
     len = snprintf(req_buf, sizeof(req_buf), 
             "HTTP/1.0 200 OK\r\n"
@@ -143,12 +148,28 @@ void process(DB *db, int sockfd){
 
     if (send(sockfd, req_buf, len, 0) < 0) 
 	goto error; 
-    if (send(sockfd, xml_buf, xml_buf_len, 0) < 0) 
-	goto error;
-    
-    error:
 
+    if (send(sockfd, xml_buf, xml_buf_len, 0) < 0) 
+    goto error;
+
+	goto error; 
+
+error:
     free(xml_buf); 	
+}
+
+int send404(int sockfd){
+    char * req_buf = 
+        "HTTP/1.0 404 Not Found"
+        "Server: Perspectves Http Server\r\n"
+        "Connection: close"
+        "Content-Type: text/html"
+        "Content-Length: 0\r\n\r\n";
+
+    if (send(sockfd, req_buf, sizeof(req_buf), 0) < 0){
+        return -1;
+    }
+    return 0;
 }
 
 char* db_get_xml(DB *db, char *host, char *port, char *service_type){
