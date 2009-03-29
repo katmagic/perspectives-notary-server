@@ -64,7 +64,7 @@ void on_kill(int signal) {
 } 
 
 void http_server_loop(uint32_t ip_addr, uint16_t port){
-    int main_sock, connfd;
+    int main_sock, connfd, on = 1;
     struct sockaddr_in server, client;
     socklen_t clientlen;
     pthread_t tid;
@@ -77,6 +77,10 @@ void http_server_loop(uint32_t ip_addr, uint16_t port){
     server.sin_family      = AF_INET;
     server.sin_addr.s_addr = ip_addr;
     server.sin_port        = htons(port);
+
+    if(setsockopt(main_sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) { 
+	fatal_error("socket option"); 
+    } 
 
     if (bind(main_sock, (struct sockaddr *)&server, sizeof(server)) < 0){
         fatal_error("binding");
