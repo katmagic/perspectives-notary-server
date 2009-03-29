@@ -3,14 +3,29 @@
 <overlay id="persp-statusbar"  
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
+<stringbundleset id="stringbundleset">
+	<stringbundle id="notary_strings" src="chrome://jscript_perspectives/locale/notaries.properties" insertbefore="1"/>
+</stringbundleset> 
+
+
+  <script type="application/x-javascript" src="common.js"/>
   <script type="application/x-javascript" src="base64.js" />
   <script type="application/x-javascript" src="xml_notary_client.js" />
   <script type="application/x-javascript" src="query.js" />
+  <script type="application/x-javascript" src="notaries.js" />
+  <script type="application/x-javascript" src="statusbar.js"/>
+  <script type="application/x-javascript" src="statusbar-info.js"/>
 	<statusbar id = "status-bar">
-        <statusbarpanel id="j-status" tooltiptext="J" onclick="query();">
-            <label value="Hello" />
-        </statusbarpanel> 
-    </statusbar>
+	<statusbarpanel id="perspective-status"
+      			onclick="if(event.button == 0) ShowInfo(ssl_cache,other_cache,tab_info_cache)"
+			tooltiptext="Perspectives">
+      <image id="perspective-status-image"
+      src="chrome://jscript_perspectives/content/default.png" 
+      style="width:16px; height:16px;" 
+      context="perspective-contextmenu" />
+	</statusbarpanel> 
+	</statusbar>
+
 </overlay>
 
 
