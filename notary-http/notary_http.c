@@ -142,12 +142,11 @@ void process(int sockfd){
     }
 
     xml_buf = db_get_xml(host, port, styp);
-    xml_buf_len = strlen(xml_buf); 
-
-    if (xml_buf_len < 0){
+    if (!xml_buf){
         send404(sockfd);
         goto error;
     }
+    xml_buf_len = strlen(xml_buf); 
 
     len = snprintf(req_buf, sizeof(req_buf), 
             "HTTP/1.0 200 OK\r\n"
@@ -161,21 +160,19 @@ void process(int sockfd){
     if (send(sockfd, xml_buf, xml_buf_len, 0) < 0) 
     goto error;
 
-	goto error; 
-
 error:
     free(xml_buf); 	
 }
 
 int send404(int sockfd){
     char * req_buf = 
-        "HTTP/1.0 404 Not Found"
+        "HTTP/1.0 404 Not Found\r\n"
         "Server: Perspectves Http Server\r\n"
-        "Connection: close"
-        "Content-Type: text/html"
+        "Connection: close\r\n"
+        "Content-Type: text/html\r\n"
         "Content-Length: 0\r\n\r\n";
 
-    if (send(sockfd, req_buf, sizeof(req_buf), 0) < 0){
+    if (send(sockfd, req_buf, strlen(req_buf), 0) < 0){
         return -1;
     }
     return 0;
@@ -187,17 +184,16 @@ char* db_get_xml(char *host, char *port, char *service_type){
     char tmp_buf[MAX_PACKET_LEN];
     char db_data[MAX_PACKET_LEN]; // valid? 
     ssh_key_info_list *info_list, *cur;
-    str_buffer *b = str_buffer_new(XML_RESP_LEN);   
    
     snprintf(tmp_buf, sizeof(tmp_buf), 
             "%s:%s,%s", host, port, service_type);
     //printf("service_id = '%s'\n", tmp_buf); 
     db_data_len = get_data(db, tmp_buf, db_data, sizeof(db_data));
     if (db_data_len < 0){
-        puts("db lookup failed");
-        return NULL; 
+	return NULL; 
     }
 
+    str_buffer *b = str_buffer_new(XML_RESP_LEN);   
     str_buffer_append(b,"<server>"); 
 
     info_list = list_from_data(db_data, db_data_len, SIGNATURE_LEN);
