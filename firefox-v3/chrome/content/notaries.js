@@ -11,6 +11,13 @@ var nonrouted_ips = [ "^192\.168\.", "^10.", "^172\.1[6-9]\.",
 			"^172\.2[0-9]\.", "172\.3[0-1]\.", "^169\.254\.", 
 			"^127\.0\.0\.1$"]; // could add many more
 
+var notaries = [ 
+ { 
+  "host" : "localhost:15217", 
+  "public_key" : "MIHKMA0GCSqGSIb3DQEBAQUAA4G4ADCBtAKBrAE0Ow4voLFzfAYf6PIVCT8CBz7Gts4/zWtAntmqk2CkvRw7KJJD9oB2RFjAVIhOIxSZN0GtLb4SjIMtDretJLIyd//UXx0lvOY8b8tc0XxpCnrMI6GPkmZ1oFZ2K9KSv7Fcega7fBsBvRuSZ1JsrdhW8xtCa1H7YqP9wnh4DYPssYhiNi/e9hbOHP3+spXxTyeTmJW6Xep8sd4j0pNdsQuV9SNd8Lv36+hkNEUCAwEAAQ=="
+ }
+]; 
+
  
 function is_nonrouted_ip(ip_str) { 
 	for each (regex in nonrouted_ips) { 
@@ -344,7 +351,7 @@ function getCertificate(browser){
 }
 
 
-function queryNotaries(cert, uri){
+function queryNotaries(cert, uri,browser,has_user_permission){
 
   if(!cert) { 
     d_print("No certificate found for: " + uri.host); 
@@ -354,25 +361,77 @@ function queryNotaries(cert, uri){
   var port = uri.port; 
   if(port == -1) 
     port = 443; 
-  service_id = uri.host + ":" + port + ",2"; 
+  var service_id = uri.host + ":" + port + ",2"; 
+  // send a request to each notary 
+  for(i = 0; i < notaries.length; i++) { 
+    var notary_server = notaries[i]; 
+    var full_url = "http://" + notary_server.host + 
+	"?host=" + uri.host + "&port=" + port + "&service_type=2&";
+    d_print("querying '" + full_url + "'");
+    var req  = XMLHttpRequest();
+    req.open("GET", full_url, true);
+    
+    req.onreadystatechange = function(evt) { 
+	notaryAjaxCallback(uri,cert, req, notary_server,service_id,
+				browser,has_user_permission); 
+    } 
+    req.send(null);
+  }
 
+} 
+        
+function notaryAjaxCallback(uri, cert, req, notary_server,service_id,
+				browser,has_user_permission) {  
+            if (req.readyState == 4) {  
+                if(req.status == 200){
+		   try { 
+		    	d_print(req.responseText); 
+    		    	var server_node = req.responseXML.documentElement;
+                    	var server_result = parse_server_node(server_node);
+		    	var bin_result = pack_result_as_binary(server_result,
+							    service_id);
+		    	d_print(resultToString(server_result)); 
+   		    	var verifier = Cc["@mozilla.org/security/datasignatureverifier;1"].createInstance(Ci.nsIDataSignatureVerifier);
+		    	var sig = server_result.signature; 		  
+		    	var result = verifier.verifyData(bin_result, 
+				server_result.signature, notary_server.public_key);
+                    	d_print("signature verify = " + result);
+
+			//FIXME: only one notary server for now!
+			notaryQueriesComplete(uri,cert,service_id,browser,
+						has_user_permission); 
+                  } catch (e) { 
+			alert(e); 
+		  } 
+                }
+                else {
+                    d_print("Error querying notary");  
+                }
+            }  
+}  
+
+function notaryQueriesComplete(uri,cert,service_id,browser,has_user_permission) {
+		try {
     // FAKE IT ALL 
     var quorum_duration = "4.0"; // FAKE 
     var info = "ssl key blah"; // FAKE
     var is_consistent = true; // FAKE
     var str = "Notary Lookup for: " + service_id + "\n";
-    str += "Key = " + cert.md5Fingerprint + "\n"; 
-    str += "Results:\n\n"; 
-    str += "Quorum duration: " + quorum_duration + " days\n"; 
-    str += "Notary Observations: \n" + info; 
+    			str += "Key = " + cert.md5Fingerprint + "\n"; 
+    			str += "Results:\n\n"; 
+    			str += "Quorum duration: " + quorum_duration + " days\n"; 
+    			str += "Notary Observations: \n" + info; 
     d_print("\n\n" + str + "\n\n");
 
     var svg = ""; 
     ssl_cache[uri.host] = new SslCert(uri.host, uri.port,cert.md5Fingerprint, 
 		str, null,svg, quorum_duration, is_consistent);
-    process_notary_results(uri); 
+    process_notary_results(uri,browser,has_user_permission); 
 
-} 
+                  } catch (e) { 
+			alert(e); 
+		  } 
+}
 
   
 /* There is a bug here.  Sometimes it gets into a browser reload 
@@ -508,14 +567,14 @@ function updateStatus(browser, has_user_permission){
     // this call is asynchronous.  after hearing from the 
     // notaries, the logic picks up again with the function 
     // 'done_querying_notaries()' below
-    queryNotaries(ti.cert, uri);
+    queryNotaries(ti.cert, uri,browser,has_user_permission);
   }else {
-    process_notary_results(uri); 
+    process_notary_results(uri,browser,has_user_permission); 
   }
 }
 
 
-function process_notary_results(uri) {  
+function process_notary_results(uri,browser,has_user_permission) {  
   try { 
  
   var ti = tab_info_cache[uri.spec]; 
@@ -580,7 +639,7 @@ function process_notary_results(uri) {
   ti.broken = false;
  
   } catch (err) {
-    d_print("done_querying_notaries error: " + err);
+    alert("done_querying_notaries error: " + err);
   }
 }
 
