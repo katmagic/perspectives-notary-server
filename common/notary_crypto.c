@@ -144,7 +144,7 @@ int verify_signature(char *buf, unsigned int buf_size, RSA *pub_key,
 // Method returns 0 on success.   
 int get_signature_rsa_sha256(char *buf, unsigned int buf_size, RSA *priv_key,
                    unsigned char *sig_buf, unsigned int *sig_len) {
-
+/*
   unsigned char digest[32];
   unsigned int digest_len = 32;
   SHA256_CTX ctx;
@@ -159,15 +159,17 @@ int get_signature_rsa_sha256(char *buf, unsigned int buf_size, RSA *priv_key,
       DPRINTF(DEBUG_ERROR,"RSA_sign error: %s", ERR_error_string(e, buf));
       return 1;
   }
- 
+
   return 0;
+  */ 
+  return 1; 
 }
 
 // verifies a RSA-SHA256 signature 'sig_buf' of data 'buf' for signing key
 // 'pub_key'.  Returns 1 if the signature if valid, 0 otherwise.  
 int verify_signature_rsa_sha256(char *buf, unsigned int buf_size, RSA *pub_key, 
                      unsigned char *sig_buf, unsigned int sig_len) {
-
+/*
   unsigned char digest[32];
   unsigned int digest_len = 32;
   SHA256_CTX ctx;
@@ -176,6 +178,8 @@ int verify_signature_rsa_sha256(char *buf, unsigned int buf_size, RSA *pub_key,
   SHA256_Final(digest, &ctx);
 
   return RSA_verify(NID_sha256,digest, digest_len,sig_buf, sig_len, pub_key);
+*/
+  return 0; 
 }
 
 int verify_message_signature(notary_header *hdr, RSA* pub_key) {

@@ -64,7 +64,8 @@ void on_kill(int signal) {
 } 
 
 void http_server_loop(uint32_t ip_addr, uint16_t port){
-    int main_sock, connfd, on = 1;
+    int main_sock, on = 1;
+    long connfd;
     struct sockaddr_in server, client;
     socklen_t clientlen;
     pthread_t tid;
@@ -99,8 +100,8 @@ void http_server_loop(uint32_t ip_addr, uint16_t port){
 }
 
 void* thread_start(void *connfd){
-    process((int)connfd);
-    if (close((int)connfd) < 0){ 
+    process((long)connfd);
+    if (close((long)connfd) < 0){ 
         fatal_error("Failed Socket Close");
     }
     return NULL;

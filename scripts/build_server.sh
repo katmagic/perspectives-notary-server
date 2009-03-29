@@ -39,6 +39,17 @@ else
 fi
 cp notary_server ../bin/
 
+cd ../notary-http
+if [ $static == 1 ]; then
+  if [ -f notary_http ] ; then
+    rm notary_http
+  fi
+  make static
+else
+  make 
+fi
+cp notary_http ../bin/
+
 cd ../key-scan
 if [ $static == 1 ]; then
   if [ -f notary_scanner ] ; then
@@ -51,9 +62,7 @@ fi
 cp notary_scanner ../bin
 
 cd ../ssh-scanner
-if ! [ -f "Makefile" ]; then
-./configure
-fi
+./configure --without-zlib-version-check
 make
 cp ssh ../bin/ssh_scan
 

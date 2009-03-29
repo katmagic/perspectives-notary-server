@@ -17,6 +17,9 @@ make clean
 cd ../notary-server
 make clean  
 
+cd ../notary-http
+make clean  
+
 cd ../key-scan
 make clean
 
@@ -44,7 +47,7 @@ echo "common/libdb-4.6.a" >> exclude
 
 # note: we need to keep the notarycode/ in from of each name, otherwise 
 #the exclude doesn't work!
-tar czfX notarycode/$fname exclude notarycode/README notarycode/scripts notarycode/common notarycode/notary-server notarycode/notary-client notarycode/key-scan notarycode/ssh-scanner notarycode/ssl-scanner notarycode/utilities notarycode/config
+tar czfX notarycode/$fname exclude notarycode/README notarycode/scripts notarycode/common notarycode/notary-server notarycode/notary-http notarycode/notary-client notarycode/key-scan notarycode/ssh-scanner notarycode/ssl-scanner notarycode/utilities notarycode/config
 
 rm exclude
 
