@@ -80,7 +80,7 @@ void http_server_loop(uint32_t ip_addr, uint16_t port){
     server.sin_port        = htons(port);
 
     if(setsockopt(main_sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) { 
-	fatal_error("socket option"); 
+        fatal_error("socket option"); 
     } 
 
     if (bind(main_sock, (struct sockaddr *)&server, sizeof(server)) < 0){
@@ -89,10 +89,10 @@ void http_server_loop(uint32_t ip_addr, uint16_t port){
 
     if (listen(main_sock, LISTENQ) < 0) fatal_error("listen"); 
 
-    clientlen = sizeof(client);
     while (1){
+        clientlen = sizeof(client);
         connfd = accept(main_sock, (struct sockaddr *) &client, &clientlen);
-        if (connfd < 0) fatal_error("accept"); 
+        if (connfd < 0) continue;
 
         pthread_create(&tid, NULL, thread_start, (void *)connfd);
         pthread_detach(tid);
@@ -118,7 +118,7 @@ void process(int sockfd){
     }
 
     if (parse_begin(&state, req_buf) < 0){
-        send404(sockfd);//TODO seend 400 instead
+        send404(sockfd);//TODO send 400 instead
         return; 
     }
 
@@ -145,7 +145,7 @@ void process(int sockfd){
     xml_buf = db_get_xml(host, port, styp);
     if (!xml_buf){
         send404(sockfd);
-        goto error;
+        goto done;
     }
     xml_buf_len = strlen(xml_buf); 
 
@@ -156,12 +156,12 @@ void process(int sockfd){
             "Content-type: text/xml\r\n\r\n", xml_buf_len);
 
     if (send(sockfd, req_buf, len, 0) < 0) 
-	goto error; 
+	goto done; 
 
     if (send(sockfd, xml_buf, xml_buf_len, 0) < 0) 
-    goto error;
+    goto done;
 
-error:
+done:
     free(xml_buf); 	
 }
 
@@ -185,13 +185,13 @@ char* db_get_xml(char *host, char *port, char *service_type){
     char tmp_buf[MAX_PACKET_LEN];
     char db_data[MAX_PACKET_LEN]; // valid? 
     ssh_key_info_list *info_list, *cur;
-   
+
     snprintf(tmp_buf, sizeof(tmp_buf), 
             "%s:%s,%s", host, port, service_type);
     //printf("service_id = '%s'\n", tmp_buf); 
     db_data_len = get_data(db, tmp_buf, db_data, sizeof(db_data));
     if (db_data_len < 0){
-	return NULL; 
+        return NULL; 
     }
 
     str_buffer *b = str_buffer_new(XML_RESP_LEN);   
@@ -201,8 +201,8 @@ char* db_get_xml(char *host, char *port, char *service_type){
     list_for_each_safe(pos, tmp, &info_list->list){
         cur = list_entry(pos, ssh_key_info_list, list);
         char *key_info_xml = xml_from_key_info(cur->info);
-	str_buffer_append(b,key_info_xml);
-	free(key_info_xml);  
+        str_buffer_append(b,key_info_xml);
+        free(key_info_xml);  
     }
     char *sig_ptr = db_data + db_data_len - SIGNATURE_LEN;
     char * sig64 = base64((unsigned char*)sig_ptr, SIGNATURE_LEN); 
