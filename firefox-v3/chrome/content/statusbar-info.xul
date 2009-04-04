@@ -63,7 +63,7 @@
       flex      = "1"
       value     = "&ThereisnoPerspectivesinformationavailableforthislocation;"/>
     <!-- svg goes into this box -->
-    <box id = "perspective-svg-box"/>
+    <scrollbox id = "perspective-svg-box"/>
   </groupbox>
   <radiogroup 
     id      = "info-radio" 

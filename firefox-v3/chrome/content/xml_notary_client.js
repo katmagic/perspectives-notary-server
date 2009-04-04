@@ -95,7 +95,7 @@ function resultToString(server_result,show_sig){
 		var start_d = new Date(1000 * start_t).toDateString();  
 		var end_d = new Date(1000 * end_t).toDateString();  
                 out += "start:\t" + start_t + " - " + start_d + "\n"; 
-                out += "end:\t" + end_t + " - " + end_d + "\n"; 
+                out += "end:  \t" + end_t + " - " + end_d + "\n"; 
             }   
         }  
 	if(show_sig)

@@ -26,4 +26,11 @@ try {
      } 
 } 
 
+function get_unix_time() { 
+	var foo = new Date(); // Generic JS date object
+	var unixtime_ms = foo.getTime(); // Returns milliseconds since the epoch
+	return parseInt(unixtime_ms / 1000);
+}
 
+function SEC2DAY(sec) { return sec / (3600 * 24); }  
+function DAY2SEC(day) { return day * (3600 * 24); }  

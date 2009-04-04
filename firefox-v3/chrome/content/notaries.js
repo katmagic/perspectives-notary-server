@@ -455,9 +455,8 @@ function notaryQueriesComplete(uri,cert,service_id,browser,has_user_permission,
  
     var qd_days =  Math.round((quorum_duration / (3600 * 24)) * 1000) / 1000;
     var obs_text = ""; 
- 
     for(var i = 0; i < server_result_list.length; i++) {
-	obs_text += "Notary: " + server_result_list[i].server + "\n";  
+	obs_text += "\nNotary: " + server_result_list[i].server + "\n";  
 	obs_text += resultToString(server_result_list[i]); 
     }  
     var qd_str = (is_consistent) ? qd_days + " days" : "none";
@@ -467,7 +466,8 @@ function notaryQueriesComplete(uri,cert,service_id,browser,has_user_permission,
     			str += "Quorum duration: " + qd_str + "\n"; 
     			str += "Notary Observations: \n" + obs_text + "\n"; 
     d_print("main","\n" + str + "\n");
-    var svg = ""; 
+    var svg = get_svg_graph(service_id, server_result_list, 30);
+    d_print("main", svg);  
     ssl_cache[uri.host] = new SslCert(uri.host, uri.port,cert.md5Fingerprint, 
 		str, null,svg, qd_days, is_consistent);
     process_notary_results(uri,browser,has_user_permission); 

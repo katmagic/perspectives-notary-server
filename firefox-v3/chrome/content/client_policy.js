@@ -131,9 +131,7 @@ function has_quorum_at_time(test_key, results, quorum_size, time) {
 
 
 function get_quorum_duration(test_key, results, quorum_size, stale_limit_secs) { 
-	var foo = new Date(); // Generic JS date object
-	var unixtime_ms = foo.getTime(); // Returns milliseconds since the epoch
-	var unixtime = parseInt(unixtime_ms / 1000);
+	var unixtime = get_unix_time(); 
 
 	if(! check_current_consistency(test_key,results,quorum_size,
 					stale_limit_secs,unixtime)) { 
