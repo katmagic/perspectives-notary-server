@@ -1,5 +1,4 @@
 
-String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); };
 
 // convert an xml '<server>' node to a javascript object
 // In JSON synatax, this object has the following format: 
@@ -85,18 +84,22 @@ function add_der_signature_header(sig_base64) {
 
 
 // Dumps all data in a server response to a string for easy debugging
-function resultToString(server_result){
+function resultToString(server_result,show_sig){
 	var out = ""; 
         for(var j = 0; j < server_result.obs.length; j++) { 
 	    var o = server_result.obs[j]; 
-            out += "\tkey = '" + o.key + "'\n";
-            for(var k = 0; k < o.timestamps.length; k++){ 
-                out += "\ttimetamp: " +
-                    "\t\tstart " + o.timestamps[k].start + 
-                    "\t\tend " + o.timestamps[k].end + "\n"; 
+            out += "ssl key: " + o.key + "'\n";
+            for(var k = 0; k < o.timestamps.length; k++){
+		var start_t = o.timestamps[k].start; 
+		var end_t = o.timestamps[k].end; 
+		var start_d = new Date(1000 * start_t).toDateString();  
+		var end_d = new Date(1000 * end_t).toDateString();  
+                out += "start:\t" + start_t + " - " + start_d + "\n"; 
+                out += "end:\t" + end_t + " - " + end_d + "\n"; 
             }   
         }  
-	out += "\tsignature = '" + server_result.signature + "'\n";  
+	if(show_sig)
+		out += "\tsignature = '" + server_result.signature + "'\n";  
 	return out;
 } 
 

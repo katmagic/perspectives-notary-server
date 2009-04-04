@@ -26,22 +26,22 @@ function setStatus(state, tooltip){
   t.setAttribute("tooltiptext", tooltip);
   switch(state){
     case STATE_SEC:
-      d_print("Secure Status\n");
+      d_print("main", "Secure Status\n");
       i.setAttribute("src", "chrome://jscript_perspectives/content/good.png");
       break;
     case STATE_NSEC:
-      d_print("Unsecure Status\n");
+      d_print("main", "Unsecure Status\n");
       i.setAttribute("src", "chrome://jscript_perspectives/content/bad.png");
       break;
     case STATE_NEUT:
-      d_print("Neutral Status\n");
+      d_print("main", "Neutral Status\n");
       i.setAttribute("src", "chrome://jscript_perspectives/content/default.png");
       break;
     case STATE_ERROR:
-      d_print("Error Status\n");
+      d_print("main", "Error Status\n");
       i.setAttribute("src", "chrome://jscript_perspectives/content/error.png");
       break;
   }
-  d_print("changing tooltip to: " + tooltip + "\n"); 
+  d_print("main", "changing tooltip to: " + tooltip + "\n"); 
   return true;
 }
