@@ -67,8 +67,11 @@ make
 cp ssh ../bin/ssh_scan
 
 cd ../ssl-scanner
+./config shared
+cd apps
 make
-cp apps/openssl ../bin/ssl_scan
+cp openssl ../../bin/ssl_scan
+cd ..
 
 cd ../notary-client
 make

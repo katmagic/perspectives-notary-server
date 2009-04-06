@@ -233,7 +233,6 @@ int main(int Argc, char *Argv[])
 
         // added by dan, to limit functionality to the single use
         if(Argc != 4) {
-           printf("argc = %d \n", Argc); 
            printf("usage: ./ssl_scan s_client -connect <host:port>\n"); 
            exit(1); 
         }
