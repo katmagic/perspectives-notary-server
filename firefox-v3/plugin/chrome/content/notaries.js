@@ -1,4 +1,5 @@
 var MY_ID = "jscript_perspectives@cmu.edu"; 
+var TIMEOUT_SEC = 5; 
 
 var STATE_IS_BROKEN   = 
   Components.interfaces.nsIWebProgressListener.STATE_IS_BROKEN;
@@ -20,7 +21,7 @@ var notary_debug = true;
 // The data is a list of 'notary data' objects.  The object will be
 // empty in the case of an invalid signature or timeout
 var query_result_data = {}; 
-
+var query_timeoutid_data = {}; 
 // list of objects representing each notary server's name + port and public key.
 // this list is populated by init_notarylist() 
 var notaries = []; 
@@ -384,6 +385,7 @@ function queryNotaries(cert, uri,browser,has_user_permission){
     d_print("query", "sending query: '" + full_url + "'");
     var req  = XMLHttpRequest();
     req.open("GET", full_url, true);
+
     //NOTE: ugly, but we need to create a closure here, otherwise
     // the callback will only see the values for the final server
     req.onreadystatechange = (function(r,ns) { 
@@ -393,8 +395,18 @@ function queryNotaries(cert, uri,browser,has_user_permission){
     		}
     })(req,notary_server);  
     req.send(null);
-    //FIXME: Need to set a timeout
   }
+    
+  query_timeoutid_data[service_id] = window.setTimeout(function () { 
+		d_print("main", "timeout for " + service_id); 
+		notaryQueriesComplete(uri,cert,service_id,browser,
+					has_user_permission, 
+					query_result_data[service_id]);
+		delete query_result_data[service_id]; 
+		delete query_timeoutid_data[service_id];  
+	}, 
+	TIMEOUT_SEC * 1000 
+    ); 
 
 } 
         
@@ -425,16 +437,19 @@ function notaryAjaxCallback(uri, cert, req, notary_server,service_id,
 			d_print("query","Query reply for '" + service_id + 
 				"' has no query result data"); 
 			return; 
-		 }  
-		 query_result_data[service_id].push(server_result); 
+		 } 
 		 d_print("query","adding result from: " + notary_server.host); 
+		 query_result_data[service_id].push(server_result); 
+ 
 		 var num_replies = query_result_data[service_id].length; 
 		 if(num_replies == notaries.length) { 
 			d_print("query","got all server replies"); 	
 			notaryQueriesComplete(uri,cert,service_id,browser,
 						has_user_permission, 
 						query_result_data[service_id]);
-			delete query_result_data[service_id]; 
+			delete query_result_data[service_id];
+			window.clearTimeout(query_timeoutid_data[service_id]);
+			delete query_timeoutid_data[service_id];  
 		  } 
                 } catch (e) { 
 			d_print("error", "exception: " + e); 
