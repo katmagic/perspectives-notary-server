@@ -1,4 +1,4 @@
-var MY_ID = "jscript_perspectives@cmu.edu"; 
+var MY_ID = "perspectives@cmu.edu"; 
 var TIMEOUT_SEC = 5; 
 
 var STATE_IS_BROKEN   = 
@@ -137,7 +137,7 @@ function notifyOverride(b){
     accessKey : "", 
     callback: function() {
       b.loadOneTab(
-      "chrome://jscript_perspectives/locale/help.html", null, null,
+      "chrome://perspectives/locale/help.html", null, null,
       null, false);
     }
   }];
@@ -233,7 +233,7 @@ function notifyNeedsPermission(b){
     accessKey : "", 
     callback: function() {
       b.loadOneTab(
-      "chrome://jscript_perspectives/locale/help.html", null, null,
+      "chrome://perspectives/locale/help.html", null, null,
       null, false);
     } 
   }];

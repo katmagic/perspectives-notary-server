@@ -1,8 +1,8 @@
-content jscript_perspectives chrome/content/
-locale jscript_perspectives en-US chrome/locale/en-US/
-locale jscript_perspectives zh-CN chrome/locale/zh-CN/
+content perspectives chrome/content/
+locale perspectives en-US chrome/locale/en-US/
+locale perspectives zh-CN chrome/locale/zh-CN/
 
 content perspectives_main .
 
-overlay	chrome://browser/content/browser.xul chrome://jscript_perspectives/content/statusbar.xul
-overlay	chrome://browser/content/browser.xul chrome://jscript_perspectives/content/initialize.xul
+overlay	chrome://browser/content/browser.xul chrome://perspectives/content/statusbar.xul
+overlay	chrome://browser/content/browser.xul chrome://perspectives/content/initialize.xul

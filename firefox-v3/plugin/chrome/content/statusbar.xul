@@ -4,7 +4,7 @@
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
 <stringbundleset id="stringbundleset">
-	<stringbundle id="notary_strings" src="chrome://jscript_perspectives/locale/notaries.properties" insertbefore="1"/>
+	<stringbundle id="notary_strings" src="chrome://perspectives/locale/notaries.properties" insertbefore="1"/>
 </stringbundleset> 
 
 
@@ -21,7 +21,7 @@
       			onclick="if(event.button == 0) ShowInfo(ssl_cache,other_cache,tab_info_cache)"
 			tooltiptext="Perspectives">
       <image id="perspective-status-image"
-      src="chrome://jscript_perspectives/content/default.png" 
+      src="chrome://perspectives/content/default.png" 
       style="width:16px; height:16px;" 
       context="perspective-contextmenu" />
 	</statusbarpanel> 
