@@ -87,10 +87,7 @@ void request_probe(notary_header *hdr, struct sockaddr_in *addr, int addr_len,
     // we need to actually tell the scanning process to 
     // probe this service_id 
     char *service_id = (char*)(tmp->hdr + 1);
-    int len = strlen(service_id) + 1; // send NULL terminator 
-    DPRINTF(DEBUG_INFO,"Requesting on-demand probe for: '%s'\n", 
-        service_id); 
-    sendToUnixSock(NEW_REQUEST_SOCK_NAME, service_id, len);
+    request_ondemand_probe(service_id); 
 }
 
 

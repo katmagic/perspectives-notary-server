@@ -6,4 +6,6 @@ typedef struct {
 	char *db_fname;
 } server_config;
 
+void request_ondemand_probe(char * service_id); 
+
 void parse_config_file(server_config *conf, char* fname);

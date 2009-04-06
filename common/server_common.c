@@ -5,6 +5,14 @@
 #include "debug.h"
 #include "common.h"
 #include "net_util.h"
+#include "keyscan_util.h" 
+
+void request_ondemand_probe(char * service_id){ 
+    int len = strlen(service_id) + 1; // send NULL terminator 
+    DPRINTF(DEBUG_INFO,"Requesting on-demand probe for: '%s'\n", 
+        service_id); 
+    sendToUnixSock(NEW_REQUEST_SOCK_NAME, service_id, len);
+} 
 
 void parse_config_file(server_config *conf, char* fname){
   char buf[1024];

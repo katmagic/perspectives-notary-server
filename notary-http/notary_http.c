@@ -15,10 +15,14 @@
 #include "pthread.h"
 
 #define LISTENQ 1024
-#define XML_RESP_LEN 1024
+#define XML_RESP_LEN_DEFAULT 1024
 
-/* TODO server_config and parse_config_file should be moved to common so the
- * code isn't replicated. Email dan about this */
+// these values mean that during an on-demand probe
+// the client may see a server-side latency of up to
+// ONDEMAND_SLEEP_SEC * (ONDEMAND_MAX_TRIES - 1) seconds
+#define ONDEMAND_SLEEP_SEC 1
+#define ONDEMAND_MAX_TRIES 4
+
 //TODO in fatal_error close db?
 //TODO look for memory leaks try valgrind
 
@@ -28,14 +32,13 @@ void process(int sockfd);
 void fatal_error(char *msg);
 void* thread_start(void *connfd);
 int send404(int sock);
-char* db_get_xml(char *host, char *port, char *service_type);
+char* db_get_xml(char *service_id);
 
 
-/*
+
 unsigned int notary_debug = 
 DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO | DEBUG_CRYPTO;
-*/
-unsigned int notary_debug = 0;
+
 DB *db;
 
 int main(int argc, char **argv){
@@ -92,7 +95,8 @@ void http_server_loop(uint32_t ip_addr, uint16_t port){
     while (1){
         clientlen = sizeof(client);
         connfd = accept(main_sock, (struct sockaddr *) &client, &clientlen);
-        if (connfd < 0) continue;
+        if (connfd < 0) 
+		continue;
 
         pthread_create(&tid, NULL, thread_start, (void *)connfd);
         pthread_detach(tid);
@@ -102,7 +106,7 @@ void http_server_loop(uint32_t ip_addr, uint16_t port){
 void* thread_start(void *connfd){
     process((long)connfd);
     if (close((long)connfd) < 0){ 
-        fatal_error("Failed Socket Close");
+       	fprintf(stderr,"Failed Socket Close");
     }
     return NULL;
 }
@@ -110,14 +114,20 @@ void* thread_start(void *connfd){
 void process(int sockfd){
     int len, xml_buf_len;
     char req_buf[2048];
-    char *state, *xml_buf;
+    char req_buf_copy[2048]; 
+    char service_id[1024]; // FIXME: use #define
+    char *state, *xml_buf = NULL;
     char *param, *value, *host, *port, *styp;
 
     if ((len = read_request(sockfd, req_buf, sizeof(req_buf))) <= 0){
+    	DPRINTF(DEBUG_ERROR,"Error reading client sock\n"); 
         return;
     }
+    // for debugging, store a copy of the pre-parsed request
+    strncpy(req_buf_copy,req_buf,2048); 
 
     if (parse_begin(&state, req_buf) < 0){
+    	DPRINTF(DEBUG_INFO,"No args, sending 404: '%s'\n",req_buf_copy); 
         send404(sockfd);//TODO send 400 instead
         return; 
     }
@@ -138,16 +148,37 @@ void process(int sockfd){
     }
 
     if (!(host && port && styp)){
+    	DPRINTF(DEBUG_INFO,"Bad args, sending 404: '%s'\n",req_buf_copy); 
         send404(sockfd);
         return;
     }
+    snprintf(service_id, sizeof(service_id), "%s:%s,%s", host, port, styp);
+    DPRINTF(DEBUG_INFO,"Request for '%s'\n",service_id); 
 
-    xml_buf = db_get_xml(host, port, styp);
-    if (!xml_buf){
-        send404(sockfd);
-        goto done;
-    }
+    // when a db lookup returns no results, this loop waits
+    // for the result of an on-demand probe
+    int num_tries = 0; 
+    while(!xml_buf) { 
+    	xml_buf = db_get_xml(service_id);
+	if(xml_buf) 
+	  break; 
+	
+	++num_tries;
+	if(num_tries == 1) { 
+ 	  request_ondemand_probe(service_id);
+	}
+ 
+    	if (num_tries >= ONDEMAND_MAX_TRIES){
+    	   DPRINTF(DEBUG_INFO,"Timeout of on-demand probe for '%s'\n",
+							service_id); 
+           send404(sockfd);
+           goto done;
+    	}
+	sleep(1); 
+    } 
     xml_buf_len = strlen(xml_buf); 
+    DPRINTF(DEBUG_INFO,"Reply for '%s':\n '%s'\n",
+				service_id,xml_buf); 
 
     len = snprintf(req_buf, sizeof(req_buf), 
             "HTTP/1.0 200 OK\r\n"
@@ -179,22 +210,19 @@ int send404(int sockfd){
     return 0;
 }
 
-char* db_get_xml(char *host, char *port, char *service_type){
+char* db_get_xml(char *service_id){
     int db_data_len;
     struct list_head *pos, *tmp;
     char tmp_buf[MAX_PACKET_LEN];
     char db_data[MAX_PACKET_LEN]; // valid? 
     ssh_key_info_list *info_list, *cur;
 
-    snprintf(tmp_buf, sizeof(tmp_buf), 
-            "%s:%s,%s", host, port, service_type);
-    //printf("service_id = '%s'\n", tmp_buf); 
-    db_data_len = get_data(db, tmp_buf, db_data, sizeof(db_data));
+    db_data_len = get_data(db, service_id, db_data, sizeof(db_data));
     if (db_data_len < 0){
         return NULL; 
     }
 
-    str_buffer *b = str_buffer_new(XML_RESP_LEN);   
+    str_buffer *b = str_buffer_new(XML_RESP_LEN_DEFAULT);   
     str_buffer_append(b,"<server>"); 
 
     info_list = list_from_data(db_data, db_data_len, SIGNATURE_LEN);

@@ -40,7 +40,7 @@ int new_request_sock;
 flex_queue *to_probe; 
 
 void close_db(int signal) {
-  printf("Closing BDB database \n");
+  DPRINTF(DEBUG_ERROR, "Closing BDB database \n");
   if(db != NULL)
      bdb_close(db);
   exit(1);
@@ -354,7 +354,6 @@ void scan_from_socket() {
 
 int main(int argc, char** argv) {
 
-
   if(argc != 3 && argc != 2) {
       printf("usage: <conf-file> [probe-file] \n");
       exit(1);
@@ -367,9 +366,6 @@ int main(int argc, char** argv) {
   priv_key = load_private_key(config.private_key_fname);
 
   all_probes = (probe_info*)calloc(config.max_simultaneous, sizeof(probe_info)); 
-
-  //not_valid = New_Patricia(32);
-  //load_file_to_trie(not_valid, config.exceptions_fname);
 
   uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
   uint32_t db_flags = DB_CREATE;
@@ -391,7 +387,6 @@ int main(int argc, char** argv) {
 
   close(child_finished_sock);
   close(new_request_sock); 
-  //Destroy_Patricia(not_valid, (void_fn1_t)NULL);
   bdb_close(db);
   return 0;
 }
