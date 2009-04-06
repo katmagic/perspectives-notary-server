@@ -384,11 +384,14 @@ function queryNotaries(cert, uri,browser,has_user_permission){
     d_print("query", "sending query: '" + full_url + "'");
     var req  = XMLHttpRequest();
     req.open("GET", full_url, true);
-    
-    req.onreadystatechange = function(evt) { 
-	notaryAjaxCallback(uri,cert, req, notary_server,service_id,
+    //NOTE: ugly, but we need to create a closure here, otherwise
+    // the callback will only see the values for the final server
+    req.onreadystatechange = (function(r,ns) { 
+		return function(evt) { 
+			notaryAjaxCallback(uri,cert, r, ns,service_id,
 				browser,has_user_permission); 
-    } 
+    		}
+    })(req,notary_server);  
     req.send(null);
     //FIXME: Need to set a timeout
   }
@@ -446,7 +449,7 @@ function notaryQueriesComplete(uri,cert,service_id,browser,has_user_permission,
 				server_result_list) {
   try {
     var test_key = cert.md5Fingerprint.toLowerCase();
-    var max_stale_sec = 2 * 24 * 3600; // 2 days
+    var max_stale_sec = 2 * 24 * 3600; // 2 days (FIXME: make this a pref)
     var q_thresh = root_prefs.getIntPref("perspectives.quorum_thresh") / 100;
     var q_required = Math.round(notaries.length * q_thresh); 
     var quorum_duration = get_quorum_duration(test_key, server_result_list, 
@@ -794,6 +797,10 @@ function requeryAllTabs(b){
  
 // Use Ajax to update the notary_list.txt file stored in the extension directory
 // this is called on start-up  
+  //NOTE: disabling auto-update of the notary list
+  // b/c it could allow an attacker with a bogus root 
+  // cert to compromise the system.  We should have this
+  // update include a signature. 
 function update_notarylist() { 
   try {
       var request = new XMLHttpRequest();
@@ -834,11 +841,6 @@ function initNotaries(){
   d_print("main", "\nPerspectives Initialization\n");
   setStatus(STATE_NEUT, "");
   init_notarylist(); 
-  //NOTE: disabling auto-update of the notary list
-  // b/c it could allow an attacker with a bogus root 
-  // cert to compromise the system.  We should have this
-  // update include a signature. 
-  //update_notarylist(); 
   init_whitelist();
   getBrowser().addProgressListener(notaryListener, 
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
