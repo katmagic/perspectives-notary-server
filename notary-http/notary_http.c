@@ -52,7 +52,7 @@ int main(int argc, char **argv){
 
     parse_config_file(&conf, argv[1]);
 
-    env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
+    env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB | DB_THREAD;
     db = bdb_open_env(conf.db_env_fname, env_flags, conf.db_fname, DB_RDONLY);
     if(db == NULL) fatal_error("bdb_open failed");
     warm_db(db);
