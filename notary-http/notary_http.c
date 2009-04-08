@@ -240,7 +240,7 @@ char* db_get_xml(char *service_id){
     str_buffer_append(b,tmp_buf); 
     char *str = str_buffer_get(b); 
     str_buffer_free(b); 
-    //printf("buf: %s\n", str); 
+    free_key_info_list(info_list); 
     free(sig64);
     return str;  
 }
