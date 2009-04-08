@@ -71,14 +71,15 @@ void bdb_close_env(DB *db){
 }
 
 unsigned int get_data(DB* db, char* host_and_port, char* buf,
-                            int max_size) {
+                            int max_size, uint32_t flags) {
             DBT key,data;
             int ret;
             memset(&key, 0, sizeof(key));
             memset(&data, 0, sizeof(data));
             key.data = host_and_port;
             key.size = strlen(host_and_port) + 1;
-            
+            data.flags = flags; 
+ 
             if ((ret = db->get(db, NULL, &key, &data, 0)) != 0){
                 if(ret == DB_NOTFOUND) {
               //    DPRINTF(DEBUG_INFO, "No service-entry for: '%s' (len = %d ) \n",
@@ -94,7 +95,8 @@ unsigned int get_data(DB* db, char* host_and_port, char* buf,
                     host_and_port);
                 return -1;
             }
-            memcpy(buf, data.data, data.size);    
+            memcpy(buf, data.data, data.size);
+	    free(data.data);     
             return data.size;
 }
 
@@ -176,7 +178,7 @@ void record_observation(DB* db, RSA *priv_key,
       ssh_key_info_list *info_list = NULL;
 
       unsigned int data_len = get_data(db, service_id ,buf, 
-                                         MAX_PACKET_LEN);
+                                         MAX_PACKET_LEN,0);
       if(data_len != -1) 
         info_list = list_from_data(buf, data_len,SIGNATURE_LEN);
       

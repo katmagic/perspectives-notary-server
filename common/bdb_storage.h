@@ -13,7 +13,8 @@ void bdb_close(DB *db);
 void bdb_close_env(DB *db);
 
 unsigned int get_data(DB* db, char* host_and_port, char* buf,
-                            int max_size);
+                            int max_size, uint32_t flags);
+
 
 int store_data(DB *db, char *host_and_port, char *buf, 
                             unsigned int buf_len);

@@ -106,7 +106,7 @@ int attempt_lookup_and_reply(DB *db, int sock, notary_header *hdr,
   char *service_id = (char*)(hdr + 1); 
 
   int data_len = get_data(db,service_id, buf + hdr_len, 
-      MAX_PACKET_LEN - hdr_len);
+      MAX_PACKET_LEN - hdr_len, 0);
   if(data_len < 0 && !send_on_miss)
     return 0; 
 

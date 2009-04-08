@@ -217,7 +217,8 @@ char* db_get_xml(char *service_id){
     char db_data[MAX_PACKET_LEN]; // valid? 
     ssh_key_info_list *info_list, *cur;
 
-    db_data_len = get_data(db, service_id, db_data, sizeof(db_data));
+    db_data_len = get_data(db, service_id, db_data, sizeof(db_data),
+						DB_DBT_MALLOC);
     if (db_data_len < 0){
         return NULL; 
     }
