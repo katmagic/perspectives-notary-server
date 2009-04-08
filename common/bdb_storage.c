@@ -70,14 +70,15 @@ void bdb_close_env(DB *db){
 
 }
 
-unsigned int get_data(DB* db, char* host_and_port, char* buf,
+unsigned int get_data(DB* db, char* service_id, char* buf,
                             int max_size, uint32_t flags) {
             DBT key,data;
             int ret;
             memset(&key, 0, sizeof(key));
             memset(&data, 0, sizeof(data));
-            key.data = host_and_port;
-            key.size = strlen(host_and_port) + 1;
+            key.data = service_id;
+            key.size = strlen(service_id) + 1;
+            key.flags = flags; // docs say this is needed 
             data.flags = flags; 
  
             if ((ret = db->get(db, NULL, &key, &data, 0)) != 0){
@@ -91,12 +92,14 @@ unsigned int get_data(DB* db, char* host_and_port, char* buf,
             }
             if(data.size > max_size) {
                 DPRINTF(DEBUG_ERROR, 
-                    "data for %s is too big for buffer in get_data\n",
-                    host_and_port);
+                    "data for '%s' is too big for buffer in get_data\n",
+                    service_id);
                 return -1;
             }
-            memcpy(buf, data.data, data.size);
-	    free(data.data);     
+            memcpy(buf, data.data, data.size); 
+	    
+	    if(flags & DB_DBT_MALLOC || flags & DB_DBT_USERMEM);
+	    	free(data.data);     
             return data.size;
 }
 

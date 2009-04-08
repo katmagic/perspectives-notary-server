@@ -37,8 +37,10 @@ char* db_get_xml(char *service_id);
 
 
 unsigned int notary_debug = 
-DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO | DEBUG_CRYPTO;
+//DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO | DEBUG_CRYPTO;
+DEBUG_ERROR; 
 
+int main_sock; 
 DB *db;
 
 int main(int argc, char **argv){
@@ -61,13 +63,12 @@ int main(int argc, char **argv){
     bdb_close(db);
 }
 
-int main_sock; 
 void on_kill(int signal) { 
 	close(main_sock); 
 } 
 
 void http_server_loop(uint32_t ip_addr, uint16_t port){
-    int main_sock, on = 1;
+    int on = 1;
     long connfd;
     struct sockaddr_in server, client;
     socklen_t clientlen;
