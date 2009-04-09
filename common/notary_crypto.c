@@ -40,11 +40,11 @@ char *base64(const unsigned char *input, int length)
 int read_key_file(char *filename, char *buf, int max_len) {
   FILE* f = fopen(filename, "r");
 
-  size_t bytes = fread(buf, 1, max_len ,f); 
-  if(ferror(f)){ 
-    perror("file open");
+  if(!f){ 
+    DPRINTF(DEBUG_ERROR, "Unable to open file '%s' \n", filename); 
     exit(1);
   }
+  size_t bytes = fread(buf, 1, max_len ,f); 
 
   if(!feof(f)) {
     DPRINTF(DEBUG_ERROR, "Unable to read full file "
