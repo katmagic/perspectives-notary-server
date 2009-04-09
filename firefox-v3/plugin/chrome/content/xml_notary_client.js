@@ -9,54 +9,50 @@
 	     ] 
    }
 */  
-function parse_server_node(server) { 
+function parse_server_node(reply, expected_version) { 
 
-        if(server.nodeName != "server"){
+        if(reply.nodeName != "notary_reply"){
             return null;
         }
+	var version = reply.attributes.getNamedItem("version").value; 
+	if(version != expected_version) { 
+		d_print("error","Expected version '" + expected_version
+			+ "' but got version '" + version + "'");
+		return null; 
+	}
         
+		
         var res = new Object();
+	var sig_type = reply.attributes.getNamedItem("sig_type").value; 
+	if(sig_type != "rsa-md5") {
+		// in the future, we will support 'rsa-sha256' as well 
+		d_print("error","Expected sig_type 'rsa-md5' " + 
+			"but got sig_type '" + sig_type + "'");
+		return null; 
+	} 
+	var sig_base64 = reply.attributes.getNamedItem("sig").value; 
+        res.signature = add_der_signature_header(sig_base64); 
         res.obs     = new Array();
-        for (var j = 0; j < server.childNodes.length; j++){
-            var servchild = server.childNodes[j];
-
-            if (servchild.nodeName == "sig"){
-		var sig_base64 = servchild.firstChild.nodeValue;
-                res.signature = add_der_signature_header(sig_base64); 
-                continue;
-            }
-
-            if (servchild.nodeName != "result"){
+        for (var j = 0; j < reply.childNodes.length; j++){
+            var keynode = reply.childNodes[j];
+            if (keynode.nodeName != "key"){
                 continue; 
             }
 
-	    // new result
-            var key_info = new Object(); 
-            key_info.timestamps = new Array();
-            for (var k = 0; k < servchild.childNodes.length; k++){
-                var reschild = servchild.childNodes[k];
-
-                if (reschild.nodeName == "key"){
-		    key_info.key = reschild.firstChild.nodeValue;
-                }
-
-                if (reschild.nodeName != "timestamp"){
+            var key_info = { 
+		"key" : keynode.attributes.getNamedItem("fp").value, 
+		"key_type" : keynode.attributes.getNamedItem("type").value, 
+		"timestamps" : [] 
+	    }; 
+            for (var k = 0; k < keynode.childNodes.length; k++){
+                var tsnode = keynode.childNodes[k];
+                if (tsnode.nodeName != "timestamp"){
                     continue;
                 }
-
-		var ts; 
-                for (var l = 0; l < reschild.childNodes.length; l++){
-                    var timestamp = reschild.childNodes[l];
-												    //FIXME: assumes ordering of start/end nodes
-                    if (timestamp.nodeName == "start"){							ts = new Object(); 
-                        ts.start = timestamp.firstChild.nodeValue.trim();
-                    }
-
-                    if (timestamp.nodeName == "end"){
-                        ts.end = timestamp.firstChild.nodeValue.trim();
-			key_info.timestamps.push(ts);
-                    }
-                }
+		key_info.timestamps.push({ 
+		  "start" : tsnode.attributes.getNamedItem("start").value, 
+		  "end" : tsnode.attributes.getNamedItem("end").value
+		}); 
             }
 	    res.obs.push(key_info); 
         }

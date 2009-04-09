@@ -665,6 +665,7 @@ char* get_reply_as_svg(const char* service_id, SSHNotary *notary, uint32_t len_d
   return str; 
 }
 
+// THIS IS NOT REALLY USED
 // given a set of server replies, print them in XML
 char* get_reply_as_xml(SSHNotary *notary) {
   server_list *server;
@@ -703,6 +704,7 @@ char* get_reply_as_xml(SSHNotary *notary) {
 }
 
 //notary-http needs this so I moved it out of get_reply_as_xml
+// This is used by the server
 char* xml_from_key_info(ssh_key_info *info){
   int i, tmp;
   char buf[1024], *key_buf;
@@ -714,7 +716,8 @@ char* xml_from_key_info(ssh_key_info *info){
   int *timespans = (int*)(key_buf + len);
   int num_spans  = ntohs(info->num_timespans);
 
-  tmp = snprintf(buf, 1024, "\t<result>\n\t\t<key>%s</key>\n", key_str);
+  tmp = snprintf(buf, 1024, "<key type=\"%s\" fp=\"%s\">\n", 
+		keytype_2_str(info->key_type), key_str);
   str_buffer_append(b,buf); 
   free(key_str); 
 
@@ -722,16 +725,12 @@ char* xml_from_key_info(ssh_key_info *info){
     uint32_t t_start = ntohl(timespans[0]);
     uint32_t t_end   = ntohl(timespans[1]);
     snprintf(buf, 1024, 
-        "\t\t<timestamp>\n"
-        "\t\t\t<start> %d </start>\n"
-        "\t\t\t<end>   %d </end>\n"
-        "\t\t</timestamp>\n",
-        t_start, t_end);
+        "\t<timestamp start=\"%d\" end=\"%d\"/>\n", t_start, t_end);
     str_buffer_append(b,buf); 
     timespans += 2;
   }
 
-  str_buffer_append(b,"\t</result>\n");
+  str_buffer_append(b,"</key>\n");
   char *str = str_buffer_get(b); 
   str_buffer_free(b); 
   return str; 

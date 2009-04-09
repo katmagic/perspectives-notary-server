@@ -419,7 +419,7 @@ function notaryAjaxCallback(uri, cert, req, notary_server,service_id,
 		 
 		 d_print("query", req.responseText); 
     		 var server_node = req.responseXML.documentElement;
-                 var server_result = parse_server_node(server_node);
+                 var server_result = parse_server_node(server_node,1);
 		 var bin_result = pack_result_as_binary(server_result,
 							    service_id);
 		 d_print("query", resultToString(server_result,false)); 
