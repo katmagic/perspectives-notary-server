@@ -15,6 +15,17 @@ import time
 # Thus, the script can be used to either generate a list of all services 
 # considered 'live' and of all services considered 'dead'. 
 
+def print_line(): 
+	print "%s %s" % (service_id,time.ctime(most_recent_ts))
+
+def print_if_valid():  
+	if service_id != None: 
+		if is_older and most_recent_ts < threshold_date: 
+			print_line()
+		elif not is_older and most_recent_ts > threshold_date:
+			print_line()
+
+
 if len(sys.argv) != 5: 
   print "usage: <db_env> <db_name> <older|newer> <days>"
   exit(1)
@@ -29,23 +40,20 @@ start_host_regex = re.compile("^Start Host")
 end_ts_regex = re.compile("^end:")
 service_id = None
 
-def print_line(service_id,most_recent_ts): 
-	print "%s %s" % (service_id,time.ctime(most_recent_ts))
 
 f2 = os.popen("bin/db2file %s %s" % (sys.argv[1], sys.argv[2]))
+
 for line in f2:
 	if start_host_regex.search(line): 
 		# do processing for service-id that is now finished
-		if service_id != None: 
-			if is_older and most_recent_ts < threshold_date: 
-				print_line(service_id,most_recent_ts)
-			elif not is_older and most_recent_ts > threshold_date:
-				print_line(service_id,most_recent_ts)
 		# start tracking new service-id
+		print_if_valid()
 		most_recent_ts = 0
 		service_id = line.split("'")[1]
 	if end_ts_regex.search(line): 
 		ts = int(line.split()[1])
 		if (ts > most_recent_ts): 
 			most_recent_ts = ts
-		
+
+# catch the last service-id		
+print_if_valid()

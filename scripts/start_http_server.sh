@@ -29,6 +29,8 @@ if ! [ -d "log" ] ; then
   mkdir log
 fi
 
+ulimit -c unlimited
+
 echo " Restarting server at: $time " >> log/http-server.log
 bin/notary_http $1 >> log/http-server.log 2>&1 &
 

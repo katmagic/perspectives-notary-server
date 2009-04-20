@@ -98,7 +98,7 @@ unsigned int get_data(DB* db, char* service_id, char* buf,
             }
             memcpy(buf, data.data, data.size); 
 	    
-	    if(flags & DB_DBT_MALLOC || flags & DB_DBT_USERMEM);
+	    if(flags & DB_DBT_MALLOC || flags & DB_DBT_USERMEM)
 	    	free(data.data);     
             return data.size;
 }

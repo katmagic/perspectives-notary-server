@@ -34,7 +34,8 @@ make clean
 
 cd ..
 
-fname="notary_src_server.tar.gz"; 
+version=`head -n 1 VERSION`
+fname="notary_src_server-$version.tar.gz"; 
 
 if [ -f "$fname" ]; then
   rm $fname

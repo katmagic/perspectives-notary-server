@@ -7,7 +7,7 @@ if ! [ -d "notary-server" ]; then
   exit 1
 fi
 
-static=0 
+static='' 
 
 if [ $# = 1 ] && [ "$1" = "static" ] ; then
   echo "will try build with static libdb-4.6" 
@@ -17,7 +17,7 @@ if [ $# = 1 ] && [ "$1" = "static" ] ; then
     echo "build_unix/.libs/libdb-4.6.a"
     exit 1 
   fi
-  static=1
+  static='static'
 fi
 
 
@@ -27,63 +27,93 @@ mkdir bin
 
 cd common
 make 
+if [ $? -ne 0 ] ; then 
+	echo "Error building in  'common'"
+	exit 1
+fi 
 
 cd ../notary-server
-if [ $static == 1 ]; then
-  if [ -f notary_server ] ; then
-    rm notary_server
-  fi
-  make static
-else
-  make 
+if [ -f notary_server ] ; then
+   rm notary_server
 fi
+  
+make $static  
+if [ $? -ne 0 ] ; then 
+	echo "Error building in  'notary-server'"
+	exit 1
+fi 
+
 cp notary_server ../bin/
 
-cd ../notary-http
-if [ $static == 1 ]; then
-  if [ -f notary_http ] ; then
-    rm notary_http
-  fi
-  make static
-else
-  make 
+cd ../notary-client
+make
+if [ $? -ne 0 ] ; then 
+	echo "Error building in 'notary-client'"
+	exit 1
 fi
+
+
+cd ../notary-http
+if [ -f notary_http ] ; then
+    rm notary_http
+fi
+make $static  
+if [ $? -ne 0 ] ; then 
+	echo "Error building in  'notary-http'"
+	exit 1
+fi 
 cp notary_http ../bin/
 
 cd ../key-scan
-if [ $static == 1 ]; then
-  if [ -f notary_scanner ] ; then
+if [ -f notary_scanner ] ; then
     rm notary_scanner
-  fi
-  make static
-else
-  make 
 fi
+make $static  
+if [ $? -ne 0 ] ; then 
+	echo "Error building in  'key-scan'"
+	exit 1
+fi 
 cp notary_scanner ../bin
 
 cd ../ssh-scanner
 ./configure --without-zlib-version-check
+if [ $? -ne 0 ] ; then 
+	echo "Error configuring in 'ssh-scanner'"
+	exit 1
+fi
 make
+if [ $? -ne 0 ] ; then 
+	echo "Error building in 'ssh-scanner'"
+	exit 1
+fi
 cp ssh ../bin/ssh_scan
 
 cd ../ssl-scanner
 ./config shared
+if [ $? -ne 0 ] ; then 
+	echo "Error configuring in 'ssl-scanner'"
+	exit 1
+fi
 cd apps
-make
+make 
+if [ $? -ne 0 ] ; then 
+	echo "Error building in 'ssl-scanner'"
+	exit 1
+fi 
 cp openssl ../../bin/ssl_scan
 cd ..
 
-cd ../notary-client
-make
-
 cd ../utilities
-make 
-cp db2file ../bin
-cp file2db ../bin 
-cp full_client ../bin
-cp db_search ../bin
-cp signature_util ../bin
-cp request_scan ../bin
+make
+if [ $? -ne 0 ] ; then 
+	echo "Error building in 'utilities'"
+	exit 1
+fi 
+
+for f in db2file file2db full_client db_search signature_util request_scan
+do
+	cp $f ../bin
+done 
 
 echo "Build Done.  ./bin should hold your files" 
 

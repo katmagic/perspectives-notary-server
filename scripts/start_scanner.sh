@@ -31,6 +31,8 @@ fi
 
 time=`date +%s`
 
+ulimit -c unlimited
+
 echo " Restarting scanner at: $time " >> log/scanner.log
 bin/notary_scanner $1 >> log/scanner.log 2>&1 &
 

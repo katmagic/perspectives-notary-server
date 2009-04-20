@@ -2,7 +2,7 @@
 # blank lines or lines starting with '#' are ignored.  all other lines must
 # be <key>#<value>
 
-port=15217
+port=8080
 ip_addr=0.0.0.0
 db_env_fname=db_env
 db_fname=notary.db

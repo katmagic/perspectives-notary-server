@@ -17,7 +17,7 @@ void read_speed_test(DB *db, int count) {
         int failures = 0;
         int i;
         for(i = 0; i < actual; i++) {
-            int r = get_data(db, all_hosts[i], buf, 4000);
+            int r = get_data(db, all_hosts[i], buf, 4000,0);
             if(r < 0) ++failures;
         }
         

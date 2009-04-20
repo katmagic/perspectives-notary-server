@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
           exit(1);
       }
       char buf[2400]; 
-      int data_len = get_data(db,argv[3],buf, 2004);
+      int data_len = get_data(db,argv[3],buf, 2004,0);
       ssh_key_info_list* list = list_from_data(buf, data_len, SIGNATURE_LEN);
       if(list == NULL) {
         printf("Failed to parse message and create list of keys \n");
