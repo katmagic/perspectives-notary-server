@@ -66,7 +66,7 @@ function selectSecurity(){
 
 //Should open new window because the dialog prevents them from seeing it
 function openNotaries(){
-  openDialog("chrome://perspectives_main/content/notary_list.txt", 
+  openDialog("chrome://perspectives_main/content/http_notary_list.txt", 
 		"", "width=600,height=600,resizable=yes");
 }
 
