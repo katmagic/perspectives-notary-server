@@ -467,8 +467,9 @@ function notaryQueriesComplete(uri,cert,service_id,browser,has_user_permission,
     var max_stale_sec = 2 * 24 * 3600; // 2 days (FIXME: make this a pref)
     var q_thresh = root_prefs.getIntPref("perspectives.quorum_thresh") / 100;
     var q_required = Math.round(notaries.length * q_thresh); 
+    var unixtime = get_unix_time(); 
     var quorum_duration = get_quorum_duration(test_key, server_result_list, 
-						q_thresh, max_stale_sec);  
+					q_required, max_stale_sec,unixtime);  
     var is_consistent = quorum_duration != -1;
  
     var qd_days =  Math.round((quorum_duration / (3600 * 24)) * 1000) / 1000;

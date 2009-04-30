@@ -130,8 +130,7 @@ function has_quorum_at_time(test_key, results, quorum_size, time) {
 
 
 
-function get_quorum_duration(test_key, results, quorum_size, stale_limit_secs) { 
-	var unixtime = get_unix_time(); 
+function get_quorum_duration(test_key, results, quorum_size, stale_limit_secs, unixtime) { 
 
 	if(! check_current_consistency(test_key,results,quorum_size,
 					stale_limit_secs,unixtime)) { 

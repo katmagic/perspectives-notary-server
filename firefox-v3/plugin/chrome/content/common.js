@@ -17,7 +17,12 @@ try {
 	dump(line); 
 	other_cache["debug"] += line;
 	try { 
-	   Firebug.Console.log(line); 
+	   Firebug.Console.log(line); // this line works in extensions
+	} catch(e) { 
+	   /* ignore, this will blow up if Firebug is not installed */  
+	}
+	try { 
+	   console.log(line); // this line works in HTML files
 	} catch(e) { 
 	   /* ignore, this will blow up if Firebug is not installed */  
 	}
