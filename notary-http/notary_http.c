@@ -38,7 +38,7 @@ char* db_get_xml(char *service_id);
 
 unsigned int notary_debug = 
 //DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO | DEBUG_CRYPTO;
-DEBUG_ERROR; 
+DEBUG_ERROR | DEBUG_INFO; 
 
 int main_sock; 
 DB *db;
@@ -107,7 +107,7 @@ void http_server_loop(uint32_t ip_addr, uint16_t port){
 void* thread_start(void *connfd){
     process((long)connfd);
     if (close((long)connfd) < 0){ 
-       	fprintf(stderr,"Failed Socket Close");
+       	DPRINTF(DEBUG_ERROR,"Failed Socket Close\n");
     }
     return NULL;
 }
@@ -120,16 +120,17 @@ void process(int sockfd){
     char *state, *xml_buf = NULL;
     char *param, *value, *host, *port, *styp;
 
-    if ((len = read_request(sockfd, req_buf, sizeof(req_buf))) <= 0){
-    	DPRINTF(DEBUG_ERROR,"Error reading client sock\n"); 
+    if ((len = read_request(sockfd, req_buf, sizeof(req_buf))) < 0){
         return;
     }
     // for debugging, store a copy of the pre-parsed request
-    strncpy(req_buf_copy,req_buf,2048); 
+    strncpy(req_buf_copy,req_buf,sizeof(req_buf_copy));
+    // based on code above, req_buf will fit, but just in case
+    req_buf_copy[sizeof(req_buf_copy) - 1] = 0; 
 
     if (parse_begin(&state, req_buf) < 0){
     	DPRINTF(DEBUG_INFO,"No args, sending 404: '%s'\n",req_buf_copy); 
-        send404(sockfd);//TODO send 400 instead
+        send404(sockfd); 
         return; 
     }
 
@@ -178,8 +179,9 @@ void process(int sockfd){
 	sleep(1); 
     } 
     xml_buf_len = strlen(xml_buf); 
-    DPRINTF(DEBUG_INFO,"Reply for '%s':\n '%s'\n",
-				service_id,xml_buf); 
+    DPRINTF(DEBUG_INFO,"Reply for '%s' of %zu bytes:\n",
+			service_id, strlen(xml_buf)); 
+    //DPRINTF(DEBUG_INFO,"'%s'\n", xml_buf); 
 
     len = snprintf(req_buf, sizeof(req_buf), 
             "HTTP/1.0 200 OK\r\n"
@@ -247,33 +249,53 @@ char* db_get_xml(char *service_id){
     return str;  
 }
 
-/*O(n^2)!*/
+// Reads from a socket until a  full line of an 
+// HTTP request (i.e., until the '\r\n' line terminator is seen).  
+// On success, 'buf' contains the line with '\r\n' removed as a
+// null-terminated string.  On error, return -1 and the contents 
+// of 'buf' is undefined.  
 int read_request(int sockfd, char *buf, int buflen){
-    char *found, *place;
-    int recv_len, request_len;
+    char *search_start = buf;
+    int bytes_read = 0;
 
-    place = buf;
-    buflen--;/*Hack so I can always null terminate safely*/
-    request_len = 0;
+    fd_set readfds; 
+    struct timeval timeout; 
     while (buflen > 0){
-        recv_len = recv(sockfd, place, buflen, 0);
+        FD_ZERO(&readfds);
+	FD_SET(sockfd,&readfds);
+	timeout.tv_sec = 5; 
+	timeout.tv_usec = 0;  
+	int ret = select(sockfd + 1, &readfds, NULL, NULL, &timeout);  
+	if(ret == 0) { 
+    		DPRINTF(DEBUG_ERROR, "client timeout\n"); 
+		return -1; 
+	}  
+	int recv_len = read(sockfd, buf + bytes_read, buflen - bytes_read);
+	
+        if (recv_len < 0) { 
+		perror("Error reading client socket"); 
+		return -1; 
+	} 
+        if (recv_len == 0) { 
+		DPRINTF(DEBUG_ERROR, "Truncated client request, "
+		"no newline found\n"); 
+		return  -1; 
+	}
 
-        if (recv_len  < 0) return -1; 
-        if (recv_len == 0) return  0; 
-
-        place[recv_len] = 0;
-        /* Check for \r\n\r\n */
-        found = strstr(buf, "\r\n\r\n");
+	bytes_read += recv_len; 
+	// temporarily null terminate for \r\n check 
+        buf[bytes_read] = 0;
+        char *found = strstr(search_start, "\r\n");
 
         if (found != NULL){
-            found += 4; //account for \r\n\r\n
-            *(found + 1) = 0;
+            *found = 0; //strip \r\n
             return (found - buf);
         }
-        place  += recv_len;
-        buflen -= recv_len;
+	// '\r' and '\n' could be in different reads
+	search_start += bytes_read - 1;
     }
-    return -1; /* Never got \r\n\r\n */
+    DPRINTF(DEBUG_ERROR, "Ran out of buffer before we received a newline\n"); 
+    return -1; /* Never got \r\n */
 }
 
 void fatal_error(char *msg){
