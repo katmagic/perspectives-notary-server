@@ -1,4 +1,4 @@
-#/bin/bash 
+#/bin/sh 
 
 VERSION='5.0p1'
 FILENAME=psv-openssh-${VERSION}.patch

@@ -109,9 +109,13 @@ void fetch_notary_observations(SSHNotary *notary,
               ip_2_str(server->ip_addr), server->port);
           server->received_reply = 1; // got something, even if its invalid
 	  first_reply = server->notary_results == NULL;
-		
-	//  printf("************ this was changed to be compatible with FF code **\n"); 
-	//  printf("************ this code is insecure **\n"); 
+	
+	  DPRINTF(DEBUG_INFO, "checking signature\n"); 	
+	  if(!verify_message_signature((notary_header*)recv_buf, server->public_key)){
+		DPRINTF(DEBUG_ERROR, "Invalid signature from notary %s, discarding\n",
+			ip_2_str(server->ip_addr)); 
+		continue; 
+	  }
  
           server->notary_results = parse_message(recv_buf, recv_len);
           // count only if the server returned new results.

@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/bin/sh
 
 if ! [ -d "bin" ]; then
   echo "need to invoke scripts/build_server.sh first!" 

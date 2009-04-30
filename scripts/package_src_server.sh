@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/bin/sh
 
 
 if ! [ -d "notary-server" ]; then
@@ -34,7 +34,7 @@ make clean
 
 cd ..
 
-version=`head -n 1 VERSION`
+version=`head -n 1 SERVER_VERSION`
 fname="notary_src_server-$version.tar.gz"; 
 
 if [ -f "$fname" ]; then

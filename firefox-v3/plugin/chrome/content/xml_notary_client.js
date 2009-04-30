@@ -84,7 +84,7 @@ function resultToString(server_result,show_sig){
 	var out = ""; 
         for(var j = 0; j < server_result.obs.length; j++) { 
 	    var o = server_result.obs[j]; 
-            out += "ssl key: " + o.key + "'\n";
+            out += "ssl key: '" + o.key + "'\n";
             for(var k = 0; k < o.timestamps.length; k++){
 		var start_t = o.timestamps[k].start; 
 		var end_t = o.timestamps[k].end; 

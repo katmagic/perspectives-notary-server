@@ -148,7 +148,8 @@ void close_db(int signal) {
 int main(int argc, char** argv) {
                  
       if(argc != 6 && argc != 4) {
-        printf("usage:<file-in>  <db-env> <db-filename> <priv-key> <md5|sha256>\n");
+        //printf("usage:<file-in>  <db-env> <db-filename> <priv-key> <md5|sha256>\n");
+        printf("usage:<file-in>  <db-env> <db-filename> <priv-key>\n");
         printf("if no private key is given, DB signatures will be invalid\n");
         exit(1);
       }
@@ -179,7 +180,7 @@ int main(int argc, char** argv) {
           DPRINTF(DEBUG_ERROR, "failed to load private key '%s' \n", argv[3]);
           exit(1);
         }
-	sig_type = argv[5]; 
+	sig_type = "md5"; 
       }
 
       parse_file(priv_key,sig_type); 

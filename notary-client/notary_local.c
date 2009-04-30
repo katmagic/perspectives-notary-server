@@ -54,7 +54,7 @@ notary_header* create_request(char*hostname, uint16_t service_type) {
 }
 
 void add_notary_server(SSHNotary *notary, uint32_t ip_address, uint16_t port, 
-    char* key){
+    RSA* key){
   server_list *tmp = (server_list*)malloc(sizeof(server_list));
   tmp->ip_addr = ip_address;
   tmp->notary_results = NULL; // this is set after data is received + parsed 
@@ -104,8 +104,7 @@ void free_ssh_notary(SSHNotary* notary){
     server = list_entry(pos, server_list, list);
     // Firefox, free base64 key
     if(server->public_key) { 
-      //  RSA_free(server->public_key);
-      free(server->public_key); 
+      RSA_free(server->public_key);
     } 
     list_del(&server->list);
     free(server);
@@ -285,29 +284,26 @@ char *read_single_pubkey(char *input_buf, char *output_buf, int max_len, int *by
 
   char *ptr = input_buf; 
   while( (ptr = get_line(ptr, line, 1024)) != NULL) {
-    int line_len; 
-    if(strcmp(PEM_PUB_START, line) == 0){
+    if(strcmp(PEM_PUB_START, line) == 0)
       key_started = TRUE;
-      continue;
-    }
+    
     if(!key_started) 
       continue;
 
-    line_len = strlen(line);
+    int line_len = strlen(line);
     if(offset + line_len > max_len){
       DPRINTF(DEBUG_ERROR, "error, pubkey file larger than buf \n");
       exit(1);
     }
 
+    // don't copy null terminator
+    memcpy(output_buf + offset, line, line_len); 
+    offset += line_len; 
+
     if(strcmp(PEM_PUB_END, line) == 0) {
       *bytes_read = offset; 
-      output_buf[offset] = 0x0; 
       return ptr;
     }
-
-    // don't copy null terminator
-    memcpy(output_buf + offset, line, line_len);
-    offset += line_len;
 
 
   }
@@ -367,11 +363,10 @@ void load_notary_servers(SSHNotary *notary, char* data, int buf_len){
     char buf2[1024];
     int key_len = -1; 
     ptr = read_single_pubkey(ptr, buf2, 1024, &key_len);
-    // RSA * pub_key = key_from_buf(buf2, key_len, FALSE);
+    RSA * pub_key = key_from_buf(buf2, key_len, FALSE);
     DPRINTF(DEBUG_INFO, "loaded key for server '%s' : %d \n", 
         ip_2_str(ip_addr), port);
-    // TODO: strdup base64 key
-    add_notary_server(notary, ip_addr, port, strdup(buf2));
+    add_notary_server(notary, ip_addr, port, pub_key);
   }
 }
 

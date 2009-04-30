@@ -1,7 +1,7 @@
-#!/usr/local/bin/bash
+#!/bin/sh
 
 
-function usage {
+usage() {
 
     echo "usage: db <scann-config-file>"
     echo "usage: f <service-list-file>"
@@ -9,7 +9,7 @@ function usage {
 }
 
 if [ $# != 2 ] && [ $# != 3 ] ; then 
-  usage;  
+  usage 
 fi 
 
 if [ $# = 3 ] ; then
@@ -59,11 +59,11 @@ if [ $1 = "db" ]; then
 elif [ "$1" = "f" ]; then
   if ! [ -f $2 ]; then
     echo "Error: couldn't locate input file '$2'"
-    usage; 
+    usage 
   fi 
   file=$2
 else 
-  usage; 
+  usage 
 fi
 
 ./bin/request_scan $file > log/scan_requests.log 2>&1

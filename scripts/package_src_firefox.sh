@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/bin/sh
 
 
 if ! [ -d "firefox-v2" ]; then
@@ -13,25 +13,12 @@ if [ -f "$fname" ]; then
   rm $fname
 fi
 
-cd common
-make clean  
+cd ..
 
-cd ../notary-client
-make clean
-
-cd ../firefox-v2/xp_src
-make clean 
-
-cd ../../..
-
-echo "notarycode/firefox-v2/Perspectives.xpi" >> exclude
-echo "notarycode/firefox-v2/ff_with_log.sh" >> exclude
-echo "notarycode/firefox-v2/xulrunner-sdk" >> exclude
-echo "notarycode/firefox-v2/build" >> exclude
-#echo "notarycode/firefox-v2/dist" >> exclude
+echo "notarycode/firefox-v3/Perspectives.xpi" >> exclude
 find notarycode -type d -print | egrep '\.svn' >> exclude
 
-tar czfX notarycode/$fname exclude notarycode/firefox-v2 notarycode/common notarycode/notary-client notarycode/COPYING notarycode/README notarycode/config/notary_list.txt
+tar czfX notarycode/$fname exclude notarycode/firefox-v3 notarycode/COPYING notarycode/config/http_notary_list.txt
 
 rm exclude
 

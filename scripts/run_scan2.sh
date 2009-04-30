@@ -1,15 +1,13 @@
-#!/usr/local/bin/bash
+#!/bin/sh
 
-
-function usage {
-
+usage() { 
     echo "usage: db <scann-config-file> <max-simultaneous> <timeout>"
     echo "usage: f <service-list-file> <max-simultaneous> <timeout>"
     exit 1
-}
+} 
 
 if [ $# != 4 ] && [ $# != 5 ] ; then 
-  usage;  
+  usage
 fi 
 
 if [ $# = 5 ] ; then
@@ -55,11 +53,11 @@ if [ $1 = "db" ]; then
 elif [ "$1" = "f" ]; then
   if ! [ -f $2 ]; then
     echo "Error: couldn't locate input file '$2'"
-    usage; 
+    usage 
   fi 
   file=$2
 else 
-  usage; 
+  usage 
 fi
 
 python scripts/simple_probe.py $file $3 $4 >> log/scan_results.log 2>&1

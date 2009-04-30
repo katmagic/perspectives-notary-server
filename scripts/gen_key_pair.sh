@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/bin/sh
 
 if [ $# != 2 ]; then
   echo "usage: priv-key-out pub-key-out"

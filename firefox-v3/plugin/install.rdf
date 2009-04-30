@@ -4,10 +4,12 @@
      xmlns:em="http://www.mozilla.org/2004/em-rdf#">
 
 	<Description about="urn:mozilla:install-manifest">
-    <!-- Required Items -->
 		<em:id>perspectives@cmu.edu</em:id>
 		<em:name>Perspectives</em:name>
 		<em:version>3.0</em:version>
+    		<em:type>2</em:type>
+    		<em:optionsURL>chrome://perspectives/content/statusbar-info.xul</em:optionsURL>
+
      		<!-- Firefox -->
 		<em:targetApplication>   
 			<Description>
@@ -26,10 +28,6 @@
         	      </Description>
         	    </em:targetApplication>
 
-    <em:type>2</em:type>
-
-    <em:optionsURL>chrome://perspectives/content/statusbar-info.xul</em:optionsURL>
-
     <em:localized> 
 	<Description> 
 	 <em:locale>en-US</em:locale> 
@@ -38,6 +36,8 @@
 		 errors by verifying certificates using a collection of 
 		 Network Notaries.  See http://www.cs.cmu.edu/~perspectives/ 
 		</em:description>
+    		<em:creator>Perspectives Project at Carnegie Mellon Computer Science </em:creator>
+    		<em:homepageURL>http://www.cs.cmu.edu/~perspectives/</em:homepageURL>
 	 </Description> 
     </em:localized> 
     <em:localized> 
@@ -45,11 +45,10 @@
 	 <em:name>Perspectives</em:name>
 	 <em:locale>zh-CN</em:locale> 
     		<em:description>一种验证安全编码站点并跳过Firefox安全警告的安全方法 </em:description>
+    		<em:creator>Perspectives Project at Carnegie Mellon Computer Science </em:creator>
+    		<em:homepageURL>http://www.cs.cmu.edu/~perspectives/</em:homepageURL>
 	 </Description> 
     </em:localized> 
-
-    <em:creator>Perspective Project at Carnegie Mellon Computer Science</em:creator>
-    <em:homepageURL>http://www.cs.cmu.edu/~perspectives/</em:homepageURL>
     <em:updateURL>http://www.cs.cmu.edu/~perspectives/update.rdf</em:updateURL>
     <em:updateKey>
       MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8mhA7PyW06tTzzY+JkVj
