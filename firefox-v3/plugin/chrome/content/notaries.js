@@ -541,7 +541,7 @@ function updateStatus(browser, has_user_permission){
   var uri = browser.currentURI;
   if(!uri) { 
     var text = strbundle.getString("noDataError"); 
-    setStatus(STATE_NEUT,text); 
+    setStatus(uri,STATE_NEUT,text); 
     other_cache["reason"] = text;
     return;
   } 
@@ -558,20 +558,20 @@ function updateStatus(browser, has_user_permission){
 
   if(uri.scheme != "https"){
     var text = strbundle.getFormattedString("nonHTTPSError", [ uri.host, uri.scheme ]);
-    setStatus(STATE_NEUT,text); 
+    setStatus(uri, STATE_NEUT,text); 
     other_cache["reason"] = text;
     return;
   } 
   if(onWhitelist(uri.host)){
     var text = strbundle.getFormattedString("whitelistError", [uri.host] ); 
-    setStatus(STATE_NEUT,text); 
+    setStatus(uri,STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
   }
   var unreachable = host_is_unreachable(uri.host); 
   if(unreachable) { 
     var text = strbundle.getFormattedString("rfc1918Error", [ uri.host ])
-    setStatus(STATE_NEUT,text); 
+    setStatus(uri, STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
   } 
@@ -580,7 +580,7 @@ function updateStatus(browser, has_user_permission){
   ti.cert       = getCertificate(browser);
   if(!ti.cert){
     var text = strbundle.getFormattedString("noCertError", [ uri.host ])
-    setStatus(STATE_NEUT,text); 
+    setStatus(uri,STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
   }
@@ -602,7 +602,7 @@ function updateStatus(browser, has_user_permission){
     !(ti.is_override_cert && ssl_cache[uri.host]); 
   if(!check_good && ti.already_trusted) {
     var text = strbundle.getString("noProbeRequestedError"); 
-    setStatus(STATE_NEUT,text); 
+    setStatus(uri, STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
   } 
@@ -622,7 +622,7 @@ function updateStatus(browser, has_user_permission){
       d_print("main", "needs user permission\n");  
       notifyNeedsPermission(browser);
       var text = strbundle.getString("needsPermission"); 
-      setStatus(STATE_NEUT,text); 
+      setStatus(uri, STATE_NEUT,text); 
       other_cache["reason"] = text;  
       return; 
     } 
@@ -655,20 +655,20 @@ function process_notary_results(uri,browser,has_user_permission) {
 
   if (cache_cert.summary.indexOf("ssl key") == -1) { 
     	cache_cert.tooltip = strbundle.getString("noRepliesWarning");
-    	setStatus(STATE_NSEC, cache_cert.tooltip);
+    	setStatus(uri,STATE_NSEC, cache_cert.tooltip);
 	if(ti.broken) { 
 	  notifyNoReplies(browser); 
 	} 
   } else if(!cache_cert.secure){
     cache_cert.tooltip = strbundle.getString("inconsistentWarning");
-    setStatus(STATE_NSEC, cache_cert.tooltip);
+    setStatus(uri, STATE_NSEC, cache_cert.tooltip);
     if(ti.broken && ti.firstLook){
       notifyFailed(browser);
     }
   } else if(cache_cert.duration < required_duration){
     cache_cert.tooltip = strbundle.getFormattedString("thresholdWarning", 
 		[ cache_cert.duration, required_duration]);
-    setStatus(STATE_NSEC, cache_cert.tooltip);
+    setStatus(uri,STATE_NSEC, cache_cert.tooltip);
     if(ti.broken && ti.firstLook){
       notifyFailed(browser);
     }
@@ -677,7 +677,7 @@ function process_notary_results(uri,browser,has_user_permission) {
     ti.notary_valid = true; 
     cache_cert.tooltip = strbundle.getFormattedString("verifiedMessage", 
 		[ cache_cert.duration, required_duration]);
-    setStatus(STATE_SEC, cache_cert.tooltip);
+    setStatus(uri,STATE_SEC, cache_cert.tooltip);
     if (ti.broken){
       ti.broken = false;
       ti.exceptions_enabled = root_prefs.getBoolPref(
@@ -719,7 +719,7 @@ var notaryListener = {
       	updateStatus(gBrowser,false);
       } catch(err){
         d_print("error", "Perspectives had an internal exception: " + err);
-	setStatus(STATE_ERROR, "Perspectives: an internal error occurred: " + err); 
+	setStatus(aURI, STATE_ERROR, "Perspectives: an internal error occurred: " + err); 
       } 
   },
 
@@ -731,7 +731,7 @@ var notaryListener = {
          updateStatus(gBrowser,false);
        } catch (err) { 
          d_print("error", "Perspectives had an internal exception: " + err);
-	 setStatus(STATE_ERROR, "Perspectives: an internal error occurred: " + err); 
+	 setStatus(uri, STATE_ERROR, "Perspectives: an internal error occurred: " + err); 
        } 
      }
   },
@@ -855,7 +855,7 @@ function update_notarylist() {
 
 function initNotaries(){
   d_print("main", "\nPerspectives Initialization\n");
-  setStatus(STATE_NEUT, "");
+  setStatus(null,STATE_NEUT, "");
   init_notarylist(); 
   init_whitelist();
   getBrowser().addProgressListener(notaryListener, 

@@ -4,15 +4,13 @@
 <!ENTITY ThereisnoPerspectivesinformationavailableforthislocation "There is no Perspectives information available for this location">
 <!ENTITY Timeline "Timeline">
 <!ENTITY NotaryResults "Notary Results">
-<!ENTITY SecuritySettings "Security Settings">
+<!ENTITY SecuritySettings "Security Level">
 <!ENTITY HighSecurity "High Security">
 <!ENTITY MediumSecurity "Medium Security">
 <!ENTITY HighAvailability "High Availability">
 <!ENTITY ManualConfiguration "Manual Configuration">
-<!ENTITY Percentageofnotariesthatmustagree "Percentage of notaries that must agree">
-<!ENTITY QuorumPercentage "Quorum Percentage">
-<!ENTITY Lengthoftimequorummustbeachieved "Length of time quorum must be achieved">
-<!ENTITY DurationDays "Duration (Days)">
+<!ENTITY Percentageofnotariesthatmustagree "Percentage of notaries that must agree (quorum percentage): ">
+<!ENTITY Lengthoftimequorummustbeachieved "Days of continuous agreement required (quorum duration): ">
 <!ENTITY OverridingFirefoxSecurityErrors "Overriding Firefox Security Errors">
 <!ENTITY AllowPerspectivestoautomaticallyoverridesecurityerrors "Allow Perspectives to automatically override security errors">
 <!ENTITY PermanentlytrustcertificatesvalidatedbyPerspectives "Permanently trust certificates validated by Perspectives">
@@ -24,3 +22,4 @@
 <!ENTITY Servers "Notary Servers">
 <!ENTITY Help "Help">
 <!ENTITY OK "OK">
+<!ENTITY Close "Close">

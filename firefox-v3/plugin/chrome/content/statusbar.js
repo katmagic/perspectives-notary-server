@@ -5,20 +5,49 @@ const STATE_NEUT  = 2;
 const STATE_START = Components.interfaces.nsIWebProgressListener.STATE_START;
 const STATE_STOP  = Components.interfaces.nsIWebProgressListener.STATE_STOP;
 
-function ShowInfo(ssl_cache,other_cache,tab_info_cache) {
-  window.openDialog("chrome://perspectives/content/statusbar-info.xul", 
-        "perspectivesInfo", "centerscreen, chrome, toolbar", gBrowser, 
-	ssl_cache,other_cache,tab_info_cache).focus();
-}
+function statusbar_click(event) {
+	d_print("main",event); 
+	d_print("main", event.button); 
+	open_results_dialog();
+} 
 
-function setStatus(state, tooltip){
+// note: when debugging, it is useful to open this dialog as a 
+// window, so we get a firebug console, etc
+function open_results_dialog() { 
+ 	window.openDialog(
+ //	window.open( // for debug
+		"chrome://perspectives/content/results_dialog.xul", 
+//        	"perspectivesResults", "").focus();  // for debug
+		"perspectivesresults", "centerscreen, chrome, toolbar").focus();
+
+} 
+
+// note: when debugging, it is useful to open this dialog as a 
+// window, so we get a firebug console, etc
+function open_preferences_dialog() { 
+ 	window.openDialog(
+// 	window.open( // for debug
+		"chrome://perspectives/content/preferences_dialog.xul", 
+//       	"perspectivesResults", "").focus();  // for debug
+		"perspectivesresults", "centerscreen, chrome, toolbar").focus();
+
+} 
+
+
+function setStatus(uri,state, tooltip){
+  if(uri != null && uri != window.gBrowser.currentURI) { 
+	d_print("main", "Ignoring setStatus for '" + uri.spec + 
+	"' because current browser tab is for '" + 
+	window.gBrowser.currentURI.spec + "'"); 
+	return;  
+  }
   if(!tooltip){
     tooltip = "Perspectives";
   }
 
   var i = document.getElementById("perspective-status-image");
   var t = document.getElementById("perspective-status");
-  if(!t || !i){//appens when called from statusbar-info.js
+  if(!t || !i){ //happens when called from a dialog
     i = window.opener.document.getElementById("perspective-status-image");
     t = window.opener.document.getElementById("perspective-status");
   }
@@ -45,3 +74,19 @@ function setStatus(state, tooltip){
   d_print("main", "changing tooltip to: " + tooltip + "\n"); 
   return true;
 }
+
+function openCertificates(){
+  openDialog("chrome://pippki/content/certManager.xul", "Certificate Manager");
+}
+
+//Should open new window because the dialog prevents them from seeing it
+function openNotaries(){
+  openDialog("chrome://perspectives_main/content/http_notary_list.txt", 
+		"", "width=600,height=600,resizable=yes");
+}
+
+function openHelp(){
+  openDialog("chrome://perspectives_main/content/help.html","",
+		"width=600,height=600,resizable=yes");
+}
+

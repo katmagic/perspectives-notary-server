@@ -8,7 +8,7 @@
 		<em:name>Perspectives</em:name>
 		<em:version>3.0</em:version>
     		<em:type>2</em:type>
-    		<em:optionsURL>chrome://perspectives/content/statusbar-info.xul</em:optionsURL>
+    		<em:optionsURL>chrome://perspectives/content/preferences_dialog.xul</em:optionsURL>
 
      		<!-- Firefox -->
 		<em:targetApplication>   

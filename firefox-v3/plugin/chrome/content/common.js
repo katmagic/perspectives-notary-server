@@ -15,7 +15,6 @@ try {
 	if(!d_print_flags[flag] && !d_print_all) 
 		return; 
 	dump(line); 
-	other_cache["debug"] += line;
 	try { 
 	   Firebug.Console.log(line); // this line works in extensions
 	} catch(e) { 
