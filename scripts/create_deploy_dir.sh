@@ -33,6 +33,7 @@ cat $2/keys/public.pem  >> $2/config/http_notary_list.txt
 
 $2/bin/file2db /dev/null $2/db_env/ notary.db $2/keys/private.pem md5
 
-echo "'$2' now contains a notary deployment. Enjoy!" 
+version=`cat SERVER_VERSION`
+echo "'$2' now contains a notary version $version deployment. Enjoy!" 
 
 

@@ -206,8 +206,16 @@ void record_observation(DB* db, RSA *priv_key,
       int name_len = strlen(service_id) + 1;
       memcpy(buf, service_id, name_len);
 
-      data_len = data_from_list(info_list, buf + name_len, 
+      while(1) { 
+      	data_len = data_from_list(info_list, buf + name_len, 
                                       MAX_PACKET_LEN - name_len);
+	if(data_len < 0) return;
+  
+	if(data_len < MAX_SERVICE_ENTRY_LEN) 
+	   break; 
+       	prune_oldest_timestamp(info_list, timestamp); 
+      }
+
       unsigned char sig_buf[SIGNATURE_LEN];
 
       unsigned int sig_len = SIGNATURE_LEN;

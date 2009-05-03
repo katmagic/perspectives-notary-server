@@ -33,6 +33,7 @@
 #define SIGNATURE_LEN 172
 #define MAX_PACKET_LEN 4000
 #define KEY_LEN 16
+#define MAX_SERVICE_ENTRY_LEN 1000 // largest any item can be in DB
 
 #define TYPE_FETCH_REQ 0x01
 #define TYPE_FETCH_REPLY_PARTIAL 0x02

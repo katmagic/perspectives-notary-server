@@ -33,13 +33,12 @@ data_from_list(ssh_key_info_list *info_list,
             cur = list_entry(pos, ssh_key_info_list, list);  
             int size = KEY_INFO_SIZE(cur->info);
 
-
             if(offset + size <= max_size)
                 memcpy(buf_out + offset, cur->info, size);
             else {
                 DPRINTF(DEBUG_ERROR, 
                     "insufficient space to convert list to data\n");
-                return 0;
+                return -1;
             }
                 
             offset += size;
@@ -205,6 +204,71 @@ void add_observation_to_list(ssh_key_info_list *info_list,
                             info_list->list.next);
         }
 
+}
+
+void prune_oldest_timestamp(ssh_key_info_list *info_list, uint32_t cur_time) {
+
+        // loop through once to find 
+        // key_info object with the oldest 'end' timestamp
+        // and the index of that timestamp
+        struct list_head *pos,*tmp;
+        ssh_key_info_list *cur, *owner_of_oldest = NULL;
+        int oldest_end = cur_time, oldest_index = -1; 
+
+        list_for_each_safe(pos, tmp, &info_list->list) {
+          cur = list_entry(pos, ssh_key_info_list, list);
+          char *key_buf = (char*)(cur->info + 1);
+          int len = ntohs(cur->info->key_len_bytes);
+          int *timespans = (int*)(key_buf + len);
+          int num_spans = ntohs(cur->info->num_timespans);
+          int i;
+          for(i = 0; i < num_spans; i++){
+              int t_end = ntohl(timespans[1]);
+              if(t_end <= oldest_end) {
+                  oldest_end = t_end;
+                  oldest_index = i; 
+                  owner_of_oldest = cur; 
+              }
+              timespans += 2;
+          }
+        }
+        if(owner_of_oldest == NULL) { 
+          DPRINTF(DEBUG_ERROR, "Failed to prune because no " 
+              " oldest timestamp was found\n");
+          return; 
+        }
+        int num_spans = ntohs(owner_of_oldest->info->num_timespans);
+        if(num_spans == 1) {
+          // great, this is the only timespan for this key, so 
+          // get rid of the whole keyinfo object
+          list_del(&owner_of_oldest->list);
+          free(owner_of_oldest->info);
+          free(owner_of_oldest);
+        } else { 
+          // we just removing one of multiple timespans, so 
+          // reallocated a slightly smaller keyinfo object
+          int key_len = ntohs(owner_of_oldest->info->key_len_bytes);
+          int old_size = KEY_INFO_SIZE(owner_of_oldest->info);
+          int new_size = old_size - (2 * sizeof(uint32_t));
+          ssh_key_info *new_info = (ssh_key_info*) malloc(new_size);
+          // copy over key 
+          int cpy_len = key_len + sizeof(ssh_key_info); 
+          memcpy(new_info,owner_of_oldest->info, cpy_len);
+
+          uint32_t *old_timespans = (uint32_t*)((char*)owner_of_oldest->info + cpy_len);
+          uint32_t *new_timespans = (uint32_t*)((char*) new_info + cpy_len); 
+          new_info->num_timespans = htons(num_spans - 1); 
+          int i;
+          for(i = 0; i < num_spans; i++){
+              if(i != oldest_index){ 
+                 memcpy(new_timespans, old_timespans, 2 * sizeof(uint32_t));
+                 new_timespans += 2; // only increment on copy
+              }
+              old_timespans += 2; // always increment
+          }
+          free(owner_of_oldest->info);
+          owner_of_oldest->info = new_info;
+        }
 }
 
 

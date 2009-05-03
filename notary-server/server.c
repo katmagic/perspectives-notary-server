@@ -91,11 +91,6 @@ void request_probe(notary_header *hdr, struct sockaddr_in *addr, int addr_len,
 }
 
 
-void sock_error(char *msg)
-{
-    perror(msg);
-    exit(1);
-}
 
 int attempt_lookup_and_reply(DB *db, int sock, notary_header *hdr, 
         struct sockaddr_in *remote_addr, unsigned int addr_len, 
@@ -123,8 +118,12 @@ int attempt_lookup_and_reply(DB *db, int sock, notary_header *hdr,
   memcpy(buf,hdr,hdr_len); 
   int n = sendto(sock, buf , total_len, 
       0 ,(struct sockaddr *)remote_addr,addr_len);
-  if (n  < 0) 
-    sock_error("sendto");
+  if (n  < 0) {  
+    // don't print client address, per notary privacy policy
+    DPRINTF(DEBUG_ERROR, "Error replying to client\n");
+    perror("sendto");
+    // still return positive byte number, indicating reply was sent
+  } 
 
     /*  ------ Disabled for Production ---------
   else     
@@ -189,14 +188,21 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port){
    INIT_LIST_HEAD(&ondemand_list.list); 
 
    main_sock=socket(AF_INET, SOCK_DGRAM, 0);
-   if (main_sock < 0) sock_error("Opening socket");
+   if (main_sock < 0) { 
+    	DPRINTF(DEBUG_ERROR, "Error opening main server socket\n");
+    	perror("socket");
+	exit(1); 
+   } 
    length = sizeof(server);
    bzero(&server,length);
    server.sin_family=AF_INET;
    server.sin_addr.s_addr= ip_addr;
    server.sin_port=htons(port);
-   if (bind(main_sock,(struct sockaddr *)&server,length)<0) 
-       sock_error("binding");
+   if (bind(main_sock,(struct sockaddr *)&server,length)<0) {  
+    	DPRINTF(DEBUG_ERROR, "Error binding main server socket\n");
+    	perror("socket");
+	exit(1); 
+   }
    fromlen = sizeof(struct sockaddr_in);
 
    fd_set readset; 
@@ -208,15 +214,19 @@ void server_loop(DB *db, uint32_t ip_addr, uint16_t port){
       FD_ZERO(&readset); 
       FD_SET(main_sock, &readset);
       int result = select(main_sock+1,&readset,NULL,NULL,&timeout); 
-      if(result < 0) { 
+      if(result < 0) {
+	DPRINTF(DEBUG_ERROR,"Select returned a failure\n");  
         perror("select"); 
       } else if(result > 0) {
         // socket is ready 
         assert(FD_ISSET(main_sock,&readset)); 
         n = recvfrom(main_sock,buf,MAX_PACKET_LEN,
            0,(struct sockaddr *)&from,&fromlen);
-        if (n < 0) sock_error("recvfrom");
-       
+        if (n < 0) { 
+		DPRINTF(DEBUG_ERROR,"Error reading client socket\n"); 
+		perror("recvfrom");
+		continue; 
+       	} 
         char *host;
         uint16_t type;
         notary_header* hdr = (notary_header*)buf;

@@ -1,0 +1,14 @@
+Start Host: '196.46.189.230:2087,2' 
+ssl key: ae:a8:10:2b:ab:e2:f3:f5:67:a9:db:95:b4:ec:62:08 
+start:	 10 - Tue Dec 30 13:10:03 2008
+end:	 20 - Wed Mar 11 19:14:26 2009
+start:	 30 - Tue Dec 30 13:10:03 2008
+end:	 40 - Wed Mar 11 19:14:26 2009
+
+ssl key: 49:40:28:ae:d4:7e:1d:28:59:25:a6:f4:94:f1:4f:ad 
+start:	 20 - Sat Dec 27 21:41:18 2008
+end:	 30 - Tue Dec 30 13:10:02 2008
+start:	 40 - Sat Dec 27 21:41:18 2008
+end:	 50 - Tue Dec 30 13:10:02 2008
+
+End Host

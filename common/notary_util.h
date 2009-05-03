@@ -17,6 +17,8 @@ void initialize_header(notary_header *hdr, uint16_t total_len,
                         uint16_t service_type,
                         uint16_t msg_type);
 
+void prune_oldest_timestamp(ssh_key_info_list *info_list, uint32_t cur_time); 
+
 void add_observation_to_list(ssh_key_info_list *info_list, 
       char *digest, int digest_len, int key_type, int timestamp);
 unsigned int data_from_list(ssh_key_info_list *info_list, 

@@ -8,32 +8,32 @@
 #include "flex_queue.h"
 #include "notary_crypto.h"
 
-unsigned int notary_debug = DEBUG_ERROR;
-
-// global so signal handler can close db and file.
-DB *db; 
-FILE *f;
+unsigned int notary_debug = DEBUG_ERROR | DEBUG_INFO;
 
 
 #define MAX_DATA_SIZE 10000
 #define KEY_DATA_SIZE 16
 
-void parse_file(RSA* priv_key, char* sig_type){
-  char buf[1024];
+ssh_key_info_list *
+read_single_keyinfo_from_file(FILE *f){
+    char buf[1024];
 
-  char hostname[512];
+    char hostname[512];
 
-  char data[MAX_DATA_SIZE]; 
-  while(fgets(buf, 1024,f) != NULL) {
+    char data[MAX_DATA_SIZE]; 
+    if(fgets(buf, 1024,f) == NULL) { 
+	DPRINTF(DEBUG_ERROR, "fgets");
+	return NULL;  
+    }
 
     int ret = sscanf(buf, "Start Host: '%s' ", hostname);
     if(ret == EOF) {
       printf("error \n");
-      continue;
+      return NULL;
     }
     if(ret != 1) {
       printf("error, ret = %d \n", ret);
-      continue;
+      return NULL;
     }
     int hostname_len = strlen(hostname);
     hostname[hostname_len - 1] = 0x0; // sscanf misses a single quote
@@ -101,93 +101,48 @@ void parse_file(RSA* priv_key, char* sig_type){
     
 
     } // done while(1) reading all keys for a single host
-
-    if(priv_key != NULL && sig_type != NULL) {
-      unsigned char sig_buf[SIGNATURE_LEN];
-      unsigned int sig_len;
-      int sig_ret; 
-      if(strcmp(sig_type, "sha256") == 0) { 
-      	sig_ret = get_signature_rsa_sha256(data, offset, 
-				priv_key,sig_buf, &sig_len); 
-      } else { 
-	sig_ret = get_signature(data, offset, priv_key,sig_buf, &sig_len); 
-      } 
-      if(sig_ret || sig_len != SIGNATURE_LEN) {
-        printf("Error calculating signature \n");
-        continue; 
-      }
-
-      memcpy(data + offset, sig_buf, SIGNATURE_LEN);
-    }
+    
+    //garbage for the sig value
     offset += SIGNATURE_LEN; 
 
     unsigned int data_len = offset - (hostname_len + 1);
     char *data_start = (data + hostname_len + 1);
     DPRINTF(DEBUG_INFO, "data size = %d \n", data_len);
-    store_data(db, hostname, data_start, data_len);
 
     if(offset > MAX_DATA_SIZE) {
       printf("ran out of buffer space converting file to DB \n");
       exit(1); 
     } 
 
-  }  
+
+    return list_from_data(data_start, data_len,SIGNATURE_LEN); 
+
 }
 
-
-void close_db(int signal) {
-  printf("Closing BDB database \n");
-  if(db != NULL)
-     bdb_close(db);
-  if(f != NULL)
-    fclose(f);
-  exit(1);
-}
 
 
 int main(int argc, char** argv) {
                  
-//      if(argc != 6 && argc != 4) {
-      if(argc != 5 && argc != 4) {
-        //printf("usage:<file-in>  <db-env> <db-filename> <priv-key> <md5|sha256>\n");
-        printf("usage:<file-in>  <db-env> <db-filename> <priv-key>\n");
-        printf("if no private key is given, DB signatures will be invalid\n");
+      if(argc != 2) {
+        printf("usage:<file-in>\n");
         exit(1);
       }
-
-      signal(SIGINT, close_db);
         
-      f = fopen(argv[1], "r");
+      FILE *f = fopen(argv[1], "r");
       if(f == NULL) {
         DPRINTF(DEBUG_ERROR, "Couldn't open '%s' \n", argv[1]); 
         exit(1); 
       }
 
-      uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
-      uint32_t db_flags = DB_CREATE;
-      db = bdb_open_env(argv[2], env_flags,
-                    argv[3], db_flags);
-      
-      if(db == NULL) {
-          DPRINTF(DEBUG_ERROR, "bdb_open failed for '%s' \n", argv[2]);
-          exit(1);
+      struct timeval now; 
+      gettimeofday(&now,NULL); 
+      ssh_key_info_list * info_list = read_single_keyinfo_from_file(f);
+      printf("********** START ************\n"); 
+      print_key_info_list(stdout, info_list);
+      while(!list_empty(&info_list->list)) { 
+       	prune_oldest_timestamp(info_list, now.tv_sec); 
+      	printf("********** AFTER PRUNE ************\n"); 
+        print_key_info_list(stdout, info_list);
       }
-
-      RSA *priv_key = NULL;
-      char *sig_type = NULL; 
-      if(argc == 6) {  
-        priv_key = load_private_key(argv[4]);
-        if(priv_key == NULL) {
-          DPRINTF(DEBUG_ERROR, "failed to load private key '%s' \n", argv[3]);
-          exit(1);
-        }
-	sig_type = "md5"; 
-      }
-
-      parse_file(priv_key,sig_type); 
-
-      bdb_close(db);
-      fclose(f);
       return 0;
-
 }
