@@ -48,6 +48,11 @@ function load_results_dialog(){
 		d_print("error","null URI in results dialog"); 
 		return; 
 	} 
+  	try { 
+		var ignore = uri.host; 
+  	} catch(e) { 
+		return;
+  	}
 
 	var other_cache = window.opener.other_cache; 	
   	var cert  = window.opener.ssl_cache[uri.host];

@@ -1,5 +1,5 @@
 var MY_ID = "perspectives@cmu.edu"; 
-var TIMEOUT_SEC = 5; 
+var TIMEOUT_SEC = 8; 
 
 var STATE_IS_BROKEN   = 
   Components.interfaces.nsIWebProgressListener.STATE_IS_BROKEN;
@@ -398,10 +398,26 @@ function queryNotaries(cert, uri,browser,has_user_permission){
   }
     
   query_timeoutid_data[service_id] = window.setTimeout(function () { 
-		d_print("main", "timeout for " + service_id); 
+		d_print("main", "timeout for " + service_id);
+		var server_result_list = query_result_data[service_id]; 
+		for(var i = 0; i < notaries.length; i++) { 
+			var found = false;
+			for(var j = 0; j < server_result_list.length; j++) { 
+				if(notaries[i].host == server_result_list[j].server) { 
+					found = true; 
+					break; 
+				}
+			} 
+			if(!found) { 
+				// add empty result for this notary
+				var res = { "server" : notaries[i].host, 
+					    "obs" : [] }; 
+				server_result_list.push(res); 
+			} 
+		} 
 		notaryQueriesComplete(uri,cert,service_id,browser,
 					has_user_permission, 
-					query_result_data[service_id]);
+					server_result_list);
 		delete query_result_data[service_id]; 
 		delete query_timeoutid_data[service_id];  
 	}, 
@@ -480,12 +496,13 @@ function notaryQueriesComplete(uri,cert,service_id,browser,has_user_permission,
     }  
     var qd_str = (is_consistent) ? qd_days + " days" : "none";
     var str = "Notary Lookup for: " + service_id + "\n";
-    			str += "Key = " + cert.md5Fingerprint + "\n"; 
+    			str += "Browser's Key = '" + test_key + "'\n"; 
     			str += "Results:\n"; 
     			str += "Quorum duration: " + qd_str + "\n"; 
     			str += "Notary Observations: \n" + obs_text + "\n"; 
     d_print("main","\n" + str + "\n");
-    var svg = get_svg_graph(service_id, server_result_list, 30);
+    var svg = get_svg_graph(service_id, server_result_list, 30,
+				unixtime,test_key);
     d_print("main", svg);  
     ssl_cache[uri.host] = new SslCert(uri.host, uri.port,cert.md5Fingerprint, 
 		str, null,svg, qd_days, is_consistent);
@@ -544,7 +561,17 @@ function updateStatus(browser, has_user_permission){
     setStatus(uri,STATE_NEUT,text); 
     other_cache["reason"] = text;
     return;
-  } 
+  }
+
+  try { 
+	var ignore = uri.host; 
+  } catch(e) {
+    	var text = "URL is not a valid remote server"; 
+    	setStatus(uri,STATE_NEUT,text); 
+    	other_cache["reason"] = text;
+	return;
+  }
+ 
   if(!uri.host){
     return;
   }
@@ -651,7 +678,7 @@ function process_notary_results(uri,browser,has_user_permission) {
     "Perspectives has validated this site");
   }
   var required_duration   = 
-    root_prefs.getIntPref("perspectives.required_duration") / 100.0;
+    root_prefs.getIntPref("perspectives.required_duration");
 
   if (cache_cert.summary.indexOf("ssl key") == -1) { 
     	cache_cert.tooltip = strbundle.getString("noRepliesWarning");

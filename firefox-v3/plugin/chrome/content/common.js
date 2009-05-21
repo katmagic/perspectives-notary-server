@@ -6,8 +6,8 @@ var d_print_all = false;
 var d_print_flags = { 
 	"policy" : false, 
 	"query" : false,
-	"main" : true,  
-	"error" :  true 
+	"main" : false,  
+	"error" :  false 
 }; 
 
 function d_print(flag,line) {

@@ -36,9 +36,9 @@ function open_preferences_dialog() {
 
 function setStatus(uri,state, tooltip){
   if(uri != null && uri != window.gBrowser.currentURI) { 
-	d_print("main", "Ignoring setStatus for '" + uri.spec + 
-	"' because current browser tab is for '" + 
-	window.gBrowser.currentURI.spec + "'"); 
+//	d_print("main", "Ignoring setStatus for '" + uri.spec + 
+//	"' because current browser tab is for '" + 
+//	window.gBrowser.currentURI.spec + "'"); 
 	return;  
   }
   if(!tooltip){

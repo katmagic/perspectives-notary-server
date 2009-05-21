@@ -45,14 +45,13 @@ function setup_color_info(server_result_list,cutoff,color_info) {
 } 
  
 
-function get_svg_graph(service_id, server_result_list, len_days) {
-	var x_offset = 160, y_offset = 40; 
+function get_svg_graph(service_id, server_result_list, len_days,cur_secs, browser_key) {
+	var x_offset = 200, y_offset = 40; 
 	var width = 700;
 	var y_cord = y_offset; 
 	var pixels_per_day = (width - x_offset - 20) / len_days; 
 	var rec_height = 10; 
 	var grey_used = false; 
-	var cur_secs = get_unix_time(); 
 	var cutoff = cur_secs - DAY2SEC(len_days);
 	var color_info = {};  
 	var color_count = setup_color_info(server_result_list, 
@@ -150,14 +149,15 @@ function get_svg_graph(service_id, server_result_list, len_days) {
   	y_cord += 30;
 	if(grey_used) 
 		color_info["all other keys"] = "grey"; 
-  	for (key in color_info) { 
+  	for (key in color_info) {
+		var match_text = (key == browser_key) ? " (browser's key)" : "";  
     		res += '<rect x="' + x_offset + '" y="' + y_cord 
 			+ '" width="10" height="10" fill="'
 			+ color_info[key] 
 			+ '" rx="0" stroke="black" stroke-width="1px" />\n'
     			+ '<text x="' + (x_offset + 15) 
-			+ '" y="' + (y_cord + 9) + '" font-size="15">'
-			+  key + '</text>\n'; 
+			+ '" y="' + (y_cord + 9) + '" font-size="13">'
+			+  key + match_text + '</text>\n'; 
     		y_cord += 20;
   	}
  

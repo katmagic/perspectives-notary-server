@@ -93,9 +93,13 @@ function resultToString(server_result,show_sig){
                 out += "start:\t" + start_t + " - " + start_d + "\n"; 
                 out += "end:  \t" + end_t + " - " + end_d + "\n"; 
             }   
-        }  
-	if(show_sig)
+        } 
+	if(server_result.obs.length == 0) { 
+		out += "[ No Results ]"; 
+	} 
+	if(show_sig) { 
 		out += "\tsignature = '" + server_result.signature + "'\n";  
+	}
 	return out;
 } 
 

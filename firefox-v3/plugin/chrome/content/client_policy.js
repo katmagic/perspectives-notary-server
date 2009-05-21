@@ -137,13 +137,12 @@ function get_quorum_duration(test_key, results, quorum_size, stale_limit_secs, u
 		d_print("policy","current_consistency_failed"); 
 		return -1; 
 	}
-	
+	var oldest_valid_ts = unixtime; 	
 	var oldest_most_recent = find_oldest_most_recent(results,unixtime,stale_limit_secs); 
-	var nonzero_duration = false; 
   	var time_changes = get_all_key_changes(results); 
 	sort_number_list_desc(time_changes); 
 	d_print("policy", "sorted times: ", time_changes); 
-  	var test_time = unixtime; 
+  	var test_time = null; 
 	for(var i = 0; i < time_changes.length; i++) {
 		test_time = time_changes[i]; 
 		if(time_changes[i] > oldest_most_recent) { 
@@ -154,12 +153,12 @@ function get_quorum_duration(test_key, results, quorum_size, stale_limit_secs, u
 			d_print("policy", "quorum failed for time " + test_time); 
 			break; 
 		}
-		nonzero_duration = true; 
+		oldest_valid_ts = test_time;  
 	}
-	var diff = unixtime - test_time + 1; 
-	if(diff > 0 && nonzero_duration) 
-		return diff;
-
-	return 0; 
+	if(oldest_valid_ts === null) { 
+		return 0; 
+	} 
+	var diff = unixtime - oldest_valid_ts + 1; 
+	return (diff > 0) ? diff : 0;  
 } 
  
