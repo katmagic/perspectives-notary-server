@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
 
       RSA *priv_key = NULL;
       char *sig_type = NULL; 
-      if(argc == 6) {  
+      if(argc == 5) {  
         priv_key = load_private_key(argv[4]);
         if(priv_key == NULL) {
           DPRINTF(DEBUG_ERROR, "failed to load private key '%s' \n", argv[3]);
