@@ -63,7 +63,6 @@ function host_is_unreachable(hostname) {
 } 
 
 /* Data */
-var whitelist     = new Array();
 var ssl_cache     = new Object();
 var root_prefs    = Components.classes["@mozilla.org/preferences-service;1"]
   .getService(Components.interfaces.nsIPrefBranchInternal);
@@ -282,20 +281,6 @@ function SslCert(host, port, md5, summary, tooltip, svg, duration, secure){
   this.summary  = summary;
   this.tooltip  = tooltip;
   this.svg      = svg;
-}
-
-function onWhitelist(host){
-  var length = whitelist.length //heard a rumor that this is O(n) sometimes
-  for(var i = 0; i < length; i++){
-    if(whitelist[i] == ""){//don't know why i need this
-      continue;
-    }
-    if(host.indexOf(whitelist[i]) >= 0){
-      d_print("main","whitelist match: " + whitelist[i] + "\n");
-      return true;
-    }
-  }
-  return false;
 }
 
 function get_invalid_cert_SSLStatus(uri){
@@ -589,12 +574,14 @@ function updateStatus(browser, has_user_permission){
     other_cache["reason"] = text;
     return;
   } 
-  if(onWhitelist(uri.host)){
+
+  if(whitelist.onWhitelist(uri.host)){
     var text = strbundle.getFormattedString("whitelistError", [uri.host] ); 
     setStatus(uri,STATE_NEUT,text); 
     other_cache["reason"] = text; 
     return;
   }
+
   var unreachable = host_is_unreachable(uri.host); 
   if(unreachable) { 
     var text = strbundle.getFormattedString("rfc1918Error", [ uri.host ])
@@ -769,31 +756,6 @@ var notaryListener = {
 	onLinkIconAvailable: function() { }
 };
 
-function init_whitelist(){
-  var req = XMLHttpRequest();
-
-  function parse(){ 
-    if (req.readyState != 4){ 
-      return;
-    }
-    whitelist = req.responseText.split("\n");
-    for(var i = 0; i < whitelist.length; i++){
-      d_print("main", "(" + whitelist[i] + ")" + "\n");
-    }
-  } 
-
-  //Do it this way so we don't lag while our whitelist page loads
-  try{
-    req.open('GET', 'chrome://perspectives_main/content/whitelist.txt', true);
-    req.onreadystatechange = parse; 
-    req.send(null);
-  }
-  catch(e){
-    d_print("error", e + "\n");
-    return;
-  }
-}
-
 function init_notarylist(){
    var em = Components.classes["@mozilla.org/extensions/manager;1"].
          getService(Components.interfaces.nsIExtensionManager);
@@ -884,11 +846,9 @@ function initNotaries(){
   d_print("main", "\nPerspectives Initialization\n");
   setStatus(null,STATE_NEUT, "");
   init_notarylist(); 
-  init_whitelist();
   getBrowser().addProgressListener(notaryListener, 
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
   setTimeout(function (){ requeryAllTabs(gBrowser); }, 4000);
   d_print("main", "Perspectives Finished Initialization\n\n");
-
 }
 

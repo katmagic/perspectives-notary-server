@@ -38,3 +38,35 @@ function get_unix_time() {
 
 function SEC2DAY(sec) { return sec / (3600 * 24); }  
 function DAY2SEC(day) { return day * (3600 * 24); }  
+
+function readLocalFile(path){ 
+
+   var em = Components.classes["@mozilla.org/extensions/manager;1"].
+         getService(Components.interfaces.nsIExtensionManager);
+   var file = em.getInstallLocation(MY_ID).getItemFile(MY_ID, path);
+   var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].
+                        createInstance(Components.interfaces.nsIFileInputStream);
+   istream.init(file, 0x01, 0444, 0);
+   istream.QueryInterface(Components.interfaces.nsILineInputStream);
+
+   // read lines into array
+   var hasmore;
+   var text = "";
+   var line = {};
+   do {
+      hasmore = istream.readLine(line)
+      if (line.value.length > 0 && line.value[0] != "#") {
+          text += line.value + "\n";
+      }
+   } while(hasmore);
+
+   istream.close();
+   return text;
+}
+
+
+
+
+
+
+
