@@ -1,18 +1,20 @@
-var whitelist = function() {
+var readLocalFile;
+
+var whitelist = (function () {
 
     var whitelist = eval(readLocalFile("whitelist.json"));
           
-    var obj = { 
-        onWhitelist : function(host){
-            var length = whitelist.length;
+    return { 
+        onWhitelist : function (host) {
+            var i = 0; 
 
-            for(var i = 0; i < length; i++){
+            for (i = 0; i < whitelist.length; i += 1) {
 
-                if(whitelist[i] === ""){
+                if (whitelist[i] === "") {
                     continue;
                 }
 
-                if(host.indexOf(whitelist[i]) >= 0){
+                if (host.indexOf(whitelist[i]) >= 0) {
                     return true;
                 }
             }
@@ -20,6 +22,5 @@ var whitelist = function() {
         }
     };
 
-    return obj;
-} ();
+}());
 

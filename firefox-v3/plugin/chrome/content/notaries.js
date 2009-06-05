@@ -22,11 +22,7 @@ var notary_debug = true;
 // empty in the case of an invalid signature or timeout
 var query_result_data = {}; 
 var query_timeoutid_data = {}; 
-// list of objects representing each notary server's name + port and public key.
-// this list is populated by init_notarylist() 
-var notaries = []; 
 
- 
 function is_nonrouted_ip(ip_str) { 
 	for each (regex in nonrouted_ips) { 
 		if(ip_str.match(RegExp(regex))) { 
@@ -346,6 +342,8 @@ function getCertificate(browser){
 
 function queryNotaries(cert, uri,browser,has_user_permission){
 
+  var notaries = notary_list.getNotaries();
+
   if(!cert) { 
     d_print("error","No certificate found for: " + uri.host); 
     return null; 
@@ -361,6 +359,7 @@ function queryNotaries(cert, uri,browser,has_user_permission){
 	d_print("main", "already querying '" + service_id + "'.  Do not requery"); 
 	return; 
   }
+
 
   query_result_data[service_id] = [];  
   for(i = 0; i < notaries.length; i++) { 
@@ -414,6 +413,7 @@ function queryNotaries(cert, uri,browser,has_user_permission){
 function notaryAjaxCallback(uri, cert, req, notary_server,service_id,
 				browser,has_user_permission) {  
 	
+    var notaries = notary_list.getNotaries();
    if (req.readyState == 4) {  
    	if(req.status == 200){
 	    try { 
@@ -463,6 +463,7 @@ function notaryAjaxCallback(uri, cert, req, notary_server,service_id,
 
 function notaryQueriesComplete(uri,cert,service_id,browser,has_user_permission,
 				server_result_list) {
+                    var notaries = notary_list.getNotaries();
   try {
     var test_key = cert.md5Fingerprint.toLowerCase();
     var max_stale_sec = 2 * 24 * 3600; // 2 days (FIXME: make this a pref)
@@ -756,41 +757,6 @@ var notaryListener = {
 	onLinkIconAvailable: function() { }
 };
 
-function init_notarylist(){
-   var em = Components.classes["@mozilla.org/extensions/manager;1"].
-         getService(Components.interfaces.nsIExtensionManager);
-   var file = em.getInstallLocation(MY_ID).getItemFile(MY_ID, "http_notary_list.txt");
-   var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].
-                        createInstance(Components.interfaces.nsIFileInputStream);
-   istream.init(file, 0x01, 0444, 0);
-   istream.QueryInterface(Components.interfaces.nsILineInputStream);
-
-   // read lines into array
-   var line = {}, lines = [], hasmore;
-   do {
-      hasmore = istream.readLine(line)
-      if (line.value.length > 0 && line.value[0] != "#") 
-      	lines.push(line.value); 
-   } while(hasmore);
-
-   istream.close();
-   
-   var i = 0; 
-   while(i < lines.length) {  
-      var notary_server = { "host" : lines[i++] }; 
-      if(i >= lines.length || lines[i++].indexOf("BEGIN PUBLIC KEY") == -1) { 
-	alert("Perspectives: invalid notary_list.txt file: " + lines[i - 1]); 
-	return; 
-      }
-      var key = ""; 
-      while(i < lines.length && lines[i].indexOf("END PUBLIC KEY") == -1) { 
-    	key += lines[i++]; 
-      }
-      i++; // consume the 'END PUBLIC KEY' line
-      notary_server["public_key"] = key; 
-      notaries.push(notary_server);  
-   } 
-}
 
 function requeryAllTabs(b){
   var num = b.browsers.length;
@@ -799,53 +765,10 @@ function requeryAllTabs(b){
     updateStatus(browser, false);
   }
 }
- 
-// Use Ajax to update the notary_list.txt file stored in the extension directory
-// this is called on start-up  
-  //NOTE: disabling auto-update of the notary list
-  // b/c it could allow an attacker with a bogus root 
-  // cert to compromise the system.  We should have this
-  // update include a signature. 
-function update_notarylist() { 
-  try {
-      var request = new XMLHttpRequest();
-      request.open("GET","https://www.networknotary.org/notary_list.txt",true);
-      request.onload = {
-        handleEvent : 
-		function(evt) {
-    			var psv_id = "perspectives@cmu.edu"; 
-    			var em = Components.classes["@mozilla.org/extensions/manager;1"].
-         getService(Components.interfaces.nsIExtensionManager);
-			var file = em.getInstallLocation(psv_id).getItemFile(psv_id, "notary_list.txt");
-			// file is nsIFile, data is a string
-			var t = request.responseText;
-			d_print("main", "updating notary list to:"); 
-			d_print("main", t);  
-			var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-
-			// use 0x02 | 0x10 to open file for appending.
-			foStream.init(file, 0x02 | 0x08 | 0x20, 0666, 0); 
-			foStream.write(t, t.length);
-			foStream.close();
-                }
-        };
-      request.onerror = {
-        handleEvent : function(evt) {
-                  d_print("error", "failed to update notary_list.txt");
-            }
-        };
-
-  request.send("");
-
-  } catch (e) {
-        d_print("error", "error updating notary_list.txt: " + e);
-  }
-} 
 
 function initNotaries(){
   d_print("main", "\nPerspectives Initialization\n");
   setStatus(null,STATE_NEUT, "");
-  init_notarylist(); 
   getBrowser().addProgressListener(notaryListener, 
       Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT);
   setTimeout(function (){ requeryAllTabs(gBrowser); }, 4000);
