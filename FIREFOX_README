@@ -1,6 +1,0 @@
-Build Instructions: 
-
-1) cd firefox-v3
-2) make  (generates Perspectives.xpi) 
-3) Use File -> Open in Firefox to start using the new XPI file.  :w
-
