@@ -6,11 +6,16 @@ cmake_minimum_required (VERSION 2.6)
 set (notary_VERSION_MAJOR 2)
 set (notary_VERSION_MINOR 0)
 
+
 find_path (bdb_INCLUDE_DIR db.h)
 find_library (bdb_LIBRARIES db)
 
 find_path (openssl_INCLUDE_DIR openssl/ssl.h)
 find_library (openssl_LIBRARIES ssl)
+
+find_path (crypto_INCLUDE_DIR openssl/crypto.h)
+find_library (crypto_LIBRARIES crypto)
+
 
 set (notary_common_ENABLED
 		ON

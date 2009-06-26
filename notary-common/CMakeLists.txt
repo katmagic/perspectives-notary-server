@@ -13,7 +13,8 @@ set (notary_common_SOURCES
 set (notary_common_INCLUDE_DIR
 		${notary_SOURCE_DIR}/notary-common
 		${bdb_INCLUDE_DIR}
-		${openssl_INCLUDE_DIR})
+		${openssl_INCLUDE_DIR}
+		${crypto_INCLUDE_DIR})
 set (notary_common_INCLUDE_DIR
 		${notary_common_INCLUDE_DIR}
 		PARENT_SCOPE)
@@ -22,6 +23,7 @@ set (notary_common_LIBRARIES
 		notary-common
 		${bdb_LIBRARIES}
 		${openssl_LIBRARIES}
+		${crypto_LIBRARIES}
 		PARENT_SCOPE)
 
 add_library (notary-common
