@@ -7,7 +7,9 @@ add_executable (notary-ssl-scanner
 		${notary_ssl_scanner_SOURCES})
 
 include_directories (
-		${openssl_INCLUDE_DIR})
+		${openssl_INCLUDE_DIR}
+		${crypto_INCLUDE_DIR})
 
 target_link_libraries (notary-ssl-scanner
-		${openssl_LIBRARIES})
+		${openssl_LIBRARIES}
+		${crypto_LIBRARIES})
