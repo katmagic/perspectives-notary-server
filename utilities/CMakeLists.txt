@@ -24,9 +24,11 @@ foreach (PREFIX ${utilities_PREFIXES})
 			${PREFIX}.c)
 	
 	include_directories (
-			${notary_client_INCLUDE_DIR})
+			${notary_client_INCLUDE_DIR}
+			${additional_INCLUDE_DIR})
 	
 	target_link_libraries (${PREFIX}
-			${notary_client_LIBRARIES})
+			${notary_client_LIBRARIES}
+			${additional_LIBRARIES})
 	
 endforeach ()

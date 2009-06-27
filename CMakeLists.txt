@@ -1,7 +1,8 @@
 
-project (notary)
-
 cmake_minimum_required (VERSION 2.6)
+
+
+project (notary)
 
 set (notary_VERSION_MAJOR 2)
 set (notary_VERSION_MINOR 0)
@@ -33,6 +34,12 @@ find_library (crypto_LIBRARIES crypto
 		/lib
 		/usr/lib /usr/local/lib
 		/opt/lib /opt/local/lib)
+
+set (additional_INCLUDE_DIR
+		CACHE PATH "Additional folders for including.")
+
+set (additional_LIBRARIES
+		CACHE FILEPATH "Additional libraries for linking.")
 
 
 set (notary_common_ENABLED

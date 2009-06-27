@@ -30,4 +30,5 @@ add_library (notary-common
 		${notary_common_SOURCES})
 
 include_directories (
-		${notary_common_INCLUDE_DIR})
+		${notary_common_INCLUDE_DIR}
+		${additional_INCLUDE_DIR})

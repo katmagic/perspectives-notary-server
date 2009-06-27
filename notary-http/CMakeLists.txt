@@ -7,7 +7,9 @@ add_executable (notary-http
 		${notary_http_SOURCES})
 
 include_directories (
-		${notary_client_INCLUDE_DIR})
+		${notary_client_INCLUDE_DIR}
+		${additional_INCLUDE_DIR})
 
 target_link_libraries (notary-http
-		${notary_client_LIBRARIES})
+		${notary_client_LIBRARIES}
+		${additional_LIBRARIES})

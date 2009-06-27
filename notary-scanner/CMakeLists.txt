@@ -6,10 +6,12 @@ add_executable (notary-scanner
 		${notary_scanner_SOURCES})
 
 include_directories (
-		${notary_common_INCLUDE_DIR})
+		${notary_common_INCLUDE_DIR}
+		${additional_INCLUDE_DIR})
 
 target_link_libraries (notary-scanner
-		${notary_common_LIBRARIES})
+		${notary_common_LIBRARIES}
+		${additional_LIBRARIES})
 
 set_source_files_properties (
 		${notary_scanner_SOURCES}

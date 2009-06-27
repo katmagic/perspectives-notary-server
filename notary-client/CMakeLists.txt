@@ -21,7 +21,8 @@ add_library (notary-client
 		${notary_client_SOURCES})
 
 include_directories (
-		${notary_client_INCLUDE_DIR})
+		${notary_client_INCLUDE_DIR}
+		${additional_INCLUDE_DIR})
 
 set_source_files_properties (
 		${notary_client_SOURCES}
