@@ -17,3 +17,18 @@ set_source_files_properties (
 		${notary_scanner_SOURCES}
 		PROPERTIES
 		COMPILE_FLAGS -std=gnu99)
+
+set (record_observation_SOURCES
+		record_observation.c)
+
+add_executable (record-observation
+		${record_observation_SOURCES})
+
+target_link_libraries (record-observation
+		${notary_common_LIBRARIES}
+		${additional_LIBRARIES})
+
+set_source_files_properties (
+		${record_observation_SOURCES}
+		PROPERTIES
+		COMPILE_FLAGS "-std=gnu99")

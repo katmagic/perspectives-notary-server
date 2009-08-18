@@ -70,6 +70,7 @@ typedef struct {
 #define SSH_RSA 1
 #define SSH_DSA 2
 #define SSL_ANY 3
+#define INVALID_KEY_TYPE 255 
 
 #define KEY_INFO_SIZE(info)  \
 	sizeof(ssh_key_info) + ntohs(info->key_len_bytes) \

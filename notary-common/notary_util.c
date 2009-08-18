@@ -474,7 +474,7 @@ uint8_t str_2_keytype(char *str) {
   if(strcmp(str,"ssh-rsa") == 0) return SSH_RSA;
   if(strcmp(str,"ssh-dsa") == 0) return SSH_DSA;
   if(strcmp(str,"ssl") == 0) return SSL_ANY;
-  return 255;
+  return INVALID_KEY_TYPE;
 }
 
 void make_lowercase(char *str, int len) {
