@@ -47,8 +47,6 @@ int main(int argc, char** argv) {
 	 fprintf(stderr, "Invalid key type '%s'\n", argv[4]); 
          exit(1); 
       } 
-      record_key(dns_name, 0 /*no ip address*/, port, key_buf, KEY_LEN, 
+      return record_key(dns_name, 0 /*no ip address*/, port, key_buf, KEY_LEN, 
 			key_type, "", service_type); 
-      return 0;
-
 }

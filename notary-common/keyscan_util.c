@@ -11,7 +11,7 @@
 
 // function used by spawned client processes to report resulting key back to
 // the main scanner process.  called from sshconnect.c
-void record_key(char *dns_name, uint32_t ip_addr, uint16_t port,
+int record_key(char *dns_name, uint32_t ip_addr, uint16_t port,
                   uint8_t* digest, uint32_t digest_len, uint32_t key_type,  
 		  char *server_version_string, uint8_t service_type){
 
@@ -39,13 +39,14 @@ void record_key(char *dns_name, uint32_t ip_addr, uint16_t port,
     memcpy(ptr, digest, digest_len);
 
     int res = sendToUnixSock(FINISHED_CHILD_SOCK_NAME, buf, total_len); 
+    free(buf);
   
     if(res < 0) {
         printf("Failed to report probe to recording socket for: \n"); 
         printf("'%s' = '%s' \n", full_name,
-            buf_2_hexstr((char*)digest, digest_len)); 
+            buf_2_hexstr((char*)digest, digest_len));
+	return 1;  
     }
-
-    free(buf);
+    return 0; 
 }
 
