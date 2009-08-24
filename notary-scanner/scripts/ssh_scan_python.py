@@ -4,8 +4,8 @@ import sys
 import tempfile 
 import os
 
-if len(sys.argv) != 3: 
-	print "usage: <service-id> <record-obs-binary>"
+if len(sys.argv) != 4: 
+	print "usage: <service-id> <report-obs-binary> <report-sock-name>"
 	exit(1)
 
 dns_and_port = sys.argv[1].split(",")[0]
@@ -43,12 +43,13 @@ for key_type in ("rsa","dsa","rsa1"):
 		print "invalid fingerprint '%s'" % output
 		continue
 
-	p3 = Popen([sys.argv[2],dns_name, port, "2", "ssh-" + key_type, fp])
+	p3 = Popen([sys.argv[2],dns_name, port, "2", "ssh-" + key_type, fp, sys.argv[3]])
 	p3.wait()
 
 	if p3.returncode != 0: 
 		print "Error reporting result to notary-scanner socket for '%s'" \
 		% dns_and_port
+		exit(1) 
 	break 
 
 os.remove(fname)

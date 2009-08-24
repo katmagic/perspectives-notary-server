@@ -19,6 +19,8 @@
 #define MAX_ONDEMAND_WAIT_SEC 3
 #define ONDEMAND_CHECK_INTERVAL_SEC 1
 
+char *new_request_sock = NULL; 
+
 typedef struct {
   notary_header *hdr;
   uint32_t hdr_len; 
@@ -87,7 +89,7 @@ void request_probe(notary_header *hdr, struct sockaddr_in *addr, int addr_len,
     // we need to actually tell the scanning process to 
     // probe this service_id 
     char *service_id = (char*)(tmp->hdr + 1);
-    request_ondemand_probe(service_id); 
+    request_ondemand_probe(service_id,new_request_sock);
 }
 
 
@@ -268,6 +270,8 @@ int main(int argc, char** argv) {
     }
 
     parse_config_file(&conf, argv[1]);
+    // stash readonly value as global
+    new_request_sock = conf.new_request_sock; 
 
     uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
     DB *db = bdb_open_env(conf.db_env_fname, env_flags, conf.db_fname, DB_RDONLY);

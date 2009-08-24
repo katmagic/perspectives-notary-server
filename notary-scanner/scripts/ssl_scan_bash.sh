@@ -1,7 +1,7 @@
 #!/bin/sh
 
-if [ $# != 2 ] ; then
-	echo "usage: <service-id> <record-obs-binary>" 
+if [ $# != 3 ] ; then
+	echo "usage: <service-id> <record-obs-binary> <report-sock-name>" 
 	exit 1
 fi
 
@@ -26,7 +26,7 @@ echo $fp
 dns_name=`echo $dns_and_port | cut -d":" -f1`
 port=`echo $dns_and_port | cut -d":" -f2`
 
-$2 $dns_name $port 2 ssl $fp
+$2 $dns_name $port 2 ssl $fp $3
 
 if [ $? -ne 0 ] ; then 
 	echo "Error reporting result to notary-scanner socket"

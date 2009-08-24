@@ -1,7 +1,7 @@
 db_env_fname=db_env
 db_fname=notary.db
 private_key_fname=keys/private.pem
-exceptions_fname=config/probing_blacklist
-max_simultaneous=350
-ssh_scan_fname=bin/ssh_scan
-ssl_scan_fname=bin/ssl_scan
+ssl_scan_binary=bin/ssl_scan
+ssh_scan_binary=bin/ssh_scan
+new_request_sock=scan_request
+request_finished_sock=request_finished

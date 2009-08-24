@@ -7,11 +7,11 @@
 #include "net_util.h"
 #include "keyscan_util.h" 
 
-void request_ondemand_probe(char * service_id){ 
+void request_ondemand_probe(char * service_id, char* sockname){ 
     int len = strlen(service_id) + 1; // send NULL terminator 
     DPRINTF(DEBUG_INFO,"Requesting on-demand probe for: '%s'\n", 
         service_id); 
-    sendToUnixSock(NEW_REQUEST_SOCK_NAME, service_id, len);
+    sendToUnixSock(sockname, service_id, len);
 } 
 
 void parse_config_file(server_config *conf, char* fname){
@@ -49,6 +49,8 @@ void parse_config_file(server_config *conf, char* fname){
       conf->db_env_fname = strdup(value);
     } else if(strcmp(buf, "db_fname") == 0) {
       conf->db_fname = strdup(value);
+    } else if(strcmp(buf, "new_request_sock") == 0) { 
+      conf->new_request_sock = strdup(value); 
     } else {
       DPRINTF(DEBUG_ERROR, "Unknown config value %s : %s \n",
           buf, value);

@@ -13,7 +13,8 @@
 // the main scanner process.  called from sshconnect.c
 int record_key(char *dns_name, uint32_t ip_addr, uint16_t port,
                   uint8_t* digest, uint32_t digest_len, uint32_t key_type,  
-		  char *server_version_string, uint8_t service_type){
+		  char *server_version_string, uint8_t service_type, 
+		  char *scan_finished_sock_name){
 
     char full_name[MAX_NAME_LEN];
     snprintf(full_name,MAX_NAME_LEN,"%s:%d,%d",dns_name, port, service_type); 
@@ -38,7 +39,7 @@ int record_key(char *dns_name, uint32_t ip_addr, uint16_t port,
     ptr += 4;
     memcpy(ptr, digest, digest_len);
 
-    int res = sendToUnixSock(FINISHED_CHILD_SOCK_NAME, buf, total_len); 
+    int res = sendToUnixSock(scan_finished_sock_name, buf, total_len); 
     free(buf);
   
     if(res < 0) {

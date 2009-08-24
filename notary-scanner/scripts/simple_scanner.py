@@ -11,20 +11,33 @@ import time
 # seems to be issues probe requests getting lost/timedout
 # when requested by the c-scanner. 
 
+
 def start_probe(sid): 
   host_and_port, service_type = sid.split(",")
   if service_type == "2": 
-    cmd = [ "bin/ssl_scan", "s_client", "-connect",  host_and_port ]
+    first_arg = config['ssl_scan_binary'] 
   elif service_type == "1": 
-    cmd = [ "bin/ssh_scan",  host_and_port ]
+    first_arg = config['ssh_scan_binary'] 
   else: 
     print "invalid service_type for '%s'" % sid
     return  
-  return Popen(cmd, stdout=PIPE, stderr=STDOUT, shell=False)
+  return Popen([first_arg,sid, config['request_finished_sock']] , 
+			stdout=PIPE, stderr=STDOUT, shell=False)
    
-if len(sys.argv) != 4: 
-  print "usage: <service_id_file> <max simultaneous> <timeout sec> "
+if len(sys.argv) != 5: 
+  print "usage: <service_id_file> <max simultaneous> <timeout sec> " \
+		" <scanner-config> "
   sys.exit(1)
+
+config = {} 
+
+f = open(sys.argv[4])
+for line in f: 
+	try: 
+		key,value = line.strip().split("=") 
+		config[key] = value
+	except: 
+		pass
 
 f = open(sys.argv[1])
 to_probe = [ line.rstrip() for line in f ] 
@@ -58,7 +71,7 @@ while True:
   for sid,(p,t) in active_sids.items():
     code = p.poll()
     if code != None:
-      if code != 8: 
+      if code != 0: 
         print "failed: %s %s" % (sid,code)
         failure_count += 1
       p.wait() # apparently this is needed on FreeBSD?

@@ -7,8 +7,9 @@ unsigned int notary_debug = DEBUG_ERROR;
 
 int main(int argc, char** argv) {
                  
-      if(argc !=6 ) {
-        printf("usage: <dns-name> <port> <service-type> <key-type-str> <md5-fingerprint>\n");
+      if(argc != 7 ) {
+        printf("usage: <dns-name> <port> <service-type> "
+		"<key-type-str> <md5-fingerprint> <report-sock-name>\n");
         exit(1);
       }
       
@@ -48,5 +49,5 @@ int main(int argc, char** argv) {
          exit(1); 
       } 
       return record_key(dns_name, 0 /*no ip address*/, port, key_buf, KEY_LEN, 
-			key_type, "", service_type); 
+			key_type, "", service_type, argv[6]); 
 }

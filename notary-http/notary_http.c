@@ -42,6 +42,7 @@ DEBUG_ERROR | DEBUG_INFO;
 
 int main_sock; 
 DB *db;
+char *new_request_sock = NULL; 
 
 int main(int argc, char **argv){
     uint32_t env_flags;
@@ -53,6 +54,8 @@ int main(int argc, char **argv){
     }
 
     parse_config_file(&conf, argv[1]);
+    // stash readonly value as global
+    new_request_sock = conf.new_request_sock; 
 
     env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB | DB_THREAD;
     db = bdb_open_env(conf.db_env_fname, env_flags, conf.db_fname, DB_RDONLY);
@@ -167,7 +170,7 @@ void process(int sockfd){
 	
 	++num_tries;
 	if(num_tries == 1) { 
- 	  request_ondemand_probe(service_id);
+ 	  request_ondemand_probe(service_id,new_request_sock);
 	}
  
     	if (num_tries >= ONDEMAND_MAX_TRIES){

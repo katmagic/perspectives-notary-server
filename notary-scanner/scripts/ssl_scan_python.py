@@ -2,8 +2,8 @@ from subprocess import *
 import re
 import sys
 
-if len(sys.argv) != 3: 
-	print "usage: <service-id> <record-obs-binary>"
+if len(sys.argv) != 4: 
+	print "usage: <service-id> <report-obs-binary> <report-sock-name>"
 	exit(1)
 
 dns_and_port = sys.argv[1].split(",")[0]
@@ -26,9 +26,11 @@ if not fp_regex.match(output):
 fp = output.split("=")[1].lower()
 dns_name, port = dns_and_port.split(":") 
 
-p3 = Popen([sys.argv[2],dns_name, port, "2", "ssl", fp])
+p3 = Popen([sys.argv[2],dns_name, port, "2", "ssl", fp, sys.argv[3]])
 p3.wait()
 
 if p3.returncode != 0: 
 	print "Error reporting result to notary-scanner socket for '%s'" \
 		% dns_and_port
+	exit(1)
+

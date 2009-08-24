@@ -39,9 +39,10 @@ fi
 # if scanner is running, don't do this, otherwise you will currupt the 
 # database because there will be two writing processes
 
-for error in `ps -a | grep -v "grep" | grep notary_scanner`; do 
-	echo "notary_scanner appears to be running"
-	echo "Please stop notary_scanner before running this script"
+db_writer="scan_db_manager"
+for error in `ps -a | grep -v "grep" | grep $db_writer`; do 
+	echo "'$db_writer' appears to be running"
+	echo "Please stop '$db_writer' before running this script"
 	exit 1
 done
 

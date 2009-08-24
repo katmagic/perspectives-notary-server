@@ -8,8 +8,8 @@ unsigned int notary_debug = DEBUG_ERROR | DEBUG_INFO;
 int main(int argc, char**argv) {
 
   int max_per_sec = 0; 
-  if(argc < 2) {
-    printf("usage: <file-of-serviceids>\n");
+  if(argc < 3) {
+    printf("usage: <file-of-serviceids> <request-sock-name>\n");
     exit(1); 
   }
   if(argc == 3) { 
@@ -31,7 +31,7 @@ int main(int argc, char**argv) {
 		int size = strlen(buf);
 		buf[size - 1] = 0x0; // replace '\n' with NULL
                 DPRINTF(DEBUG_INFO, "Loaded service-id = '%s'\n",buf);
-                sendToUnixSock(NEW_REQUEST_SOCK_NAME, buf, size);
+                sendToUnixSock(argv[2], buf, size);
                 ++total; 
                 if(max_per_sec && ((total % max_per_sec) == 0)) {
                      sleep(1); 
