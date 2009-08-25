@@ -722,36 +722,66 @@ function process_notary_results(uri,browser,has_user_permission) {
 }
 
 
+// See Documentation for nsIWebProgressListener at: 
+// https://developer.mozilla.org/en/nsIWebProgressListener
+
+// The current approach is to clear the previous status
+// icon during onLocationChange.  For each call to 
+// onSecurityChange, we call updateStatus. 
+// Then, when onStateChange is called with STATE_STOP
+// we call updateStatus one last time just for good 
+// measure, as this should be the last thing that happens. 
+//
+// NOTE: this code needs some TLC
 
 //note can use request to suspend the loading
 var notaryListener = { 
 
-  /* Note can use state is broken to listen if we need to do special stuff for
-   * redirecting */
-  onLocationChange: function(aWebProgress, aRequest, aURI) {
-      try{ 
-      	d_print("main", "Location change " + aURI.spec + "\n");
-      	updateStatus(gBrowser,false);
+   // Note: We intentially do NOT call updateStatus from here, as this
+   // was causing a bug that caused us to get the previous website's cert
+   // instead of the correct cert.  
+   onLocationChange: function(aWebProgress, aRequest, aURI) {
+      try{
+        d_print("main", "Location change " + aURI.spec + "\n");
+        setStatus(aURI, STATE_NEUT, "Connecting to " + aURI.spec);
       } catch(err){
         d_print("error", "Perspectives had an internal exception: " + err);
-	setStatus(aURI, STATE_ERROR, "Perspectives: an internal error occurred: " + err); 
+        setStatus(aURI, STATE_ERROR, "Perspectives: an internal error occurred: " + err);
       } 
-  },
+  
+   },
 
+   // we only call updateStatus on STATE_STOP, as a catch all in case
+   // onSecurityChange was never called. 
    onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) { 
      var uri = gBrowser.currentURI;
-     d_print("main", "State change " + uri.spec + "\n");
+     d_print("State change " + uri.spec + "\n");
      if(aFlag & STATE_STOP){
        try { 
          updateStatus(gBrowser,false);
        } catch (err) { 
-         d_print("error", "Perspectives had an internal exception: " + err);
-	 setStatus(uri, STATE_ERROR, "Perspectives: an internal error occurred: " + err); 
+         d_print("Perspectives had an internal exception: " + err);
+	 setStatus(STATE_ERROR, "Perspectives: an internal error occurred: " + err); 
        } 
      }
   },
 
-	onSecurityChange:    function() { },
+  // this is the main function we key off of.  It seems to work well, even though
+  // the docs do not explicitly say when it will be called. 
+  onSecurityChange:    function() { 
+       var uri = null; 
+       try{ 
+         uri = gBrowser.currentURI;
+         d_print("main", "Security change " + uri.spec + "\n");
+         updateStatus(gBrowser,false);
+       } catch(err){
+         d_print("error", "Perspectives had an internal exception: " + err);
+         if(uri) { 
+          setStatus(uri, STATE_ERROR, "Perspectives: an internal error occurred: " + err); 
+         }
+       }
+  },
+	// we currently ignore these listeners
 	onStatusChange:      function() { },
 	onProgressChange:    function() { },
 	onLinkIconAvailable: function() { }
