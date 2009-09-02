@@ -20,7 +20,6 @@ fname = tempfile.mktemp()
 # We tolerate this for now because the number of ssh machines is 
 # small and we plan on phasing it out anyway
 for key_type in ("rsa","dsa","rsa1"): 
-	print "file: %s" % fname
 	fd = open(fname,'w')
 	p1 = Popen(["ssh-keyscan", "-t", key_type, "-p", port, dns_name ], 
 		stdout=fd, stdin=None, stderr=None)
@@ -43,7 +42,7 @@ for key_type in ("rsa","dsa","rsa1"):
 		print "invalid fingerprint '%s'" % output
 		continue
 
-	p3 = Popen([sys.argv[2],dns_name, port, "2", "ssh-" + key_type, fp, sys.argv[3]])
+	p3 = Popen([sys.argv[2],dns_name, port, "1", "ssh-" + key_type, fp, sys.argv[3]])
 	p3.wait()
 
 	if p3.returncode != 0: 

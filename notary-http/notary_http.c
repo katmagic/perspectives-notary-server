@@ -7,7 +7,6 @@
 #include <arpa/inet.h>
 #include "net_util.h"
 #include "notary_util.h"
-#include "notary_local.h"
 #include "parse.h"
 #include "bdb_storage.h"
 #include "server_common.h"
@@ -34,6 +33,7 @@ void* thread_start(void *connfd);
 int send404(int sock);
 char* db_get_xml(char *service_id);
 
+char* xml_from_key_info(ssh_key_info *info); 
 
 
 unsigned int notary_debug = 
@@ -304,4 +304,35 @@ int read_request(int sockfd, char *buf, int buflen){
 void fatal_error(char *msg){
     perror(msg);
     exit(1);
+}
+
+char* xml_from_key_info(ssh_key_info *info){
+  int i, tmp;
+  char buf[1024], *key_buf;
+  str_buffer *b = str_buffer_new(1024);   
+
+  int len        = ntohs(info->key_len_bytes);
+  key_buf        = (char*)(info + 1); 
+  char *key_str  = buf_2_hexstr(key_buf,KEY_LEN);
+  int *timespans = (int*)(key_buf + len);
+  int num_spans  = ntohs(info->num_timespans);
+
+  tmp = snprintf(buf, 1024, "<key type=\"%s\" fp=\"%s\">\n", 
+		keytype_2_str(info->key_type), key_str);
+  str_buffer_append(b,buf); 
+  free(key_str); 
+
+  for(i = 0; i < num_spans; i++){
+    uint32_t t_start = ntohl(timespans[0]);
+    uint32_t t_end   = ntohl(timespans[1]);
+    snprintf(buf, 1024, 
+        "\t<timestamp start=\"%d\" end=\"%d\"/>\n", t_start, t_end);
+    str_buffer_append(b,buf); 
+    timespans += 2;
+  }
+
+  str_buffer_append(b,"</key>\n");
+  char *str = str_buffer_get(b); 
+  str_buffer_free(b); 
+  return str; 
 }

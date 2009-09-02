@@ -1,25 +1,18 @@
 #!/bin/sh
 
-
-usage() {
-
-    echo "usage: db <scann-config-file>"
-    echo "usage: f <service-list-file>"
+usage() { 
+    echo "usage: db <scann-config-file> <max-simultaneous> <timeout>"
+    echo "usage: f <service-list-file> <max-simultaneous> <timeout>"
     exit 1
-}
+} 
 
-if [ $# != 2 ] && [ $# != 3 ] ; then 
-  usage 
+if [ $# != 4 ] && [ $# != 5 ] ; then 
+  usage
 fi 
 
-if [ $# = 3 ] ; then
-  cd $3
+if [ $# = 5 ] ; then
+  cd $5
 fi
-
-if ! [ -x python ] ; then
-  echo "could not find 'python' in path. python must be installed"
-  exit 1
-fi 
 
 if ! [ -d "bin" ] ; then 
   echo "must be invoked from the top level of the notary package"
@@ -51,10 +44,11 @@ if [ $1 = "db" ]; then
     echo "ERROR: cannot find DB file '$db_env_fname/$db_fname'"
     exit 1
   fi
+  
+  file=log/scanned_hosts_$time.txt
 
-  python scripts/list_by_last_obs $db_env_fname $db_fname newer 10 | awk '{print $1}' > log/scan_list_$time.txt
+  python scripts/list_by_last_obs.py $db_env_fname $db_fname older 0 | awk '{print $1}' > $file
 
-  file=log/scan_list_$time.txt
 
 elif [ "$1" = "f" ]; then
   if ! [ -f $2 ]; then
@@ -66,5 +60,5 @@ else
   usage 
 fi
 
-./bin/request_scan $file > log/scan_requests.log 2>&1
+python scripts/simple_scanner.py $file $3 $4 $2 >> log/scan_results.log 2>&1
 

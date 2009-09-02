@@ -29,11 +29,12 @@ if ! [ -d "log" ] ; then
   mkdir log
 fi
 
-time=`date +%s`
 
 ulimit -c unlimited
 
-echo " Restarting scanner at: $time " >> log/scanner.log
-bin/notary_scanner $1 >> log/scanner.log 2>&1 &
+echo " Restarting scan-db-manager at: `date` " >> log/notary-db-manager.log
+bin/notary-db-manager $1 >> log/notary-db-manager.log 2>&1 &
+
+echo $! > run/notary-db-manager.pid
 
 

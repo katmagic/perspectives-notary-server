@@ -50,29 +50,13 @@ set (notary_client_ENABLED
 		ON
 		CACHE BOOL "Enable building 'notary-client' library.")
 
-set (notary_client_ENABLED
-		ON
-		CACHE BOOL "Enable building 'notary-client' executable.")
-
 set (notary_scanner_ENABLED
 		ON
 		CACHE BOOL "Enable building 'notary-scanner' executable.")
 
-set (notary_ssl_scanner_ENABLED
-		ON
-		CACHE BOOL "Enable building 'notary-ssl-scanner' executable.")
-
-#set (notary_ssh_scanner_ENABLED
-#		ON
-#		CACHE BOOL "Enable building 'notary-ssh-scanner' executable.")
-
 set (notary_http_ENABLED
 		ON
 		CACHE BOOL "Enable building 'notary-http' executable.")
-
-set (notary_server_ENABLED
-		ON
-		CACHE BOOL "Enable building 'notary-server' executable.")
 
 set (utilities_ENABLED
 		ON
@@ -84,43 +68,20 @@ else ()
 	message ("Disabled building 'notary-common' library.")
 endif ()
 
-if (notary_common_ENABLED AND notary_client_ENABLED)
-	add_subdirectory (notary-client)
-else ()
-	message ("Disabled building 'notary-client' library.")
-endif ()
-
 if (notary_common_ENABLED AND notary_scanner_ENABLED)
 	add_subdirectory (notary-scanner)
 else ()
 	message ("Disabled building 'notary-scanner' executable.")
 endif ()
 
-if (notary_ssl_scanner_ENABLED)
-	add_subdirectory (notary-ssl-scanner)
-else ()
-	message ("Disabled building 'notary-ssl-scanner' executable.")
-endif ()
 
-#if (notary_ssh_scanner_ENABLED)
-#	add_subdirectory (notary-ssh-scanner)
-#else ()
-#	message ("Disabled building 'notary-ssh-scanner' executable.")
-#endif ()
-
-if (notary_common_ENABLED AND notary_client_ENABLED AND notary_http_ENABLED)
+if (notary_common_ENABLED AND notary_http_ENABLED)
 	add_subdirectory (notary-http)
 else ()
 	message ("Disabled building 'notary-http' executable.")
 endif ()
 
-if (notary_common_ENABLED AND notary_server_ENABLED)
-	add_subdirectory (notary-server)
-else ()
-	message ("Disabled building 'notary-server' executable.")
-endif ()
-
-if (notary_common_ENABLED AND notary_client_ENABLED AND utilities_ENABLED)
+if (notary_common_ENABLED AND utilities_ENABLED)
 	add_subdirectory (utilities)
 else ()
 	message ("Disabled building utilities executables.")

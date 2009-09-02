@@ -31,7 +31,7 @@ fi
 
 ulimit -c unlimited
 
-echo " Restarting server at: $time " >> log/http-server.log
-bin/notary_http $1 >> log/http-server.log 2>&1 &
+echo " Restarting server at: `date` " >> log/http-server.log
+bin/notary-http $1 >> log/http-server.log 2>&1 &
 
-
+echo $! > run/notary-http.pid

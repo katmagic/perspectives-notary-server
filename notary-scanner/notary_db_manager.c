@@ -8,7 +8,7 @@
 #include "bdb_storage.h"
 #include "notary_crypto.h"
 #include "notary_util.h"
-#include "scan_db_manager.h"
+#include "notary_db_manager.h"
 #include "keyscan_util.h"
 #include "net_util.h"
 

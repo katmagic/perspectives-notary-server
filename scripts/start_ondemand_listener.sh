@@ -2,7 +2,7 @@
 
 if [ $# != 1 ] 
 then 
-  echo "usage: <server-config>"
+  echo "usage: <scanner-config>"
   exit 1
 fi
 
@@ -31,7 +31,8 @@ fi
 
 ulimit -c unlimited
 
-echo " Restarting server at: $time " >> log/server.log
-bin/notary_server $1 >> log/server.log 2>&1 &
+echo " Restarting ondemand_listener at: `date` " >> log/on-demand.log
+python scripts/notary_ondemand_listener.py $1 >> log/on-demand.log 2>&1 &
 
+echo $! > run/notary_ondemand_listener.pid
 
