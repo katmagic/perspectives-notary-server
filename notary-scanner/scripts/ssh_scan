@@ -1,0 +1,9 @@
+#!/bin/sh 
+
+if [ $# != 2 ] 
+then
+	echo "usage: <service-id> <report-sock-name>"
+	exit 1
+fi
+
+python scripts/ssh_scan_python.py $1 bin/report-observation $2 
