@@ -52,7 +52,7 @@ while True:
 		service_type = int(service_id.split(",")[1])
 		if service_type == SERVICE_TYPE_SSL: 
 			cmd = config['ssl_scan_binary']
-		elif service_tyep == SERVICE_TYPE_SSH: 
+		elif service_type == SERVICE_TYPE_SSH: 
 			cmd = config['ssh_scan_binary']
 		else: 
 			print "invalid service-type: %s" % service_type

@@ -1,7 +1,6 @@
 
 set (utilities_PREFIXES
 		db2file
-		db_multiaccess_test
 		db_search
 		db_speed_test
 		dump_b64_signature
