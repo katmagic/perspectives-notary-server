@@ -82,21 +82,32 @@ int make_timespan_change(DB* db, RSA *priv_key,
     return 0;
 }
 
+DB *db = NULL; 
+
+void close_db(int signal) {
+  printf("Caught signal, closing BDB database environment\n");
+  if(db != NULL)
+     bdb_close_env(db);
+  exit(1);
+}
+
 int
 main(int argc, char** argv)
 {
 
-      if(argc != 2) {
-        printf("usage: <db-filename> \n");
+      if(argc != 4) {
+        printf("usage: <db-env-directory> <db-filename> <priv-key-fname>\n");
         exit(1);
       }
       struct timeval now;
       gettimeofday(&now,NULL);
 
-
-      DB* db = bdb_open(argv[1], DB_CREATE);
+      db = bdb_open_env(argv[1], g_db_env_flags,
+                    argv[2], DB_CREATE);
+      
+      register_for_signals(close_db); 
   
-      RSA *priv_key = load_private_key("private.pem");
+      RSA *priv_key = load_private_key(argv[3]);
 
       int count = 1000;
       int actual; 
@@ -123,6 +134,6 @@ main(int argc, char** argv)
             actual - failures, time_result);
 
         printf("failures: %d \n", failures);
-      bdb_close(db);
+      bdb_close_env(db);
       return 0;
 }

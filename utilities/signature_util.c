@@ -106,9 +106,9 @@ void loop_over(DB *db, RSA* crypto_key, BOOL create_sig, char* sig_type){
 DB *db; // global so signal handler can close db.
 
 void close_db(int signal) {
-  printf("Closing BDB database \n");
+  printf("Caught signal, closing BDB database environment\n");
   if(db != NULL)
-     bdb_close(db);
+     bdb_close_env(db);
   exit(1);
 }
 
@@ -122,7 +122,7 @@ main(int argc, char** argv)
         exit(1);
       }
 
-      signal(SIGINT, close_db);
+      register_for_signals(close_db); 
 
       RSA* key;
       BOOL create_keys = FALSE;
@@ -132,10 +132,8 @@ main(int argc, char** argv)
       } else 
         key = load_public_key(argv[4]);
       
-      uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
-      uint32_t db_flags = DB_CREATE;
-      db = bdb_open_env(argv[2], env_flags,
-                    argv[3], db_flags);
+      db = bdb_open_env(argv[2], g_db_env_flags,
+                    argv[3], DB_CREATE);
       if(db == NULL) {
           printf("bdb_open failed \n");
           exit(1);
@@ -143,6 +141,6 @@ main(int argc, char** argv)
 
       loop_over(db, key, create_keys, argv[5]);
 
-      bdb_close(db);
+      bdb_close_env(db);
       return 0;
 }

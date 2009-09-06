@@ -44,6 +44,14 @@ int main_sock;
 DB *db;
 char *new_request_sock = NULL; 
 
+void on_signal(int signal) {
+  DPRINTF(DEBUG_ERROR, "Caught signal, closing BDB database env\n");
+  if(db != NULL)
+     bdb_close_env(db);
+  close(main_sock); 
+  exit(1);
+}
+
 int main(int argc, char **argv){
     uint32_t env_flags;
     server_config conf;
@@ -52,23 +60,22 @@ int main(int argc, char **argv){
         puts("usage: <config file>");
         return 0;
     }
+    register_for_signals(on_signal); 
 
     parse_config_file(&conf, argv[1]);
     // stash readonly value as global
     new_request_sock = conf.new_request_sock; 
 
-    env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB | DB_THREAD;
-    db = bdb_open_env(conf.db_env_fname, env_flags, conf.db_fname, DB_RDONLY);
+    env_flags = g_db_env_flags | DB_THREAD;
+    db = bdb_open_env(conf.db_env_fname, g_db_env_flags | DB_THREAD, 
+		conf.db_fname, g_db_flags | DB_RDONLY);
     if(db == NULL) fatal_error("bdb_open failed");
     warm_db(db);
 
     http_server_loop(conf.ip_addr, conf.port);
-    bdb_close(db);
+    bdb_close_env(db);
 }
 
-void on_kill(int signal) { 
-	close(main_sock); 
-} 
 
 void http_server_loop(uint32_t ip_addr, uint16_t port){
     int on = 1;

@@ -1,4 +1,3 @@
-#include "signal.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
@@ -28,9 +27,9 @@ RSA *priv_key;
 int child_finished_sock;
 
 void close_db(int signal) {
-  DPRINTF(DEBUG_ERROR, "Closing BDB database \n");
+  DPRINTF(DEBUG_ERROR, "Caught signal, closing BDB database env\n");
   if(db != NULL)
-     bdb_close(db);
+     bdb_close_env(db);
   exit(1);
 }
 
@@ -69,11 +68,6 @@ void handle_finished_client(int cur_time) {
 }
 
 
-int check_server_sockets(uint32_t now) {
-
-}
-
-
 int main(int argc, char** argv) {
 
   if(argc != 2) {
@@ -81,16 +75,14 @@ int main(int argc, char** argv) {
       exit(1);
   }
 
-  signal(SIGINT, close_db);
+  register_for_signals(close_db);
   
   parse_config_file(&config, argv[1]);
 
   priv_key = load_private_key(config.private_key_fname);
 
-  uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
-  uint32_t db_flags = DB_CREATE;
-  db = bdb_open_env(config.db_env_fname, env_flags,
-                    config.db_fname, db_flags);
+  db = bdb_open_env(config.db_env_fname, g_db_env_flags,
+                    config.db_fname, g_db_flags | DB_CREATE);
   warm_db(db);
 
    // create global UNIX domain server sockets
@@ -117,7 +109,7 @@ int main(int argc, char** argv) {
   }
  
   close(child_finished_sock);
-  bdb_close(db);
+  bdb_close_env(db);
   return 0;
 }
 

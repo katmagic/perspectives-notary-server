@@ -33,26 +33,32 @@ void read_speed_test(DB *db, int count) {
 }
 
 unsigned int notary_debug = DEBUG_ERROR;
+DB *db = NULL; 
+
+void close_db(int signal) {
+  printf("Caught signal, closing BDB database environment\n");
+  if(db != NULL)
+     bdb_close_env(db);
+  exit(1);
+}
 
 int main(int argc, char** argv)
 {
 
-      if(argc != 3) {
-        printf("usage: <db-filename> <count> \n");
+      if(argc != 4) {
+        printf("usage: <db-env-name> <db-filename> <count> \n");
         exit(1);
       }
-      struct timeval now;
-      gettimeofday(&now,NULL);
+      register_for_signals(close_db); 
 
-
-      DB* db = bdb_open(argv[1], DB_CREATE);
+      db = bdb_open_env(argv[1], g_db_env_flags,
+                    argv[2], DB_CREATE);
   
-
       warm_db(db);
       
-      read_speed_test(db, atoi(argv[2]));
+      read_speed_test(db, atoi(argv[3]));
       
-      bdb_close(db);
+      bdb_close_env(db);
       return 0;
 }
 

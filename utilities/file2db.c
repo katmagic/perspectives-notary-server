@@ -138,7 +138,7 @@ void parse_file(RSA* priv_key, char* sig_type){
 void close_db(int signal) {
   printf("Closing BDB database \n");
   if(db != NULL)
-     bdb_close(db);
+     bdb_close_env(db);
   if(f != NULL)
     fclose(f);
   exit(1);
@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
         exit(1);
       }
 
-      signal(SIGINT, close_db);
+      register_for_signals(close_db); 
         
       f = fopen(argv[1], "r");
       if(f == NULL) {
@@ -163,10 +163,8 @@ int main(int argc, char** argv) {
         exit(1); 
       }
 
-      uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
-      uint32_t db_flags = DB_CREATE;
-      db = bdb_open_env(argv[2], env_flags,
-                    argv[3], db_flags);
+      db = bdb_open_env(argv[2], g_db_env_flags,
+                    argv[3], g_db_flags | DB_CREATE);
       
       if(db == NULL) {
           DPRINTF(DEBUG_ERROR, "bdb_open failed for '%s' \n", argv[2]);
@@ -186,7 +184,7 @@ int main(int argc, char** argv) {
 
       parse_file(priv_key,sig_type); 
 
-      bdb_close(db);
+      bdb_close_env(db);
       fclose(f);
       return 0;
 

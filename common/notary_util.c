@@ -2,9 +2,15 @@
 #include "notary_util.h"
 #include "common.h"
 #include <time.h>
+#include <signal.h> 
 
 void xfree(void*);
 
+void register_for_signals(void (*sig_cb)(int)) { 
+	signal(SIGTERM, sig_cb); 
+	signal(SIGINT, sig_cb); 
+	signal(SIGKILL, sig_cb); 
+}  
 
 
 void initialize_header(notary_header *hdr, uint16_t total_len, 

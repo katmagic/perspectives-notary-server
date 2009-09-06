@@ -76,9 +76,9 @@ void loop_over(DB *db, char *regex, int limit){
 DB *db; // global so signal handler can close db.
 
 void close_db(int signal) {
-  printf("Closing BDB database \n");
+  printf("Caught signal, closing BDB database environment\n");
   if(db != NULL)
-     bdb_close(db);
+     bdb_close_env(db);
   exit(1);
 }
 
@@ -87,22 +87,23 @@ int
 main(int argc, char** argv)
 {
 
-      if(argc != 4) {
-        printf("usage: <db-filename> <regular expression> <max results>\n");
+      if(argc != 5) {
+        printf("usage: <db-env-filename> <db-filename> <regular expression> <max results>\n");
         exit(1);
       }
 
-      signal(SIGINT, close_db);
+      register_for_signals(close_db); 
 
-      db = bdb_open(argv[1], DB_CREATE);
+      db = bdb_open_env(argv[1], g_db_env_flags, argv[2], 
+				DB_RDONLY);
       if(db == NULL) {
           printf("bdb_open failed \n");
           exit(1);
       }
 
 
-      loop_over(db, argv[2], atoi(argv[3]));
+      loop_over(db, argv[3], atoi(argv[4]));
 
-      bdb_close(db);
+      bdb_close_env(db);
       return 0;
 }

@@ -5,6 +5,11 @@
 #include <openssl/rsa.h>
 #include "common.h"
 
+// default global environment flags
+uint32_t g_db_env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_TXN \
+		| DB_INIT_LOCK | DB_INIT_LOG;
+uint32_t g_db_flags = DB_AUTO_COMMIT; 
+
 DB * bdb_open(char *filename, uint32_t open_flags);
 DB * bdb_open_env(char *evn_file, uint32_t evn_flags, 
                   char *db_name, uint32_t db_open_flags);

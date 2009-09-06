@@ -1,6 +1,5 @@
 
 #include <stdlib.h>
-#include <signal.h>
 #include "db.h"
 #include "common.h"
 #include "bdb_storage.h"
@@ -48,9 +47,9 @@ void loop_over(){
 
 
 void close_db(int signal) {
-  printf("Closing BDB database \n");
+  printf("Caught signal, closing BDB database environment\n");
   if(db != NULL)
-     bdb_close(db);
+     bdb_close_env(db);
   if(f != NULL)
     fclose(f);
   exit(1);
@@ -64,11 +63,9 @@ int main(int argc, char** argv) {
         exit(1);
       }
 
-      signal(SIGINT, close_db);
+      register_for_signals(close_db);
 
-      uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
-      db = bdb_open_env(argv[1], env_flags, argv[2], DB_RDONLY);
-    //  db = bdb_open(argv[1], DB_CREATE);
+      db = bdb_open_env(argv[1], g_db_env_flags, argv[2], g_db_flags | DB_RDONLY);
       if(db == NULL) {
           printf("bdb_open failed \n");
           exit(1);
@@ -81,7 +78,7 @@ int main(int argc, char** argv) {
 
       loop_over();
 
-      bdb_close(db);
+      bdb_close_env(db);
       fclose(f);
       return 0;
 

@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
@@ -15,6 +14,15 @@
 
 unsigned int notary_debug = DEBUG_ERROR;
 
+DB *db = NULL; 
+
+void close_db(int signal) {
+  printf("Caught signal, closing BDB database environment\n");
+  if(db != NULL)
+     bdb_close_env(db);
+  exit(1);
+}
+
 int main(int argc, char** argv) {
                  
       if(argc != 4) {
@@ -23,12 +31,14 @@ int main(int argc, char** argv) {
       }
 
 
-      uint32_t env_flags = DB_CREATE | DB_INIT_MPOOL | DB_INIT_CDB;
-      DB *db = bdb_open_env(argv[1], env_flags, argv[2], DB_RDONLY);
+      db = bdb_open_env(argv[1], g_db_env_flags, argv[2], 
+				DB_RDONLY);
       if(db == NULL) {
           printf("bdb_open failed \n");
           exit(1);
       }
+      register_for_signals(close_db); 
+
       char buf[2400]; 
       int data_len = get_data(db,argv[3],buf, 2004,0);
       ssh_key_info_list* list = list_from_data(buf, data_len, SIGNATURE_LEN);
@@ -55,6 +65,6 @@ int main(int argc, char** argv) {
       BIO_flush(bio);
       BIO_free_all(bio); 
       
-      bdb_close(db);
+      bdb_close_env(db);
       return 0;
 }
