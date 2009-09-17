@@ -61,6 +61,7 @@ else
 fi
 
 echo "INFO: starting scan"
+echo "" >> '@notary_log_PATH@'/scan.log
 echo "INFO: starting db_manager at $(date)" >> '@notary_log_PATH@'/scan.log
 '@notary_bin_PATH@/@notary_bin_PREFIX@'simple_scanner "$file" "$3" "$4" "$2" 2>&1 | tee -a '@notary_log_PATH@'/scan.log
 

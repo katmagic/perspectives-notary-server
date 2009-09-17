@@ -5,6 +5,6 @@ if [ "$#" != 5 ] ; then
   exit 1
 fi
 
-wget --output-document=- "http://$1:$2?host=$3&port=$4&service_type=$5"
+wget -O - -q "http://$1:$2?host=$3&port=$4&service_type=$5"
 
 exit 0

@@ -43,7 +43,7 @@ end_ts_regex = re.compile("^end:")
 service_id = None
 
 
-f2 = os.popen("bin/db2file %s %s" % (sys.argv[1], sys.argv[2]))
+f2 = os.popen("@notary_bin_PATH@/@notary_bin_PREFIX@db2file %s %s" % (sys.argv[1], sys.argv[2]))
 
 for line in f2:
 	if start_host_regex.search(line):

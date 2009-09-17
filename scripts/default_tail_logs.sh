@@ -7,6 +7,6 @@ if [ "$#" != 0 ] ; then
   exit 1
 fi
 
-exec '@notary_bin_PATH@/@notary_bin_PREFIX@'run_scan db '@notary_etc_PATH@'/scanner_config.txt 6 6
+exec tail -f '@notary_log_PATH@'/*.log
 
 exit 0

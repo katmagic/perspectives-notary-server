@@ -43,6 +43,7 @@ if [ -f "$f" ] ; then
 fi
 
 echo "INFO: starting db_manager"
+echo "" >> '@notary_log_PATH@'/db_manager.log
 echo "INFO: starting db_manager at $(date)" >> '@notary_log_PATH@'/db_manager.log
 
 '@notary_bin_PATH@/@notary_bin_PREFIX@'db_manager "$1" >> '@notary_log_PATH@'/db_manager.log 2>&1 &

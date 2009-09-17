@@ -1,0 +1,43 @@
+
+== Quick startup guide ==
+
+1. Configure:
+> ./do configure-auto
+
+2. Build:
+> ./do build
+
+3. Install into '/opt/notary_@VERSION@':
+> ./do install
+
+4. Add the '/opt/notary_@VERSION@/bin' to PATH:
+> export PATH="/opt/notary_@VERSION@/bin:$PATH"
+
+5. Create cryptographic keys:
+> notary_@VERSION@_default_create_keys
+
+6. Create record database:
+> notary_@VERSION@_default_create_db
+
+7. Start daemons:
+> notary_@VERSION@_default_start_daemons
+
+8. Stop daemons:
+> notary_@VERSION@_default_stop_daemons
+
+o. Backup database:
+> notary_@VERSION@_default_backup_db
+
+o. Run scan:
+> notary_@VERSION@_default_run_scan
+
+
+== 'do' script options ==
+
+ * configure-auto:
+  * automatically detect dependencies;
+  * use default values for installation and configuration;
+ * configure-ui: start a nice curses UI for configuration;
+ * build: ...;
+ * clean: ...;
+ * install: ...;

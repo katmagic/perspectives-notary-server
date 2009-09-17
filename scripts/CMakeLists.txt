@@ -6,6 +6,7 @@ set (notary_script_SOURCES
 		default_run_scan.sh
 		default_start_daemons.sh
 		default_stop_daemons.sh
+		default_tail_logs.sh
 		gen_key_pair.sh
 		http_fetch.sh
 		init_db_from_text.sh

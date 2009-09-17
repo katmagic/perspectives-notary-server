@@ -43,6 +43,7 @@ if [ -f "$f" ] ; then
 fi
 
 echo "INFO: starting http_server"
+echo "" >> '@notary_log_PATH@'/http_server.log
 echo "INFO: starting http_server at $(date)" >> '@notary_log_PATH@'/http_server.log
 
 '@notary_bin_PATH@/@notary_bin_PREFIX@'http_server "$1" >> '@notary_log_PATH@'/http_server.log 2>&1 &

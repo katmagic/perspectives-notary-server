@@ -43,6 +43,7 @@ if [ -f "$f" ] ; then
 fi
 
 echo "INFO: starting ondemand_listener"
+echo "" >> '@notary_log_PATH@'/ondemand_listener.log
 echo "INFO: starting ondemand_listener at $(date)" >> '@notary_log_PATH@'/ondemand_listener.log
 
 '@notary_bin_PATH@/@notary_bin_PREFIX@'ondemand_listener "$1" >> '@notary_log_PATH@'/ondemand_listener.log 2>&1 &
