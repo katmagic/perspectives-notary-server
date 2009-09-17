@@ -69,7 +69,7 @@ set (scripts_ENABLED
 
 set (CMAKE_INSTALL_PREFIX
 		"/tmp/notary"
-		CACHE STRING "Installation prefix" FORCE)
+		CACHE PATH "Installation prefix" FORCE)
 
 set (notary_MANGLING
 		"notary-b"
@@ -80,36 +80,52 @@ set (notary_bin_PREFIX
 		CACHE STRING "Prefix of the executable files.")
 
 set (notary_bin_PATH
-		"bin"
-		CACHE STRING "Path of the executable files.")
+		"${CMAKE_INSTALL_PREFIX}/bin"
+		CACHE PATH "Path of the executable files.")
 
 set (notary_etc_PATH
-		"etc/${notary_MANGLING}"
-		CACHE STRING "Path of the configuration files.")
+		"${CMAKE_INSTALL_PREFIX}/etc/${notary_MANGLING}"
+		CACHE PATH "Path of the configuration files.")
 
 set (notary_var_PATH
-		"var/${notary_MANGLING}"
-		CACHE STRING "Path of the data files.")
+		"${CMAKE_INSTALL_PREFIX}/var/${notary_MANGLING}"
+		CACHE PATH "Path of the data files.")
 
 set (notary_db_PATH
 		"${notary_var_PATH}/db"
-		CACHE STRING "Path of the BerkeleyDB environment.")
+		CACHE PATH "Path of the BerkeleyDB environment.")
 
 set (notary_db_NAME
 		"notary.db"
-		CACHE STRING "Name of the BerkeleyDB name.")
+		CACHE PATH "Name of the BerkeleyDB name.")
 
 set (notary_sock_PATH
 		"${notary_var_PATH}/sock"
-		CACHE STRING "Path of the sockets.")
+		CACHE PATH "Path of the sockets.")
 
 set (notary_private_key_PATH
 		"${notary_etc_PATH}/private_key.pem"
-		CACHE STRING "Path of the private key.")
+		CACHE PATH "Path of the private key.")
 
 set (notary_public_key_PATH
 		"${notary_etc_PATH}/public_key.pem"
-		CACHE STRING "Path of the public key.")
+		CACHE PATH "Path of the public key.")
+
+set (notary_http_listen_IP
+		"0.0.0.0"
+		CACHE STRING "Listening IP of the notary http server.")
+
+set (notary_http_listen_PORT
+		"8080"
+		CACHE STRING "Listening port of the notary http server.")
+
+set (notary_new_request_socket_PATH
+		"${notary_sock_PATH}/new_request"
+		CACHE PATH "Unix domain socket path for new requests.")
+
+set (notary_finished_request_socket_PATH
+		"${notary_sock_PATH}/finished_request"
+		CACHE PATH "Unix domain socket path for finished requests.")
 
 
 if (notary_common_ENABLED)

@@ -1,12 +1,10 @@
 
 set (configuration_NAMES
-		client_params.txt
-		http_notary_list.txt
-		http_server_config.txt
-		notary_list.txt
-		probing_blacklist.txt
-		scanner_config.txt
-		server_config.txt)
+		http_config.txt
+		http_servers.txt
+		scanner_blacklist.txt
+		scanner_config.txt)
+
 
 foreach (configuration_NAME ${configuration_NAMES})
 	

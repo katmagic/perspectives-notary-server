@@ -1,9 +1,9 @@
-# revision 5.0 
-#  
+# revision 5.0
+#
 # you can use the version number above to tell when you need to
 # update this file.
-#
-#  cmu.ron.lcs.mit.edu 
+
+#  cmu.ron.lcs.mit.edu
 cmu.ron.lcs.mit.edu:8080
 -----BEGIN PUBLIC KEY-----
 MIHKMA0GCSqGSIb3DQEBAQUAA4G4ADCBtAKBrAGXsegzE6E/6j4vgzi3NqGSn2dz
@@ -12,7 +12,8 @@ MyfYnEk0iiNWG2fj4mRpTscHfcEJfKP13OGAYP1ZuHksTXSYsaKfIwiVKMLgQ/hA
 FHBSCs9X+bvVMgPOiEpxZXfaynOQ3TLGYtVywLRwW5yvlRq4E9z0rtvwR1bn1hVd
 JaJ2Lw7kRVMCAwEAAQ==
 -----END PUBLIC KEY-----
-# convoke.ron.lcs.mit.edu 
+
+# convoke.ron.lcs.mit.edu
 convoke.ron.lcs.mit.edu:8080
 -----BEGIN PUBLIC KEY-----
 MIHKMA0GCSqGSIb3DQEBAQUAA4G4ADCBtAKBrAHB9gHj3Zyx7u++wTffAsEuRJdj
@@ -21,6 +22,7 @@ TbKqDgeN1ttDiJmszN939RvBdmzkmXi2zaOXPX3ral56hJOWjOs6NokeBo26ZHux
 5k9g3AqFer5LNyDVgGrG5q7+INGodDSTYm2W5nvmi55U/pe7MmJCH7EEY1ObGPr1
 7XqZeEbL4ikCAwEAAQ==
 -----END PUBLIC KEY-----
+
 # mvn.ron.lcs.mit.edu
 mvn.ron.lcs.mit.edu:8080
 -----BEGIN PUBLIC KEY-----
@@ -30,7 +32,8 @@ xtuWMxAR0VMhywdzotTJAb/4a2btqHdrUlOZg6l7R66GbCupVWwyDQF7YBKarEGF
 2v6mRM/WknwaEYVOMu7XDb6zkEf4MsxptQnY7PfNktMMcuhusYjko3IhFmlUl4lu
 e+c3aFR35Y8CAwEAAQ==
 -----END PUBLIC KEY-----
-# hostway.ron.lcs.mit.edu 
+
+# hostway.ron.lcs.mit.edu
 hostway.ron.lcs.mit.edu:8080
 -----BEGIN PUBLIC KEY-----
 MIHKMA0GCSqGSIb3DQEBAQUAA4G4ADCBtAKBrAFiENC/BwZXOfzDOed4Qbvjd/25
