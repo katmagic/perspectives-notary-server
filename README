@@ -2,16 +2,25 @@
 == Quick startup guide ==
 
 1. Configure:
-> ./do configure-auto
+> ./do configure
+
+1a. Configure with prefix (without "extra-prefix"):
+> ./do configure -Dnotary_PATH=/opt/notary
+ * will create /opt/notary/etc, /opt/notary/var/db, etc.
+
+1b. Configure with prefix and with "extra-prefix":
+> ./do configure -Dnotary_PATH=/usr/local -Dnotary_PATH_MANGLING=notary
+ * will create /usr/local/etc/notary, /usr/local/var/notary/db, etc.
+ * the "extra-prefix" is in fact a subfolder for some 'system-wide' folders like /etc and /var.
 
 2. Build:
-> ./do build
+> ./do make
 
-3. Install into '/opt/notary_@VERSION@':
-> ./do install
+3. Install into '/tmp/notary_@VERSION@':
+> ./do make install
 
-4. Add the '/opt/notary_@VERSION@/bin' to PATH:
-> export PATH="/opt/notary_@VERSION@/bin:$PATH"
+4. Add the '/tmp/notary_@VERSION@/bin' to PATH:
+> export PATH="/tmp/notary_@VERSION@/bin:$PATH"
 
 5. Create cryptographic keys:
 > notary_@VERSION@_default_create_keys

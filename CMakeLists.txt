@@ -91,23 +91,17 @@ set (notary_configurations_ENABLED
 		CACHE BOOL "Enable building configurations.")
 
 
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	
-	set (CMAKE_INSTALL_PREFIX
-			"/opt/notary_${notary_VERSION}"
-			CACHE PATH "Installation prefix." FORCE)
-	
-	set (notary_PATH_MANGLING
-			""
-			CACHE STRING "Prefix for notary folders (resulting in /etc/notary, /var/lib/notary, /var/run/notary, etc.)")
-	
-else ()
-	
-	set (notary_PATH_MANGLING
-			"notary_${notary_VERSION}"
-			CACHE STRING "Prefix for notary folders (resulting in /etc/notary, /var/lib/notary, /var/run/notary, etc.)")
-	
-endif ()
+set (notary_PATH
+		"/tmp/notary_${notary_VERSION}"
+		CACHE PATH "Prefix for the installation folders.")
+
+set (notary_PATH_MANGLING
+		""
+		CACHE STRING "Extra-prefix for some installation folders (resulting in /etc/notary, /var/lib/notary, /var/run/notary, etc.)")
+
+set (CMAKE_INSTALL_PREFIX
+		"${notary_PATH}"
+		CACHE PATH "" FORCE)
 
 
 set (notary_bin_PREFIX
@@ -123,7 +117,7 @@ set (notary_bin_PATH
 		"${CMAKE_INSTALL_PREFIX}/bin"
 		CACHE PATH "Path of the executable files.")
 
-if (notary_MANGLING)
+if (notary_PATH_MANGLING)
 	
 	set (notary_etc_PATH
 			"${CMAKE_INSTALL_PREFIX}/etc/${notary_PATH_MANGLING}"
