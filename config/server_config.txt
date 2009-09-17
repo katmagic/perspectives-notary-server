@@ -1,9 +1,0 @@
-# server config files take name value pairs, for the values shown below
-# blank lines or lines starting with '#' are ignored.  all other lines must
-# be <key>#<value>
-
-port=15217
-ip_addr=0.0.0.0
-db_env_fname=db_env
-db_fname=notary.db
-new_request_sock=scan_request
