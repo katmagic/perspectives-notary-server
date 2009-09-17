@@ -1,6 +1,0 @@
-debug=0
-timeout_secs=5
-num_notaries=-1
-quorum=.6
-quorum_duration_days=1
-max_stale_days=1
