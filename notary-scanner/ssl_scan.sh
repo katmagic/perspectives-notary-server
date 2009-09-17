@@ -1,9 +1,11 @@
-#!/bin/sh 
+#!@bash_EXEC@
 
-if [ $# != 2 ] 
+if [ "$#" != 2 ]
 then
 	echo "usage: <service-id> <report-sock-name>"
 	exit 1
 fi
 
-ssl_scan_python $1 bin/report-observation $2 
+exec '@notary_bin_PATH@/@notary_bin_PREFIX@'ssl_scan_python "$1" '@notary_bin_PATH@/@notary_bin_PREFIX@'report-observation "$2"
+
+exit 1

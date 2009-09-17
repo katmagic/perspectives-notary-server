@@ -1,4 +1,4 @@
-#!/bin/sh
+#!@bash_EXEC@
 
 exec >&2
 

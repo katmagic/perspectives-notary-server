@@ -1,4 +1,4 @@
-#!/bin/sh
+#!@bash_EXEC@
 
 if [ "$#" != 5 ] ; then
   echo "usage: <notary-address> <notary-port> <service-address> <port> <service-type>"

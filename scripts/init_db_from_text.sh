@@ -1,4 +1,4 @@
-#!/bin/sh
+#!@bash_EXEC@
 
 if [ "$#" != 2 ] ; then
   echo "usage: <scanner-config> <db-text-file>"

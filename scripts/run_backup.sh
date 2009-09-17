@@ -1,4 +1,4 @@
-#!/bin/sh
+#!@bash_EXEC@
 
 exec >&2
 
@@ -32,7 +32,7 @@ if ! [ -d "$2" ] ; then
   mkdir -p "$2"
 fi
 
-file="$2/notary_backup_$time.txt.bzip2"
+file="$2/notary_$time.txt.bzip2"
 echo "INFO: creating backup file '$file'"
 '@notary_bin_PATH@/@notary_bin_PREFIX@'db2file "$db_env_fname" "$db_fname" | bzip2 -z > "$file"
 

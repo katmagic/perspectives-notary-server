@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!@python_EXEC@
 
 # Echo server program
 import socket,os

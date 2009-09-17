@@ -8,6 +8,9 @@ set (notary_VERSION_MAJOR 2)
 set (notary_VERSION_MINOR 0)
 
 
+file (STRINGS VERSION notary_VERSION)
+
+
 find_path (bdb_INCLUDE_DIR db.h
 		/usr/include /usr/local/include
 		/opt/include /opt/local/include)
@@ -42,6 +45,27 @@ set (additional_LIBRARIES
 		CACHE FILEPATH "Additional libraries for linking.")
 
 
+find_program (bash_EXEC bash
+		PATHS
+			/bin
+			/usr/bin /usr/local/bin
+			/opt/bin /opt/local/bin)
+
+if (${bash_EXEC} STREQUAL bash_EXEC-NOTFOUND)
+	message (FATAL_ERROR "Bash executable not found.")
+endif ()
+
+find_program (python_EXEC python
+		PATHS
+			/bin
+			/usr/bin /usr/local/bin
+			/opt/bin /opt/local/bin)
+
+if (${python_EXEC} STREQUAL python_EXEC-NOTFOUND)
+	message (FATAL_ERROR "Python executable not found.")
+endif ()
+
+
 set (notary_common_ENABLED
 		ON
 		CACHE BOOL "Enable building 'notary-common' library.")
@@ -54,58 +78,100 @@ set (notary_scanner_ENABLED
 		ON
 		CACHE BOOL "Enable building 'notary-scanner' executable.")
 
-set (utilities_ENABLED
+set (notary_utilities_ENABLED
 		ON
 		CACHE BOOL "Enable building utility executables.")
 
-set (configurations_ENABLED
-		ON
-		CACHE BOOL "Enable building configuration files.")
-
-set (scripts_ENABLED
+set (notary_scripts_ENABLED
 		ON
 		CACHE BOOL "Enable building script files.")
 
+set (notary_configurations_ENABLED
+		ON
+		CACHE BOOL "Enable building configuration files.")
 
-set (CMAKE_INSTALL_PREFIX
-		"/tmp/notary"
-		CACHE PATH "Installation prefix" FORCE)
 
-set (notary_MANGLING
-		"notary"
-		CACHE STRING "Text to prefix executables or to derive paths names.")
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	
+	set (CMAKE_INSTALL_PREFIX
+			"/opt/notary_${notary_VERSION}"
+			CACHE PATH "Installation prefix." FORCE)
+	
+	set (notary_PATH_MANGLING
+			""
+			CACHE STRING "Prefix for notary folders (resulting in /etc/notary, /var/lib/notary, /var/run/notary, etc.)")
+	
+else ()
+	
+	set (notary_PATH_MANGLING
+			"notary_${notary_VERSION}"
+			CACHE STRING "Prefix for notary folders (resulting in /etc/notary, /var/lib/notary, /var/run/notary, etc.)")
+	
+endif ()
 
-set (notary_bin_PREFIX
-		"${notary_MANGLING}_"
-		CACHE STRING "Prefix of the executable files.")
 
 set (notary_bin_PATH
 		"${CMAKE_INSTALL_PREFIX}/bin"
 		CACHE PATH "Path of the executable files.")
 
-set (notary_etc_PATH
-		"${CMAKE_INSTALL_PREFIX}/etc/${notary_MANGLING}"
-		CACHE PATH "Path of the configuration files.")
+set (notary_bin_PREFIX
+		"notary_${notary_VERSION}_"
+		CACHE STRING "Prefix of the executable files.")
 
-set (notary_var_PATH
-		"${CMAKE_INSTALL_PREFIX}/var"
-		CACHE PATH "Generic path of the data files.")
+if (notary_MANGLING)
+	
+	set (notary_etc_PATH
+			"${CMAKE_INSTALL_PREFIX}/etc/${notary_PATH_MANGLING}"
+			CACHE PATH "Path of the configuration files.")
+	
+	set (notary_var_PATH
+			"${CMAKE_INSTALL_PREFIX}/var"
+			CACHE PATH "Generic path of the data files.")
+	
+	set (notary_data_PATH
+			"${notary_var_PATH}/lib/${notary_PATH_MANGLING}"
+			CACHE PATH "Path of the durable data files.")
+	
+	set (notary_run_PATH
+			"${notary_var_PATH}/run/${notary_PATH_MANGLING}"
+			CACHE PATH "Path of the temporary data files.")
+	
+	set (notary_backups_PATH
+			"${notary_var_PATH}/backups/${notary_PATH_MANGLING}"
+			CACHE PATH "Path of the backup files.")
+	
+	set (notary_log_PATH
+			"${notary_var_PATH}/log/${notary_PATH_MANGLING}"
+			CACHE PATH "Path of the log files.")
+	
+else ()
+	
+	set (notary_etc_PATH
+			"${CMAKE_INSTALL_PREFIX}/etc"
+			CACHE PATH "Path of the configuration files.")
+	
+	set (notary_var_PATH
+			"${CMAKE_INSTALL_PREFIX}/var"
+			CACHE PATH "Generic path of the data files.")
+	
+	set (notary_data_PATH
+			"${notary_var_PATH}/lib"
+			CACHE PATH "Path of the durable data files.")
+	
+	set (notary_run_PATH
+			"${notary_var_PATH}/run"
+			CACHE PATH "Path of the temporary data files.")
+	
+	set (notary_backups_PATH
+			"${notary_var_PATH}/backups"
+			CACHE PATH "Path of the backup files.")
+	
+	set (notary_log_PATH
+			"${notary_var_PATH}/log"
+			CACHE PATH "Path of the log files.")
+	
+endif ()
 
-set (notary_data_PATH
-		"${notary_var_PATH}/lib/${notary_MANGLING}"
-		CACHE PATH "Path of the durable data files.")
-
-set (notary_run_PATH
-		"${notary_var_PATH}/run/${notary_MANGLING}"
-		CACHE PATH "Path of the temporary data files.")
-
-set (notary_backups_PATH
-		"${notary_var_PATH}/backups/${notary_MANGLING}"
-		CACHE PATH "Path of the backup files.")
-
-set (notary_log_PATH
-		"${notary_var_PATH}/log/${notary_MANGLING}"
-		CACHE PATH "Path of the log files.")
 
 set (notary_private_key_PATH
 		"${notary_etc_PATH}/private_key.pem"
@@ -146,32 +212,32 @@ else ()
 	message ("Disabled building 'notary-common' library.")
 endif ()
 
-if (notary_common_ENABLED AND notary_http_ENABLED)
+if (notary_http_ENABLED)
 	add_subdirectory (notary-http)
 else ()
 	message ("Disabled building 'notary-http' executable.")
 endif ()
 
-if (notary_common_ENABLED AND notary_scanner_ENABLED)
+if (notary_scanner_ENABLED)
 	add_subdirectory (notary-scanner)
 else ()
 	message ("Disabled building 'notary-scanner' executable.")
 endif ()
 
-if (notary_common_ENABLED AND utilities_ENABLED)
+if (notary_utilities_ENABLED)
 	add_subdirectory (utilities)
 else ()
 	message ("Disabled building utility executables.")
 endif ()
 
-if (configurations_ENABLED)
-	add_subdirectory (config)
-else ()
-	message ("Disabled building configuration files.")
-endif ()
-
-if (scripts_ENABLED)
+if (notary_scripts_ENABLED)
 	add_subdirectory (scripts)
 else ()
 	message ("Disabled building script files.")
+endif ()
+
+if (notary_configurations_ENABLED)
+	add_subdirectory (config)
+else ()
+	message ("Disabled building configuration files.")
 endif ()
