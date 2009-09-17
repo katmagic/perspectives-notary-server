@@ -46,26 +46,82 @@ set (notary_common_ENABLED
 		ON
 		CACHE BOOL "Enable building 'notary-common' library.")
 
-set (notary_client_ENABLED
+set (notary_http_ENABLED
 		ON
-		CACHE BOOL "Enable building 'notary-client' library.")
+		CACHE BOOL "Enable building 'notary-http' executable.")
 
 set (notary_scanner_ENABLED
 		ON
 		CACHE BOOL "Enable building 'notary-scanner' executable.")
 
-set (notary_http_ENABLED
-		ON
-		CACHE BOOL "Enable building 'notary-http' executable.")
-
 set (utilities_ENABLED
 		ON
-		CACHE BOOL "Enable building utilities executables.")
+		CACHE BOOL "Enable building utility executables.")
+
+set (configurations_ENABLED
+		ON
+		CACHE BOOL "Enable building configuration files.")
+
+set (scripts_ENABLED
+		ON
+		CACHE BOOL "Enable building script files.")
+
+
+set (CMAKE_INSTALL_PREFIX
+		"/tmp/notary"
+		CACHE STRING "Installation prefix" FORCE)
+
+set (notary_MANGLING
+		"notary-b"
+		CACHE STRING "Text to prefix executables or to derive paths names.")
+
+set (notary_bin_PREFIX
+		"${notary_MANGLING}-"
+		CACHE STRING "Prefix of the executable files.")
+
+set (notary_bin_PATH
+		"bin"
+		CACHE STRING "Path of the executable files.")
+
+set (notary_etc_PATH
+		"etc/${notary_MANGLING}"
+		CACHE STRING "Path of the configuration files.")
+
+set (notary_var_PATH
+		"var/${notary_MANGLING}"
+		CACHE STRING "Path of the data files.")
+
+set (notary_db_PATH
+		"${notary_var_PATH}/db"
+		CACHE STRING "Path of the BerkeleyDB environment.")
+
+set (notary_db_NAME
+		"notary.db"
+		CACHE STRING "Name of the BerkeleyDB name.")
+
+set (notary_sock_PATH
+		"${notary_var_PATH}/sock"
+		CACHE STRING "Path of the sockets.")
+
+set (notary_private_key_PATH
+		"${notary_etc_PATH}/private_key.pem"
+		CACHE STRING "Path of the private key.")
+
+set (notary_public_key_PATH
+		"${notary_etc_PATH}/public_key.pem"
+		CACHE STRING "Path of the public key.")
+
 
 if (notary_common_ENABLED)
 	add_subdirectory (notary-common)
 else ()
 	message ("Disabled building 'notary-common' library.")
+endif ()
+
+if (notary_common_ENABLED AND notary_http_ENABLED)
+	add_subdirectory (notary-http)
+else ()
+	message ("Disabled building 'notary-http' executable.")
 endif ()
 
 if (notary_common_ENABLED AND notary_scanner_ENABLED)
@@ -74,15 +130,20 @@ else ()
 	message ("Disabled building 'notary-scanner' executable.")
 endif ()
 
-
-if (notary_common_ENABLED AND notary_http_ENABLED)
-	add_subdirectory (notary-http)
-else ()
-	message ("Disabled building 'notary-http' executable.")
-endif ()
-
 if (notary_common_ENABLED AND utilities_ENABLED)
 	add_subdirectory (utilities)
 else ()
-	message ("Disabled building utilities executables.")
+	message ("Disabled building utility executables.")
+endif ()
+
+if (configurations_ENABLED)
+	add_subdirectory (config)
+else ()
+	message ("Disabled building configuration files.")
+endif ()
+
+if (scripts_ENABLED)
+	add_subdirectory (scripts)
+else ()
+	message ("Disabled building script files.")
 endif ()

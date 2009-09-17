@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from subprocess import *
 import re
 import sys

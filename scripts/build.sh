@@ -33,6 +33,12 @@ case "${1}" in
 		exec make
 	;;
 	
+	( install )
+		test -e ./build || { echo "configure first!" >&2 ; exit 1 ; }
+		cd ./build
+		exec make install
+	;;
+	
 	( * )
 		echo "wrong command!" >&2
 		exit 1
