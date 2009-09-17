@@ -20,6 +20,10 @@ case "${1}" in
 		exit 0
 	;;
 	
+	( license )
+		exec less ./COPYING
+	;;
+	
 	( clean )
 		test -e ./build || { echo "already clean!" >&2 ; exit 0 ; }
 		exec find ./build -delete

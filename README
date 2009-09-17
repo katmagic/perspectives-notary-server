@@ -41,3 +41,5 @@ o. Run scan:
  * build: ...;
  * clean: ...;
  * install: ...;
+ * help: ...;
+ * license: ...;
