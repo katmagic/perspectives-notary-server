@@ -72,11 +72,11 @@ set (CMAKE_INSTALL_PREFIX
 		CACHE PATH "Installation prefix" FORCE)
 
 set (notary_MANGLING
-		"notary-b"
+		"notary"
 		CACHE STRING "Text to prefix executables or to derive paths names.")
 
 set (notary_bin_PREFIX
-		"${notary_MANGLING}-"
+		"${notary_MANGLING}_"
 		CACHE STRING "Prefix of the executable files.")
 
 set (notary_bin_PATH
@@ -88,20 +88,24 @@ set (notary_etc_PATH
 		CACHE PATH "Path of the configuration files.")
 
 set (notary_var_PATH
-		"${CMAKE_INSTALL_PREFIX}/var/${notary_MANGLING}"
-		CACHE PATH "Path of the data files.")
+		"${CMAKE_INSTALL_PREFIX}/var"
+		CACHE PATH "Generic path of the data files.")
 
-set (notary_db_PATH
-		"${notary_var_PATH}/db"
-		CACHE PATH "Path of the BerkeleyDB environment.")
+set (notary_data_PATH
+		"${notary_var_PATH}/lib/${notary_MANGLING}"
+		CACHE PATH "Path of the durable data files.")
 
-set (notary_db_NAME
-		"notary.db"
-		CACHE PATH "Name of the BerkeleyDB name.")
+set (notary_run_PATH
+		"${notary_var_PATH}/run/${notary_MANGLING}"
+		CACHE PATH "Path of the temporary data files.")
 
-set (notary_sock_PATH
-		"${notary_var_PATH}/sock"
-		CACHE PATH "Path of the sockets.")
+set (notary_backups_PATH
+		"${notary_var_PATH}/backups/${notary_MANGLING}"
+		CACHE PATH "Path of the backup files.")
+
+set (notary_log_PATH
+		"${notary_var_PATH}/log/${notary_MANGLING}"
+		CACHE PATH "Path of the log files.")
 
 set (notary_private_key_PATH
 		"${notary_etc_PATH}/private_key.pem"
@@ -110,6 +114,14 @@ set (notary_private_key_PATH
 set (notary_public_key_PATH
 		"${notary_etc_PATH}/public_key.pem"
 		CACHE PATH "Path of the public key.")
+
+set (notary_db_PATH
+		"${notary_data_PATH}/db"
+		CACHE PATH "Path of the BerkeleyDB environment.")
+
+set (notary_db_NAME
+		"notary.db"
+		CACHE STRING "Name of the BerkeleyDB name.")
 
 set (notary_http_listen_IP
 		"0.0.0.0"
@@ -120,11 +132,11 @@ set (notary_http_listen_PORT
 		CACHE STRING "Listening port of the notary http server.")
 
 set (notary_new_request_socket_PATH
-		"${notary_sock_PATH}/new_request"
+		"${notary_run_PATH}/new_request"
 		CACHE PATH "Unix domain socket path for new requests.")
 
 set (notary_finished_request_socket_PATH
-		"${notary_sock_PATH}/finished_request"
+		"${notary_run_PATH}/finished_request"
 		CACHE PATH "Unix domain socket path for finished requests.")
 
 

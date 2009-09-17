@@ -1,15 +1,20 @@
 #!/bin/sh
 
-if [ $# != 2 ]; then
-  echo "usage: priv-key-out pub-key-out"
+exec >&2
+
+if [ "$#" != 2 ] ; then
+  echo "usage: <priv-key-out> <pub-key-out>"
   exit 1
 fi
 
 len=1369
 
-openssl genrsa -out $1 $len
+echo "INFO: generating notary key pair"
 
-openssl rsa -in $1 -out $2 -outform PEM -pubout
+echo "INFO: generating private key"
+openssl genrsa -out "$1" "$len"
 
-echo " create $len bit public ($2) private ($1) key-pair " 
+echo "INFO: generating public key"
+openssl rsa -in "$1" -out "$2" -outform PEM -pubout
 
+exit 0

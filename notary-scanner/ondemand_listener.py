@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 # Echo server program
 import socket,os
 import time

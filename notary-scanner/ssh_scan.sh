@@ -6,4 +6,4 @@ then
 	exit 1
 fi
 
-python scripts/ssh_scan_python.py $1 bin/report-observation $2 
+ssh_scan_python $1 bin/report-observation $2 

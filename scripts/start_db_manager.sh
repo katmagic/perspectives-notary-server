@@ -1,40 +1,51 @@
 #!/bin/sh
 
-if [ $# != 1 ] 
-then 
+exec >&2
+
+if [ "$#" != 1 ] ; then
   echo "usage: <scanner-config>"
   exit 1
 fi
 
-if ! [ -f $1 ] ; then 
-  echo "sorry, config file '$1' doesn't exist"
-  exit 1 
+if ! [ -f "$1" ] ; then
+  echo "ERROR: cannot find config file '$1'"
+  exit 1
 fi
 
+db_env_fname="$(cat "$1" | grep db_env_fname | awk -F = '{print $2}')"
+db_fname="$(cat "$1" | grep db_fname | awk -F = '{print $2}')"
 
-db_env_fname=$(cat $1 | grep db_env_fname | awk -F "=" '{print $2}') 
-db_fname=$(cat $1 | grep db_fname | awk -F "=" '{print $2}') 
-
-if ! [ -d "$db_env_fname" ]; then
+if ! [ -d "$db_env_fname" ] ; then
   echo "ERROR: cannot find DB environment dir '$db_env_fname'"
   exit 1
 fi
 
-if ! [ -f "$db_env_fname/$db_fname" ]; then
+if ! [ -f "$db_env_fname/$db_fname" ] ; then
   echo "ERROR: cannot find DB file '$db_env_fname/$db_fname'"
   exit 1
 fi
 
-if ! [ -d "log" ] ; then 
-  mkdir log
+if ! [ -d '@notary_run_PATH@' ] ; then
+  echo "WARNING: cannot find run dir '@notary_run_PATH@'"
+  mkdir -p '@notary_run_PATH@'
 fi
 
+if ! [ -d '@notary_log_PATH@' ] ; then
+  echo "WARNING: cannot find log dir '@notary_log_PATH@'"
+  mkdir -p '@notary_log_PATH@'
+fi
 
-ulimit -c unlimited
+f='@notary_run_PATH@'/db_manager.pid
 
-echo " Restarting scan-db-manager at: `date` " >> log/notary-db-manager.log
-bin/notary-db-manager $1 >> log/notary-db-manager.log 2>&1 &
+if [ -f "$f" ] ; then
+  echo "ERROR: pid file '$f' already exists; please kill"
+  exit 1
+fi
 
-echo $! > run/notary-db-manager.pid
+echo "INFO: starting db_manager"
+echo "INFO: starting db_manager at $(date)" >> '@notary_log_PATH@'/db_manager.log
 
+'@notary_bin_PATH@/@notary_bin_PREFIX@'db_manager "$1" >> '@notary_log_PATH@'/db_manager.log 2>&1 &
+echo "$!" > "$f"
 
+exit 0

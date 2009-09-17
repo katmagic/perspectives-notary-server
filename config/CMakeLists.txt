@@ -1,18 +1,23 @@
 
-set (configuration_NAMES
-		http_config.txt
+set (notary_configuration_SOURCES
+		http_server_config.txt
 		http_servers.txt
 		scanner_blacklist.txt
 		scanner_config.txt)
 
-
-foreach (configuration_NAME ${configuration_NAMES})
+foreach (notary_configuration_SOURCE ${notary_configuration_SOURCES})
+	
+	get_filename_component (
+			notary_configuration_NAME
+			${notary_configuration_SOURCE} NAME)
 	
 	configure_file (
-			${configuration_NAME} ${CMAKE_CURRENT_BINARY_DIR}/${configuration_NAME} @ONLY)
+			${notary_configuration_SOURCE}
+			${CMAKE_CURRENT_BINARY_DIR}/${notary_configuration_NAME}
+			@ONLY)
 	
 	install (
-			FILES ${CMAKE_CURRENT_BINARY_DIR}/${configuration_NAME}
+			FILES ${CMAKE_CURRENT_BINARY_DIR}/${notary_configuration_NAME}
 			DESTINATION ${notary_etc_PATH})
 	
 endforeach ()

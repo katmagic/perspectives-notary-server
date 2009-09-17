@@ -1,13 +1,22 @@
 #!/bin/sh
 
-f=notary-db-manager.pid
+exec >&2
 
-if ! test -e run/$f ; then
-	echo "run/$f does not exist.  Please kill manually"
-	exit 1
+if [ "$#" != 0 ] ; then
+  echo "usage: no arguments"
+  exit 1
 fi
 
-kill `cat run/$f`
+f='@notary_run_PATH@'/db_manager.pid
 
-rm run/$f
+if ! [ -f "$f" ] ; then
+  echo "ERROR: cannot find pid file '$f'; please kill manually"
+  exit 1
+fi
 
+echo "INFO: stopping db_manager"
+
+kill "$(cat "$f")"
+rm "$f"
+
+exit 0
