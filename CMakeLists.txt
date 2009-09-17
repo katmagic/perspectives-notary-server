@@ -68,27 +68,27 @@ endif ()
 
 set (notary_common_ENABLED
 		ON
-		CACHE BOOL "Enable building 'notary-common' library.")
+		CACHE BOOL "Enable building common.")
 
-set (notary_http_ENABLED
+set (notary_http_server_ENABLED
 		ON
-		CACHE BOOL "Enable building 'notary-http' executable.")
+		CACHE BOOL "Enable building http-server.")
 
 set (notary_scanner_ENABLED
 		ON
-		CACHE BOOL "Enable building 'notary-scanner' executable.")
+		CACHE BOOL "Enable building scanner.")
 
 set (notary_utilities_ENABLED
 		ON
-		CACHE BOOL "Enable building utility executables.")
+		CACHE BOOL "Enable building utilities.")
 
 set (notary_scripts_ENABLED
 		ON
-		CACHE BOOL "Enable building script files.")
+		CACHE BOOL "Enable building scripts.")
 
 set (notary_configurations_ENABLED
 		ON
-		CACHE BOOL "Enable building configuration files.")
+		CACHE BOOL "Enable building configurations.")
 
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -110,13 +110,18 @@ else ()
 endif ()
 
 
-set (notary_bin_PATH
-		"${CMAKE_INSTALL_PREFIX}/bin"
-		CACHE PATH "Path of the executable files.")
-
 set (notary_bin_PREFIX
 		"notary_${notary_VERSION}_"
 		CACHE STRING "Prefix of the executable files.")
+
+set (notary_lib_PREFIX
+		"notary_${notary_VERSION}_"
+		CACHE STRING "Prefix of the library files.")
+
+
+set (notary_bin_PATH
+		"${CMAKE_INSTALL_PREFIX}/bin"
+		CACHE PATH "Path of the executable files.")
 
 if (notary_MANGLING)
 	
@@ -207,37 +212,37 @@ set (notary_finished_request_socket_PATH
 
 
 if (notary_common_ENABLED)
-	add_subdirectory (notary-common)
+	add_subdirectory (common)
 else ()
-	message ("Disabled building 'notary-common' library.")
+	message ("Disabled building common library.")
 endif ()
 
-if (notary_http_ENABLED)
-	add_subdirectory (notary-http)
+if (notary_http_server_ENABLED)
+	add_subdirectory (http_server)
 else ()
-	message ("Disabled building 'notary-http' executable.")
+	message ("Disabled building http-server.")
 endif ()
 
 if (notary_scanner_ENABLED)
-	add_subdirectory (notary-scanner)
+	add_subdirectory (scanner)
 else ()
-	message ("Disabled building 'notary-scanner' executable.")
+	message ("Disabled building scanner.")
 endif ()
 
 if (notary_utilities_ENABLED)
 	add_subdirectory (utilities)
 else ()
-	message ("Disabled building utility executables.")
+	message ("Disabled building utilities.")
 endif ()
 
 if (notary_scripts_ENABLED)
 	add_subdirectory (scripts)
 else ()
-	message ("Disabled building script files.")
+	message ("Disabled building scripts.")
 endif ()
 
 if (notary_configurations_ENABLED)
 	add_subdirectory (config)
 else ()
-	message ("Disabled building configuration files.")
+	message ("Disabled building configurations.")
 endif ()

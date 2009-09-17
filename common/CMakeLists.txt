@@ -11,7 +11,7 @@ set (notary_common_SOURCES
 		server_common.c)
 
 set (notary_common_INCLUDE_DIR
-		${notary_SOURCE_DIR}/notary-common
+		${CMAKE_CURRENT_SOURCE_DIR}
 		${bdb_INCLUDE_DIR}
 		${openssl_INCLUDE_DIR}
 		${crypto_INCLUDE_DIR})
@@ -20,13 +20,13 @@ set (notary_common_INCLUDE_DIR
 		PARENT_SCOPE)
 
 set (notary_common_LIBRARIES
-		notary-common
+		${notary_lib_PREFIX}common
 		${bdb_LIBRARIES}
 		${openssl_LIBRARIES}
 		${crypto_LIBRARIES}
 		PARENT_SCOPE)
 
-add_library (notary-common
+add_library (${notary_lib_PREFIX}common
 		${notary_common_SOURCES})
 
 include_directories (
