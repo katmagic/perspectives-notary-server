@@ -12,6 +12,9 @@ if [ "$#" != 4 ] ; then
   usage
 fi
 
+echo
+echo "INFO: scanning"
+
 if ! [ -d '@notary_run_PATH@' ] ; then
   echo "WARNING: cannot find run dir '@notary_run_PATH@'"
   mkdir -p '@notary_run_PATH@'
@@ -60,9 +63,9 @@ else
   usage
 fi
 
-echo "INFO: starting scan"
 echo "" >> '@notary_log_PATH@'/scan.log
 echo "INFO: starting db_manager at $(date)" >> '@notary_log_PATH@'/scan.log
+echo "" >> '@notary_log_PATH@'/scan.log
 '@notary_bin_PATH@/@notary_bin_PREFIX@'simple_scanner "$file" "$3" "$4" "$2" 2>&1 | tee -a '@notary_log_PATH@'/scan.log
 
 if [ "$1" = db ] ; then

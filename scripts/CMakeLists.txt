@@ -5,13 +5,15 @@ set (notary_script_SOURCES
 		default_check_daemons.sh
 		default_create_db.sh
 		default_create_keys.sh
-		default_run_scan.sh
+		default_initialize.sh
+		default_maintenance.sh
+		default_refresh_db.sh
 		default_start_daemons.sh
 		default_stop_daemons.sh
 		default_tail_logs.sh
-		gen_key_pair.sh
 		http_fetch.sh
 		init_db_from_text.sh
+		init_key_pair.sh
 		list_by_last_obs.py
 		run_backup.sh
 		run_scan.sh

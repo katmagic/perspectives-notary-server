@@ -9,7 +9,8 @@ fi
 
 len=1369
 
-echo "INFO: generating notary key pair"
+echo
+echo "INFO: initializing key pair"
 
 echo "INFO: generating private key"
 openssl genrsa -out "$1" "$len"

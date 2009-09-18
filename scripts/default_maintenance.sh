@@ -9,6 +9,7 @@ if [ "$#" != 0 ] ; then
   exit 1
 fi
 
-exec tail -f '@notary_log_PATH@'/*.log
+'@notary_bin_PATH@/@notary_bin_PREFIX@'default_backup_db || true
+'@notary_bin_PATH@/@notary_bin_PREFIX@'default_refresh_db || true
 
 exit 0

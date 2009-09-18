@@ -1,9 +1,14 @@
 #!@bash_EXEC@
 
+exec >&2
+
 if [ "$#" != 2 ] ; then
   echo "usage: <scanner-config> <db-text-file>"
   exit 1
 fi
+
+echo
+echo "INFO: intializing database"
 
 if ! [ -f "$1" ] ; then
   echo "ERROR: cannot find config file '$1'"
@@ -43,7 +48,6 @@ fi
 #	exit 1
 #done
 
-echo "INFO: intializing notary database"
 echo "INFO: due to per-entry cryptographic signatures, this may take tens of minutes"
 
 '@notary_bin_PATH@/@notary_bin_PREFIX@'file2db "$2" "$db_env_fname" "$db_fname" "$privkey_fname"

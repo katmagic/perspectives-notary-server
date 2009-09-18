@@ -7,6 +7,9 @@ if [ "$#" != 2 ] ; then
   exit 1
 fi
 
+echo
+echo "INFO: backing-up database"
+
 if ! [ -f $1 ] ; then
     echo "ERROR: cannot find config file '$1'"
     exit 1

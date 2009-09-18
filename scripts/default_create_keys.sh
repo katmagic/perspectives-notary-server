@@ -7,6 +7,6 @@ if [ "$#" != 0 ] ; then
   exit 1
 fi
 
-exec '@notary_bin_PATH@/@notary_bin_PREFIX@'gen_key_pair '@notary_private_key_PATH@' '@notary_public_key_PATH@'
+exec '@notary_bin_PATH@/@notary_bin_PREFIX@'init_key_pair '@notary_private_key_PATH@' '@notary_public_key_PATH@'
 
-exit 0
+exit 1
