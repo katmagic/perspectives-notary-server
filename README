@@ -65,3 +65,12 @@
 
 8. (For later) Stop daemons:
 >> notary_@VERSION@_default_stop_daemons
+
+9. (For administrators) Add control script to init.d and rcX.d:
+>> ln -s -T `which notary_@VERSION@_default_control` /etc/init.d/notary_@VERSION@
+>> # for startup
+>> ln -s -T /etc/init.d/notary_@VERSION@ /etc/rcX.d/S99notary_@VERSION@
+>> # for shutdown, reboot and single-user
+>> ln -s -T /etc/init.d/notary_@VERSION@ /etc/rc0.d/K01notary_@VERSION@
+>> ln -s -T /etc/init.d/notary_@VERSION@ /etc/rc1.d/K01notary_@VERSION@
+>> ln -s -T /etc/init.d/notary_@VERSION@ /etc/rc6.d/K01notary_@VERSION@

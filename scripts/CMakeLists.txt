@@ -3,6 +3,7 @@ set (notary_script_SOURCES
 		check_daemon.sh
 		default_backup_db.sh
 		default_check_daemons.sh
+		default_control.sh
 		default_create_db.sh
 		default_create_keys.sh
 		default_initialize.sh
