@@ -7,16 +7,16 @@ if [ "$#" != 0 ] ; then
   exit 1
 fi
 
-f='@notary_run_PATH@'/db_manager.pid
+pid_fname='@notary_run_PATH@'/db_manager.pid
 
-if ! [ -f "$f" ] ; then
-  echo "ERROR: cannot find pid file '$f'; please kill manually"
+if ! [ -f "$pid_fname" ] ; then
+  echo "ERROR: cannot find pid file '$pid_fname'"
   exit 1
 fi
 
 echo "INFO: stopping db_manager"
 
-kill "$(cat "$f")"
-rm "$f"
+kill "$(cat "$pid_fname")"
+rm "$pid_fname"
 
 exit 0

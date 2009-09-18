@@ -1,6 +1,8 @@
 
 set (notary_script_SOURCES
+		check_daemon.sh
 		default_backup_db.sh
+		default_check_daemons.sh
 		default_create_db.sh
 		default_create_keys.sh
 		default_run_scan.sh
@@ -13,9 +15,11 @@ set (notary_script_SOURCES
 		list_by_last_obs.py
 		run_backup.sh
 		run_scan.sh
+		start_daemon.sh
 		start_db_manager.sh
 		start_http_server.sh
 		start_ondemand_listener.sh
+		stop_daemon.sh
 		stop_db_manager.sh
 		stop_http_server.sh
 		stop_ondemand_listener.sh)

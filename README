@@ -43,7 +43,7 @@ o. Run scan:
 
 == 'do' script options ==
 
- * configure-auto:
+ * configure:
   * automatically detect dependencies;
   * use default values for installation and configuration;
  * configure-ui: start a nice curses UI for configuration;
@@ -52,3 +52,7 @@ o. Run scan:
  * install: ...;
  * help: ...;
  * license: ...;
+ * test-shell:
+  * configure installation in /tmp/notary
+  * build and install there
+  * open a shell to allow testing of executables and scripts

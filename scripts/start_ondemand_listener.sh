@@ -35,18 +35,18 @@ if ! [ -d '@notary_log_PATH@' ] ; then
   mkdir -p '@notary_log_PATH@'
 fi
 
-f='@notary_run_PATH@'/ondemand_listener.pid
+pid_fname='@notary_run_PATH@'/ondemand_listener.pid
 
-if [ -f "$f" ] ; then
-  echo "ERROR: pid file '$f' already exists; please kill"
+if [ -f "$pid_fname" ] ; then
+  echo "ERROR: pid file '$pid_fname' already exists; please kill"
   exit 1
 fi
 
 echo "INFO: starting ondemand_listener"
-echo "" >> '@notary_log_PATH@'/ondemand_listener.log
+echo >> '@notary_log_PATH@'/ondemand_listener.log
 echo "INFO: starting ondemand_listener at $(date)" >> '@notary_log_PATH@'/ondemand_listener.log
 
 '@notary_bin_PATH@/@notary_bin_PREFIX@'ondemand_listener "$1" >> '@notary_log_PATH@'/ondemand_listener.log 2>&1 &
-echo "$!" > "$f"
+echo "$!" > "$pid_fname"
 
 exit 0

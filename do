@@ -56,6 +56,19 @@ case "${1}" in
 		exec make
 	;;
 	
+	( test-shell )
+		shift
+		./do configure -Dnotary_PATH=/tmp/notary -Dnotary_PATH_MANGLING=
+		./do make
+		./do make install
+		cd /tmp/notary
+		export PATH="/tmp/notary/bin:$PATH"
+		export HISTFILE="/tmp/notary/.bash_history"
+		export PS1='\nnotary> '
+		cd /tmp/notary
+		exec /bin/bash --noprofile --norc
+	;;
+	
 	( * )
 		echo "wrong command! try help!" >&2
 		exit 1
