@@ -74,3 +74,6 @@
 >> ln -s -T /etc/init.d/notary_@VERSION@ /etc/rc0.d/K01notary_@VERSION@
 >> ln -s -T /etc/init.d/notary_@VERSION@ /etc/rc1.d/K01notary_@VERSION@
 >> ln -s -T /etc/init.d/notary_@VERSION@ /etc/rc6.d/K01notary_@VERSION@
+
+10. (For administrators) Add maintenance script to cron:
+>> echo 59 0,12 * * * `which notary_@VERSION@_control` maintenance >>/etc/crontab
