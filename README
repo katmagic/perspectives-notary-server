@@ -75,10 +75,13 @@
 7. (For later) Do maintenance in one step (all sub-steps bellow at once):
 >> notary_@VERSION@_maintenance
 
-  7a. Backup record database:
+  7a. Prime record database (recover and delete un-needed transaction logs):
+  >> notary_@VERSION@_prime_db
+
+  7b. Backup record database:
   >> notary_@VERSION@_backup_db
 
-  7b. Refresh record database:
+  7c. Refresh record database:
   >> notary_@VERSION@_refresh_db
 
 8. (For later) Stop daemons:

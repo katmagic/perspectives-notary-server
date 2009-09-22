@@ -8,6 +8,7 @@ set (notary_bin_script_SOURCES
 		http_fetch.sh
 		initialize.sh
 		maintenance.sh
+		prime_db.sh
 		refresh_db.sh
 		start_daemons.sh
 		stop_daemons.sh
@@ -19,6 +20,7 @@ set (notary_libexec_script_SOURCES
 		init_key_pair.sh
 		list_by_last_obs.py
 		run_backup.sh
+		run_prime.sh
 		run_scan.sh
 		start_daemon.sh
 		stop_daemon.sh)

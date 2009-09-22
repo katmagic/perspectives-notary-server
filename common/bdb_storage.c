@@ -249,3 +249,50 @@ void record_observation(DB* db, RSA *priv_key,
 }
 
 
+void bdb_fatal_failure (
+		char const * const context,
+		int const outcome);
+
+void bdb_prime_env (
+		char const * const env_path)
+{
+	DB_ENV * env;
+	uint32_t env_open_flags;
+	int outcome;
+	void * sink;
+	
+	env_open_flags =
+			DB_INIT_LOCK | DB_INIT_LOG | DB_INIT_MPOOL | DB_INIT_TXN
+			| DB_CREATE | DB_RECOVER | DB_REGISTER
+			// | DB_FAILCHK -- not defined?
+			;
+	
+	outcome = db_env_create (&env, 0);
+	if (outcome != 0)
+		bdb_fatal_failure ("bdb_prime_env -> db_env_create", outcome);
+	
+	outcome = env->open (env, env_path, env_open_flags, 0);
+	if (outcome != 0)
+		bdb_fatal_failure ("bdb_prime_env -> db_env.open", outcome);
+	
+	outcome = env->txn_checkpoint (env, 0, 0, 0);
+	if (outcome != 0)
+		bdb_fatal_failure ("bdb_prime_env -> db_env.txn_checkpoint", outcome);
+	
+	outcome = env->log_archive (env, (char***) &sink,  DB_ARCH_REMOVE);
+	if (outcome != 0)
+		bdb_fatal_failure ("bdb_prime_env -> db_env.log_archive", outcome);
+	
+	outcome = env->close (env, 0);
+	if (outcome != 0)
+		bdb_fatal_failure ("bdb_prime_env -> db_env.close", outcome);
+}
+
+void bdb_fatal_failure (
+		char const * const context,
+		int const outcome)
+{
+	char const * reason = db_strerror (outcome);
+	fprintf (stderr, "bdb failure :: %s :: %s\n", context, reason);
+	exit (1);
+}

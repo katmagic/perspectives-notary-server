@@ -22,7 +22,7 @@ set (CMAKE_EXE_LINKER_FLAGS
 		""
 		CACHE INTERNAL "" FORCE)
 
-	set (BUILD_SHARED_LIBS
+set (BUILD_SHARED_LIBS
 		OFF
 		CACHE INTERNAL "" FORCE)
 
@@ -127,11 +127,11 @@ if (notary_static_ENABLED)
 else ()
 	
 	set (BUILD_SHARED_LIBS
-		ON
+		OFF
 		CACHE INTERNAL "" FORCE)
 	
 	set (CMAKE_EXE_LINKER_FLAGS
-		"${CMAKE_EXE_LINKER_FLAGS} -shared"
+		""
 		CACHE INTERNAL "" FORCE)
 	
 endif ()

@@ -1,6 +1,7 @@
 
 set (notary_utility_NAMES
 		db2file
+		db_prime
 		db_search
 		db_speed_test
 		dump_b64_signature

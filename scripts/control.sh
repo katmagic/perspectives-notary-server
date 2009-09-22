@@ -16,16 +16,21 @@ fi
 case "${1}" in
 	
 	( start )
-		exec @notary_bin_PATH@/@notary_bin_PREFIX@start_daemons
+		@notary_bin_PATH@/@notary_bin_PREFIX@prime_db
+		@notary_bin_PATH@/@notary_bin_PREFIX@start_daemons
+		exit 0
 	;;
 	
 	( stop )
-		exec @notary_bin_PATH@/@notary_bin_PREFIX@stop_daemons
+		@notary_bin_PATH@/@notary_bin_PREFIX@stop_daemons
+		@notary_bin_PATH@/@notary_bin_PREFIX@prime_db
+		exit 0
 	;;
 	
 	( restart )
-		@notary_bin_PATH@/@notary_bin_PREFIX@stop_daemons || true
-		exec @notary_bin_PATH@/@notary_bin_PREFIX@start_daemons
+		@notary_bin_PATH@/@notary_bin_PREFIX@stop_daemons
+		@notary_bin_PATH@/@notary_bin_PREFIX@prime_db
+		@notary_bin_PATH@/@notary_bin_PREFIX@start_daemons
 	;;
 	
 	( check )

@@ -32,6 +32,6 @@ void record_observation(DB* db, RSA *priv_key,
                                   int key_type, int timestamp,
                                   BOOL do_signature);
 
+void bdb_prime_env(char const * const env_path);
 
 #endif
-

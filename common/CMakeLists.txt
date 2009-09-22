@@ -19,12 +19,23 @@ set (notary_common_INCLUDE_DIR
 		${notary_common_INCLUDE_DIR}
 		PARENT_SCOPE)
 
+if (notary_static_ENABLED)
+	
+	message ("Static build enabled... Trying to solve some libcrypt and glibc issues...")
+	
+	set (notary_common_static_LIBRARIES
+			dl pthread)
+	
+endif ()
+
 set (notary_common_LIBRARIES
 		${notary_lib_PREFIX}common
 		${bdb_LIBRARIES}
 		${openssl_LIBRARIES}
 		${crypto_LIBRARIES}
-		dl pthread
+		${notary_common_static_LIBRARIES})
+set (notary_common_LIBRARIES
+		${notary_common_LIBRARIES}
 		PARENT_SCOPE)
 
 add_library (${notary_lib_PREFIX}common

@@ -29,7 +29,8 @@ case "${1}" in
 		shift
 		test "${#}" -eq 0 || { echo "wrong arguments! try help!" >&2 ; exit 1 ; }
 		test -e ./build || { echo "already clean!" >&2 ; exit 0 ; }
-		exec find ./build -delete
+		find ./build -delete || true
+		exit 0
 	;;
 	
 	( configure )
@@ -63,7 +64,7 @@ case "${1}" in
 		./do make
 		./do make install
 		cd /tmp/notary
-		export PATH="/tmp/notary/bin:$PATH"
+		export PATH="/tmp/notary/bin:/tmp/notary/libexec:$PATH"
 		export HISTFILE="/tmp/notary/.bash_history"
 		export PS1='\nnotary> '
 		cd /tmp/notary
@@ -73,7 +74,9 @@ case "${1}" in
 	( test-clean )
 		shift
 		test "${#}" -eq 0 || { echo "wrong arguments! try help!" >&2 ; exit 1 ; }
-		exec find ./build /tmp/notary -delete
+		find ./build -delete || true
+		find /tmp/notary -delete || true
+		exit 0
 	;;
 	
 	( * )
