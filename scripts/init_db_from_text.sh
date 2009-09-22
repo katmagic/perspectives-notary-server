@@ -8,7 +8,7 @@ if [ "$#" != 2 ] ; then
 fi
 
 echo
-echo "INFO: intializing database"
+echo "INFO: initializing database"
 
 if ! [ -f "$1" ] ; then
   echo "ERROR: cannot find config file '$1'"
