@@ -59,7 +59,7 @@ case "${1}" in
 	( test-shell )
 		shift
 		test "${#}" -eq 0 || { echo "wrong arguments! try help!" >&2 ; exit 1 ; }
-		./do configure -Dnotary_PATH=/tmp/notary -Dnotary_PATH_MANGLING=
+		./do configure -Dnotary_PATH=/tmp/notary -Dnotary_PATH_MANGLING= -Dnotary_static_ENABLED=off
 		./do make
 		./do make install
 		cd /tmp/notary
@@ -73,7 +73,7 @@ case "${1}" in
 	( test-clean )
 		shift
 		test "${#}" -eq 0 || { echo "wrong arguments! try help!" >&2 ; exit 1 ; }
-		exec find /tmp/notary -delete
+		exec find ./build /tmp/notary -delete
 	;;
 	
 	( * )

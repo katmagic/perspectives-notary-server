@@ -4,8 +4,27 @@ cmake_minimum_required (VERSION 2.6)
 
 project (notary)
 
-set (notary_VERSION_MAJOR 2)
-set (notary_VERSION_MINOR 0)
+
+set (CMAKE_CONFIGURATION_TYPES
+		"Release"
+		CACHE INTERNAL "" FORCE)
+
+set (CMAKE_BUILD_TYPE
+		Release
+		CACHE STRING "Build type. Available options: ${CMAKE_CONFIGURATION_TYPES}" FORCE)
+
+
+set (CMAKE_INSTALL_PREFIX
+		""
+		CACHE INTERNAL "" FORCE)
+
+set (CMAKE_EXE_LINKER_FLAGS
+		""
+		CACHE INTERNAL "" FORCE)
+
+	set (BUILD_SHARED_LIBS
+		OFF
+		CACHE INTERNAL "" FORCE)
 
 
 file (STRINGS VERSION notary_VERSION)
@@ -91,6 +110,33 @@ set (notary_configurations_ENABLED
 		CACHE BOOL "Enable building configurations.")
 
 
+set (notary_static_ENABLED
+		OFF
+		CACHE BOOL "Enable static linking.")
+
+if (notary_static_ENABLED)
+	
+	set (BUILD_SHARED_LIBS
+		OFF
+		CACHE INTERNAL "" FORCE)
+	
+	set (CMAKE_EXE_LINKER_FLAGS
+		-static
+		CACHE INTERNAL "" FORCE)
+	
+else ()
+	
+	set (BUILD_SHARED_LIBS
+		ON
+		CACHE INTERNAL "" FORCE)
+	
+	set (CMAKE_EXE_LINKER_FLAGS
+		"${CMAKE_EXE_LINKER_FLAGS} -shared"
+		CACHE INTERNAL "" FORCE)
+	
+endif ()
+
+
 set (notary_PATH
 		"/tmp/notary_${notary_VERSION}"
 		CACHE PATH "Prefix for the installation folders.")
@@ -99,9 +145,10 @@ set (notary_PATH_MANGLING
 		""
 		CACHE STRING "Extra-prefix for some installation folders (resulting in /etc/notary, /var/lib/notary, /var/run/notary, etc.)")
 
+
 set (CMAKE_INSTALL_PREFIX
 		"${notary_PATH}"
-		CACHE PATH "" FORCE)
+		CACHE INTERNAL "" FORCE)
 
 
 set (notary_bin_PREFIX

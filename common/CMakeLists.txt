@@ -24,6 +24,7 @@ set (notary_common_LIBRARIES
 		${bdb_LIBRARIES}
 		${openssl_LIBRARIES}
 		${crypto_LIBRARIES}
+		dl pthread
 		PARENT_SCOPE)
 
 add_library (${notary_lib_PREFIX}common

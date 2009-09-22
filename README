@@ -1,22 +1,36 @@
 
-== 'do' script options ==
+--------------
+== Contents ==
+--------------
+
+* './do' script options
+* Quick startup guide
+* CMake configuration variables
+
+
+----------------------------
+== './do' script commands ==
+----------------------------
 
  * configure:
   * automatically detect dependencies;
   * use default values for installation and configuration;
  * configure-ui: start a nice curses UI for configuration;
- * build: ...;
+ * make:
+  * make: build everything;
+  * make install: ...;
  * clean: ...;
- * install: ...;
+ * test-shell:
+  * configure and install the test installation in /tmp/notary;
+  * open a shell to allow testing of executables and scripts;
+ * test-clean: removes the test installation from /tmp/notary;
  * help: ...;
  * license: ...;
- * test-shell:
-  * configure installation in /tmp/notary
-  * build and install there
-  * open a shell to allow testing of executables and scripts
 
 
+-------------------------
 == Quick startup guide ==
+-------------------------
 
 1. Configure:
 >> ./do configure
@@ -29,6 +43,10 @@
  >> ./do configure -Dnotary_PATH=/usr/local -Dnotary_PATH_MANGLING=notary
  * will create /usr/local/etc/notary, /usr/local/var/notary/db, etc.
  * the "extra-prefix" is in fact a subfolder for some 'system-wide' folders like /etc and /var.
+
+ 1c. Configure static building (usefull for chroot-ing):
+ >> ./do configure -Dnotary_static_ENABLED=on
+ * prepare to receive warnings and maybe even a fail; (libcrypt and glibc have issues with this?)
 
 2. Build:
 >> ./do make
@@ -77,3 +95,16 @@
 
 10. (For administrators) Add maintenance script to cron:
 >> echo '59 0,12 * * *' `which notary_@VERSION@_control` maintenance >>/etc/crontab
+
+
+-----------------------------------
+== CMake configuration variables ==
+-----------------------------------
+
+* notary_PATH: Prefix for the installation folders.
+* notary_PATH_MANGLING: Extra-prefix for some installation folders (resulting in /etc/notary, /var/lib/notary, /var/run/notary, etc.)
+* notary_bin_PREFIX: Prefix of the executable files (those in bin).
+* notary_libexec_PREFIX: Prefix of the (internal) executable files (those in libexec).
+* notary_http_listen_IP: Listening IP of the notary http server.
+* notary_http_listen_PORT: Listening port of the notary http server.
+* notary_scripts_ENABLED: Enable building scripts.
