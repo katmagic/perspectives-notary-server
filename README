@@ -40,34 +40,34 @@
 >> export PATH="/tmp/notary_@VERSION@/bin:$PATH"
 
 5. Initialize in one step (all sub-steps bellow at once):
->> notary_@VERSION@_default_initialize
+>> notary_@VERSION@_initialize
 
   5a. Create cryptographic keys:
-  >> notary_@VERSION@_default_create_keys
+  >> notary_@VERSION@_create_keys
 
   5b. Create record database:
-  >> notary_@VERSION@_default_create_db
+  >> notary_@VERSION@_create_db
 
   5c. Start daemons:
-  >> notary_@VERSION@_default_start_daemons
+  >> notary_@VERSION@_start_daemons
 
 6. (Optional) Check daemons:
->> notary_@VERSION@_default_check_daemons
+>> notary_@VERSION@_check_daemons
 
 7. (For later) Do maintenance in one step (all sub-steps bellow at once):
->> notary_@VERSION@_default_maintenance
+>> notary_@VERSION@_maintenance
 
   7a. Backup record database:
-  >> notary_@VERSION@_default_backup_db
+  >> notary_@VERSION@_backup_db
 
   7b. Refresh record database:
-  >> notary_@VERSION@_default_refresh_db
+  >> notary_@VERSION@_refresh_db
 
 8. (For later) Stop daemons:
->> notary_@VERSION@_default_stop_daemons
+>> notary_@VERSION@_stop_daemons
 
 9. (For administrators) Add control script to init.d and rcX.d:
->> ln -s -T `which notary_@VERSION@_default_control` /etc/init.d/notary_@VERSION@
+>> ln -s -T `which notary_@VERSION@_control` /etc/init.d/notary_@VERSION@
 >> # for startup
 >> ln -s -T /etc/init.d/notary_@VERSION@ /etc/rcX.d/S99notary_@VERSION@
 >> # for shutdown, reboot and single-user

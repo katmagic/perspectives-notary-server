@@ -13,8 +13,8 @@ test -d '@notary_db_PATH@' || mkdir -p '@notary_db_PATH@'
 test -d '@notary_run_PATH@' || mkdir -p '@notary_run_PATH@'
 test -d '@notary_log_PATH@' || mkdir -p '@notary_log_PATH@'
 
-'@notary_bin_PATH@/@notary_bin_PREFIX@'default_create_keys || true
-'@notary_bin_PATH@/@notary_bin_PREFIX@'default_create_db || true
-'@notary_bin_PATH@/@notary_bin_PREFIX@'default_start_daemons || true
+'@notary_bin_PATH@/@notary_bin_PREFIX@'create_keys || true
+'@notary_bin_PATH@/@notary_bin_PREFIX@'create_db || true
+'@notary_bin_PATH@/@notary_bin_PREFIX@'start_daemons || true
 
 exit 0

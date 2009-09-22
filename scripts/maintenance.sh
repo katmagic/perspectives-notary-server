@@ -9,7 +9,7 @@ if [ "$#" != 0 ] ; then
   exit 1
 fi
 
-'@notary_bin_PATH@/@notary_bin_PREFIX@'default_backup_db || true
-'@notary_bin_PATH@/@notary_bin_PREFIX@'default_refresh_db || true
+'@notary_bin_PATH@/@notary_bin_PREFIX@'backup_db || true
+'@notary_bin_PATH@/@notary_bin_PREFIX@'refresh_db || true
 
 exit 0

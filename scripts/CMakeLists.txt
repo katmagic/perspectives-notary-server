@@ -1,17 +1,17 @@
 
 set (notary_bin_script_SOURCES
-		default_backup_db.sh
-		default_check_daemons.sh
-		default_control.sh
-		default_create_db.sh
-		default_create_keys.sh
-		default_initialize.sh
-		default_maintenance.sh
-		default_refresh_db.sh
-		default_start_daemons.sh
-		default_stop_daemons.sh
-		default_tail_logs.sh
-		http_fetch.sh)
+		backup_db.sh
+		check_daemons.sh
+		control.sh
+		create_db.sh
+		create_keys.sh
+		http_fetch.sh
+		initialize.sh
+		maintenance.sh
+		refresh_db.sh
+		start_daemons.sh
+		stop_daemons.sh
+		tail_logs.sh)
 
 set (notary_libexec_script_SOURCES
 		check_daemon.sh
@@ -21,13 +21,7 @@ set (notary_libexec_script_SOURCES
 		run_backup.sh
 		run_scan.sh
 		start_daemon.sh
-		start_db_manager.sh
-		start_http_server.sh
-		start_ondemand_listener.sh
-		stop_daemon.sh
-		stop_db_manager.sh
-		stop_http_server.sh
-		stop_ondemand_listener.sh)
+		stop_daemon.sh)
 
 foreach (notary_script_SOURCE ${notary_bin_script_SOURCES})
 	
