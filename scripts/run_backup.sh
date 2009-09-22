@@ -37,6 +37,6 @@ fi
 
 file="$2/notary_$time.txt.bzip2"
 echo "INFO: creating backup file '$file'"
-'@notary_bin_PATH@/@notary_bin_PREFIX@'db2file "$db_env_fname" "$db_fname" | bzip2 -z > "$file"
+'@notary_libexec_PATH@/@notary_libexec_PREFIX@'db2file "$db_env_fname" "$db_fname" | bzip2 -z > "$file"
 
 exit 0

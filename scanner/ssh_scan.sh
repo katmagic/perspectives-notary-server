@@ -5,6 +5,6 @@ if [ "$#" != 2 ] ; then
 	exit 1
 fi
 
-exec '@notary_bin_PATH@/@notary_bin_PREFIX@'ssh_scan_python "$1" '@notary_bin_PATH@/@notary_bin_PREFIX@'report_observation "$2"
+exec '@notary_libexec_PATH@/@notary_libexec_PREFIX@'ssh_scan_python "$1" '@notary_libexec_PATH@/@notary_libexec_PREFIX@'report_observation "$2"
 
 exit 1

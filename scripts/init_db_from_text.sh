@@ -50,6 +50,6 @@ fi
 
 echo "INFO: due to per-entry cryptographic signatures, this may take tens of minutes"
 
-'@notary_bin_PATH@/@notary_bin_PREFIX@'file2db "$2" "$db_env_fname" "$db_fname" "$privkey_fname"
+'@notary_libexec_PATH@/@notary_libexec_PREFIX@'file2db "$2" "$db_env_fname" "$db_fname" "$privkey_fname"
 
 exit 0

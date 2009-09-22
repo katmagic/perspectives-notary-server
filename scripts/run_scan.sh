@@ -49,7 +49,7 @@ if [ "$1" = db ] ; then
 
   file='@notary_run_PATH@'/"scan_$time.in"
   echo "INFO: dumping db"
-  '@notary_bin_PATH@/@notary_bin_PREFIX@'list_by_last_obs "$db_env_fname" "$db_fname" older 0 | awk '{print $1}' > "$file"
+  '@notary_libexec_PATH@/@notary_libexec_PREFIX@'list_by_last_obs "$db_env_fname" "$db_fname" older 0 | awk '{print $1}' > "$file"
 
 elif [ "$1" = f ] ; then
 
@@ -66,7 +66,7 @@ fi
 echo "" >> '@notary_log_PATH@'/scan.log
 echo "INFO: starting db_manager at $(date)" >> '@notary_log_PATH@'/scan.log
 echo "" >> '@notary_log_PATH@'/scan.log
-'@notary_bin_PATH@/@notary_bin_PREFIX@'simple_scanner "$file" "$3" "$4" "$2" 2>&1 | tee -a '@notary_log_PATH@'/scan.log
+'@notary_libexec_PATH@/@notary_libexec_PREFIX@'simple_scanner "$file" "$3" "$4" "$2" 2>&1 | tee -a '@notary_log_PATH@'/scan.log
 
 if [ "$1" = db ] ; then
   echo "INFO: cleaning"

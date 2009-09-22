@@ -9,6 +9,6 @@ if [ "$#" != 0 ] ; then
   exit 1
 fi
 
-exec '@notary_bin_PATH@/@notary_bin_PREFIX@'init_db_from_text '@notary_etc_PATH@'/scanner_config.txt /dev/null
+exec '@notary_libexec_PATH@/@notary_libexec_PREFIX@'init_db_from_text '@notary_etc_PATH@'/scanner_config.txt /dev/null
 
 exit 1

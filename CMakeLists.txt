@@ -106,7 +106,11 @@ set (CMAKE_INSTALL_PREFIX
 
 set (notary_bin_PREFIX
 		"notary_${notary_VERSION}_"
-		CACHE STRING "Prefix of the executable files.")
+		CACHE STRING "Prefix of the executable files (those in bin).")
+
+set (notary_libexec_PREFIX
+		"notary_${notary_VERSION}_"
+		CACHE STRING "Prefix of the (internal) executable files (those in libexec).")
 
 set (notary_lib_PREFIX
 		"notary_${notary_VERSION}_"
@@ -114,60 +118,65 @@ set (notary_lib_PREFIX
 
 
 set (notary_bin_PATH
-		"${CMAKE_INSTALL_PREFIX}/bin"
-		CACHE PATH "Path of the executable files.")
+		"${notary_PATH}/bin"
+		CACHE PATH "Path of the executable files (bin).")
+
+set (notary_libexec_PATH
+		"${notary_PATH}/libexec"
+		CACHE PATH "Path of the (internal) executable files (libexec).")
+
 
 if (notary_PATH_MANGLING)
 	
 	set (notary_etc_PATH
-			"${CMAKE_INSTALL_PREFIX}/etc/${notary_PATH_MANGLING}"
-			CACHE PATH "Path of the configuration files.")
+			"${notary_PATH}/etc/${notary_PATH_MANGLING}"
+			CACHE PATH "Path of the configuration files (etc).")
 	
 	set (notary_var_PATH
-			"${CMAKE_INSTALL_PREFIX}/var"
-			CACHE PATH "Generic path of the data files.")
+			"${notary_PATH}/var"
+			CACHE PATH "Generic path of the data files (var).")
 	
 	set (notary_data_PATH
 			"${notary_var_PATH}/lib/${notary_PATH_MANGLING}"
-			CACHE PATH "Path of the durable data files.")
+			CACHE PATH "Path of the durable data files (var/lib).")
 	
 	set (notary_run_PATH
 			"${notary_var_PATH}/run/${notary_PATH_MANGLING}"
-			CACHE PATH "Path of the temporary data files.")
+			CACHE PATH "Path of the temporary data files (var/run).")
 	
 	set (notary_backups_PATH
 			"${notary_var_PATH}/backups/${notary_PATH_MANGLING}"
-			CACHE PATH "Path of the backup files.")
+			CACHE PATH "Path of the backup files (var/backup).")
 	
 	set (notary_log_PATH
 			"${notary_var_PATH}/log/${notary_PATH_MANGLING}"
-			CACHE PATH "Path of the log files.")
+			CACHE PATH "Path of the log files (var/log).")
 	
 else ()
 	
 	set (notary_etc_PATH
-			"${CMAKE_INSTALL_PREFIX}/etc"
-			CACHE PATH "Path of the configuration files.")
+			"${notary_PATH}/etc"
+			CACHE PATH "Path of the configuration files (etc).")
 	
 	set (notary_var_PATH
-			"${CMAKE_INSTALL_PREFIX}/var"
-			CACHE PATH "Generic path of the data files.")
+			"${notary_PATH}/var"
+			CACHE PATH "Generic path of the data files (var).")
 	
 	set (notary_data_PATH
 			"${notary_var_PATH}/lib"
-			CACHE PATH "Path of the durable data files.")
+			CACHE PATH "Path of the durable data files (var/lib).")
 	
 	set (notary_run_PATH
 			"${notary_var_PATH}/run"
-			CACHE PATH "Path of the temporary data files.")
+			CACHE PATH "Path of the temporary data files (var/run).")
 	
 	set (notary_backups_PATH
 			"${notary_var_PATH}/backups"
-			CACHE PATH "Path of the backup files.")
+			CACHE PATH "Path of the backup files (var/backups).")
 	
 	set (notary_log_PATH
 			"${notary_var_PATH}/log"
-			CACHE PATH "Path of the log files.")
+			CACHE PATH "Path of the log files (var/log).")
 	
 endif ()
 
