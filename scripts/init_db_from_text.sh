@@ -34,9 +34,9 @@ if ! [ -d "$db_env_fname" ] ; then
   mkdir -p "$db_env_fname"
 fi
 
-if ! [ -f "$db_env_fname/$db_fname" ] ; then
-  echo "WARNING: cannot find DB file '$db_env_fname/$db_fname'"
-fi
+#if ! [ -f "$db_env_fname/$db_fname" ] ; then
+#  echo "WARNING: cannot find DB file '$db_env_fname/$db_fname'"
+#fi
 
 # if scanner is running, don't do this, otherwise you will currupt the
 # database because there will be two writing processes

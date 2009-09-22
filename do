@@ -53,11 +53,12 @@ case "${1}" in
 		test -e ./build || { echo "configure first!" >&2 ; exit 1 ; }
 		cd ./build
 		test "${#}" -eq 0 || exec make "${@}"
-		exec make
+		exec make all
 	;;
 	
 	( test-shell )
 		shift
+		test "${#}" -eq 0 || { echo "wrong arguments! try help!" >&2 ; exit 1 ; }
 		./do configure -Dnotary_PATH=/tmp/notary -Dnotary_PATH_MANGLING=
 		./do make
 		./do make install
@@ -67,6 +68,12 @@ case "${1}" in
 		export PS1='\nnotary> '
 		cd /tmp/notary
 		exec /bin/bash --noprofile --norc
+	;;
+	
+	( test-clean )
+		shift
+		test "${#}" -eq 0 || { echo "wrong arguments! try help!" >&2 ; exit 1 ; }
+		exec find /tmp/notary -delete
 	;;
 	
 	( * )
