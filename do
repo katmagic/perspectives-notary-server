@@ -50,7 +50,7 @@ case "${1}" in
 		bdb="$( for verify in db{,4{.{8..0},}}_verify ; do "${verify}" -V 2>&1 && break ; done | head -n 1 | grep -o -E -e '[0-9][0-9a-zA-Z_.+()-]+' | head -n 1 )"
 		openssl="$( openssl version 2>&1 | head -n 1 | grep -o -E -e '[0-9][0-9a-zA-Z_.+()-]+' | head -n 1 )"
 		openssh="$( ssh -V 2>&1 | head -n 1 | grep -o -E -e '[0-9][0-9a-zA-Z_.+()-]+' | head -n 1 )"
-		echo "OS:         ${OSTYPE:-unknown!!!!})" >&2
+		echo "OS:         ${OSTYPE:-unknown!!!!}" >&2
 		echo "Bash:       ${bash:-missing!!!!} $( which bash )" >&2
 		echo "Python:     ${python:-missing!!!!} $( which python )" >&2
 		echo "CMake:      ${cmake:-missing!!!!} $( which cmake )" >&2
@@ -72,7 +72,8 @@ case "${1}" in
 	
 	( configure )
 		shift
-		cmake="${cmake_EXEC:-cmake}"
+		test -z "${cmake_PREFIX:-}" || export PATH="${cmake_PREFIX}/bin:${PATH}"
+		cmake="${cmake_EXEC:-$( which cmake )}"
 		test -n "${cmake}" || { echo "cmake not found!" >&2 ; exit 1 ; }
 		test -e ./build || mkdir ./build
 		cd ./build
@@ -83,22 +84,23 @@ case "${1}" in
 	
 	( configure-ui )
 		shift
-		cmake="${cmake_EXEC:-cmake}"
-		test -n "${cmake}" || { echo "cmake not found!" >&2 ; exit 1 ; }
+		test -z "${cmake_PREFIX:-}" || export PATH="${cmake_PREFIX}/bin:${PATH}"
+		ccmake="${ccmake_EXEC:-$( which ccmake )}"
+		test -n "${ccmake}" || { echo "cmake not found!" >&2 ; exit 1 ; }
 		test -e ./build || mkdir ./build
 		cd ./build
-		test "${#}" -eq 0 || exec ccmake "${@}" ..
-		exec ccmake ..
+		test "${#}" -eq 0 || exec "${ccmake}" "${@}" ..
+		exec "${ccmake}" ..
 		exit 1
 	;;
 	
 	( make )
 		shift
-		make="${make_EXEC:-make}"
+		make="${make_EXEC:-$( which make )}"
 		test -n "${make}" || { echo "make not found!" >&2 ; exit 1 ; }
 		test -e ./build || { echo "build directory not found! configure first!" >&2 ; exit 1 ; }
 		cd ./build
-		test "${#}" -eq 0 || exec make "${@}"
+		test "${#}" -eq 0 || exec "${make}" "${@}"
 		exec "${make}" all
 		exit 1
 	;;

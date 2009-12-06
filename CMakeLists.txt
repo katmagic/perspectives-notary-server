@@ -151,7 +151,7 @@ if (notary_static_ENABLED)
 		CACHE INTERNAL "" FORCE)
 	
 	set (CMAKE_EXE_LINKER_FLAGS
-		-static
+		-all-static
 		CACHE INTERNAL "" FORCE)
 	
 else ()
