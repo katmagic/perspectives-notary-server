@@ -32,7 +32,7 @@ case "${1}" in
 		shift
 		test "${#}" -eq 0 || { echo "wrong arguments! try help!" >&2 ; exit 1 ; }
 		test -e ./build || { echo "already clean!" >&2 ; exit 0 ; }
-		find ./build -delete || true
+		rm -R -f ./build || true
 		exit 0
 	;;
 	
@@ -127,7 +127,7 @@ case "${1}" in
 		deployment="/tmp/notary.${USER}"
 		./do clean
 		test -e "${deployment}" || { echo "already clean!" >&2 ; exit 0 ; }
-		find "${deployment}" -delete || true
+		rm -R -f "${deployment}" || true
 		exit 0
 	;;
 	
