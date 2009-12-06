@@ -2,7 +2,7 @@
 
 exec >&2
 
-set -e -u -o pipefail || exit 1
+set -e -u || exit 1
 
 if [ "$#" != 1 ] ; then
 	echo "usage: <daemon-name>"
