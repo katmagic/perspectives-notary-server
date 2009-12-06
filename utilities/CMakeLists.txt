@@ -21,6 +21,7 @@ foreach (notary_utility_NAME ${notary_utility_NAMES})
 	
 	target_link_libraries (${notary_libexec_PREFIX}${notary_utility_NAME}
 			${notary_common_LIBRARIES}
+			${notary_static_LIBRARIES}
 			${additional_LIBRARIES})
 	
 	install (

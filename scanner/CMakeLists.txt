@@ -11,6 +11,7 @@ include_directories (
 
 target_link_libraries (${notary_bin_PREFIX}db_manager
 		${notary_common_LIBRARIES}
+		${notary_static_LIBRARIES}
 		${additional_LIBRARIES})
 
 set_source_files_properties (
@@ -30,6 +31,7 @@ add_executable (${notary_libexec_PREFIX}report_observation
 
 target_link_libraries (${notary_libexec_PREFIX}report_observation
 		${notary_common_LIBRARIES}
+		${notary_static_LIBRARIES}
 		${additional_LIBRARIES})
 
 set_source_files_properties (

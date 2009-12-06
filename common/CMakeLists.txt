@@ -19,22 +19,11 @@ set (notary_common_INCLUDE_DIR
 		${notary_common_INCLUDE_DIR}
 		PARENT_SCOPE)
 
-if (notary_static_ENABLED)
-	
-	message ("Static build enabled... Note that there are some libcrypt and glibc issues...")
-	message ("  if build fails, try to play with, `./do configure ... -Dnotary_static_ENABLED -Dnotary_common_static_LIBRARIES=...")
-	
-	#set (notary_common_static_LIBRARIES
-	#		)
-	
-endif ()
-
 set (notary_common_LIBRARIES
 		${notary_lib_PREFIX}common
 		${bdb_LIBRARIES}
 		${openssl_LIBRARIES}
-		${crypto_LIBRARIES}
-		${notary_common_static_LIBRARIES})
+		${crypto_LIBRARIES})
 set (notary_common_LIBRARIES
 		${notary_common_LIBRARIES}
 		PARENT_SCOPE)

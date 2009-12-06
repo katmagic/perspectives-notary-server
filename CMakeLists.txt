@@ -69,22 +69,66 @@ else ()
 endif ()
 
 
+set (notary_static_ENABLED
+		OFF
+		CACHE BOOL "Enable static linking.")
+
+if (notary_static_ENABLED)
+	
+	message ("Static build enabled... Note that there are some issues related to missing libraries...")
+	message ("  if build fails, try to play with `notary_static_LIBRARIES` (which is a `;` separated list of libraries);")
+	message ("  (for example on Linux: `./do configure ... -Dnotary_static_ENABLED=yes -Dnotary_static_LIBRARIES='pthread;dl'` )")
+	message ("  (for example on FreeBSD: `./do configure ... -Dnotary_static_ENABLED=yes -Dnotary_static_LIBRARIES='pthread'` )")
+	message ("  (be prepared for a lot of headakes...)")
+	
+	#set (notary_static_LIBRARIES
+	#		)
+	
+	set (BUILD_SHARED_LIBS
+		OFF
+		CACHE INTERNAL "" FORCE)
+	
+	set (CMAKE_EXE_LINKER_FLAGS
+		-static
+		CACHE INTERNAL "" FORCE)
+	
+	set (bdb_LIB libdb.a)
+	set (openssl_LIB libssl.a)
+	set (crypto_LIB libcrypto.a)
+	
+else ()
+	
+	set (BUILD_SHARED_LIBS
+		OFF
+		CACHE INTERNAL "" FORCE)
+	
+	set (CMAKE_EXE_LINKER_FLAGS
+		""
+		CACHE INTERNAL "" FORCE)
+	
+	set (bdb_LIB libdb.so)
+	set (openssl_LIB libssl.so)
+	set (crypto_LIB libcrypto.so)
+	
+endif ()
+
+
 find_path (bdb_INCLUDE_DIR db.h
 		HINTS ${bdb_INCLUDE_DIR_SEARCH})
 
-find_library (bdb_LIBRARIES db
+find_library (bdb_LIBRARIES ${bdb_LIB}
 		HINTS ${bdb_LIBRARIES_SEARCH})
 
 find_path (openssl_INCLUDE_DIR openssl/ssl.h
 		HINTS ${openssl_INCLUDE_DIR_SEARCH})
 
-find_library (openssl_LIBRARIES ssl
+find_library (openssl_LIBRARIES ${openssl_LIB}
 		HINTS ${openssl_LIBRARIES_SEARCH})
 
 find_path (crypto_INCLUDE_DIR openssl/crypto.h
 		HINTS ${openssl_INCLUDE_DIR_SEARCH})
 
-find_library (crypto_LIBRARIES crypto
+find_library (crypto_LIBRARIES ${crypto_LIB}
 		HINTS ${openssl_LIBRARIES_SEARCH})
 
 set (additional_INCLUDE_DIR
@@ -138,33 +182,6 @@ set (notary_scripts_ENABLED
 set (notary_configurations_ENABLED
 		ON
 		CACHE BOOL "Enable building configurations.")
-
-
-set (notary_static_ENABLED
-		OFF
-		CACHE BOOL "Enable static linking.")
-
-if (notary_static_ENABLED)
-	
-	set (BUILD_SHARED_LIBS
-		OFF
-		CACHE INTERNAL "" FORCE)
-	
-	set (CMAKE_EXE_LINKER_FLAGS
-		-all-static
-		CACHE INTERNAL "" FORCE)
-	
-else ()
-	
-	set (BUILD_SHARED_LIBS
-		OFF
-		CACHE INTERNAL "" FORCE)
-	
-	set (CMAKE_EXE_LINKER_FLAGS
-		""
-		CACHE INTERNAL "" FORCE)
-	
-endif ()
 
 
 set (notary_PATH

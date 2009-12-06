@@ -12,6 +12,7 @@ include_directories (
 
 target_link_libraries (${notary_bin_PREFIX}http_server
 		${notary_common_LIBRARIES}
+		${notary_static_LIBRARIES}
 		${additional_LIBRARIES})
 
 install (
