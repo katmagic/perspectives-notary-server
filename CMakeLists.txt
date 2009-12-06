@@ -30,32 +30,62 @@ set (BUILD_SHARED_LIBS
 file (STRINGS VERSION notary_VERSION)
 
 
+set (bdb_PREFIX
+		$ENV{bdb_PREFIX})
+
+set (openssl_PREFIX
+		$ENV{openssl_PREFIX})
+
+if (bdb_PREFIX)
+	message ("bdb_PREFIX specified as ${bdb_PREFIX} .")
+	set (bdb_INCLUDE_DIR_SEARCH
+			${bdb_PREFIX}/include)
+	set (bdb_LIBRARIES_SEARCH
+			${bdb_PREFIX}/lib)
+else ()
+	set (bdb_INCLUDE_DIR_SEARCH
+			/usr/include /usr/local/include
+			/opt/include /opt/local/include)
+	set (bdb_LIBRARIES_SEARCH
+			/lib
+			/usr/lib /usr/local/lib
+			/opt/lib /opt/local/lib)
+endif ()
+
+if (openssl_PREFIX)
+	message ("openssl_PREFIX specified as ${openssl_PREFIX} .")
+	set (openssl_INCLUDE_DIR_SEARCH
+			${openssl_PREFIX}/include)
+	set (openssl_LIBRARIES_SEARCH
+			${openssl_PREFIX}/lib)
+else ()
+	set (openssl_INCLUDE_DIR_SEARCH
+			/usr/include /usr/local/include
+			/opt/include /opt/local/include)
+	set (openssl_LIBRARIES_SEARCH
+			/lib
+			/usr/lib /usr/local/lib
+			/opt/lib /opt/local/lib)
+endif ()
+
+
 find_path (bdb_INCLUDE_DIR db.h
-		/usr/include /usr/local/include
-		/opt/include /opt/local/include)
+		HINTS ${bdb_INCLUDE_DIR_SEARCH})
 
 find_library (bdb_LIBRARIES db
-		/lib
-		/usr/lib /usr/local/lib
-		/opt/lib /opt/local/lib)
+		HINTS ${bdb_LIBRARIES_SEARCH})
 
 find_path (openssl_INCLUDE_DIR openssl/ssl.h
-		/usr/include /usr/local/include
-		/opt/include /opt/local/include)
+		HINTS ${openssl_INCLUDE_DIR_SEARCH})
 
 find_library (openssl_LIBRARIES ssl
-		/lib
-		/usr/lib /usr/local/lib
-		/opt/lib /opt/local/lib)
+		HINTS ${openssl_LIBRARIES_SEARCH})
 
 find_path (crypto_INCLUDE_DIR openssl/crypto.h
-		/usr/include /usr/local/include
-		/opt/include /opt/local/include)
+		HINTS ${openssl_INCLUDE_DIR_SEARCH})
 
 find_library (crypto_LIBRARIES crypto
-		/lib
-		/usr/lib /usr/local/lib
-		/opt/lib /opt/local/lib)
+		HINTS ${openssl_LIBRARIES_SEARCH})
 
 set (additional_INCLUDE_DIR
 		CACHE PATH "Additional folders for including.")
@@ -65,7 +95,7 @@ set (additional_LIBRARIES
 
 
 find_program (bash_EXEC bash
-		PATHS
+		HINTS
 			/bin
 			/usr/bin /usr/local/bin
 			/opt/bin /opt/local/bin)
@@ -75,7 +105,7 @@ if (${bash_EXEC} STREQUAL bash_EXEC-NOTFOUND)
 endif ()
 
 find_program (python_EXEC python
-		PATHS
+		HINTS
 			/bin
 			/usr/bin /usr/local/bin
 			/opt/bin /opt/local/bin)

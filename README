@@ -12,18 +12,29 @@
 == './do' script commands ==
 ----------------------------
 
+ * dependencies: (simplistic informative) dependency check
+
  * configure:
   * automatically detect dependencies;
   * use default values for installation and configuration;
  * configure-ui: start a nice curses UI for configuration;
+
  * make:
   * make: build everything;
   * make install: ...;
+
  * clean: ...;
+
+ * (local installation of tools):
+  * cmake-install: installs CMake
+  * bdb-install: installs BerkeleyDB
+  * openssl-install: installs OpenSSL
+
  * test-shell:
-  * configure and install the test installation in /tmp/notary;
+  * configure and install the test installation in /tmp/notary.$USER;
   * open a shell to allow testing of executables and scripts;
- * test-clean: removes the test installation from /tmp/notary;
+ * test-clean: removes the test installation from /tmp/notary.$USER;
+
  * help: ...;
  * license: ...;
 
@@ -31,6 +42,21 @@
 -------------------------
 == Quick startup guide ==
 -------------------------
+
+0. Dependency checking:
+>> ./do dependencies
+
+  0a. (optional) Install CMake (if missing):
+  >> ./do cmake-install
+  >> export cmake_EXEC=... # see the output of the previous command
+
+  0b. (optional) Install BerkeleyDB (if missing):
+  >> ./do bdb-install
+  >> export bdb_PREFIX=... # see the output of the previous command
+
+  0c. (optional) Install OpenSSL (if missing):
+  >> ./do openssl-install
+  >> export openssl_PREFIX=... # see the output of the previous command
 
 1. Configure:
 >> ./do configure
@@ -98,6 +124,15 @@
 
 10. (For administrators) Add maintenance script to cron:
 >> echo '59 0,12 * * *' `which notary_@VERSION@_control` maintenance >>/etc/crontab
+
+
+-----------------------------------
+== Environment variables ==
+-----------------------------------
+
+* cmake_PREFIX: Prefix for a custom CMake installation.
+* bdb_PREFIX: Prefix for a custom BerkeleyDB installation.
+* openssl_PREFIX: Prefix for a custom BerkeleyDB installation.
 
 
 -----------------------------------
