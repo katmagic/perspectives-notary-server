@@ -37,7 +37,7 @@ set (openssl_PREFIX
 		$ENV{openssl_PREFIX})
 
 if (bdb_PREFIX)
-	message ("bdb_PREFIX specified as ${bdb_PREFIX} .")
+	message ("bdb_PREFIX specified as ${bdb_PREFIX}")
 	set (bdb_INCLUDE_DIR_SEARCH
 			${bdb_PREFIX}/include)
 	set (bdb_LIBRARIES_SEARCH
@@ -53,7 +53,7 @@ else ()
 endif ()
 
 if (openssl_PREFIX)
-	message ("openssl_PREFIX specified as ${openssl_PREFIX} .")
+	message ("openssl_PREFIX specified as ${openssl_PREFIX}")
 	set (openssl_INCLUDE_DIR_SEARCH
 			${openssl_PREFIX}/include)
 	set (openssl_LIBRARIES_SEARCH
@@ -131,11 +131,12 @@ find_path (crypto_INCLUDE_DIR openssl/crypto.h
 find_library (crypto_LIBRARIES ${crypto_LIB}
 		HINTS ${openssl_LIBRARIES_SEARCH})
 
+
 set (additional_INCLUDE_DIR
 		CACHE PATH "Additional folders for including.")
 
 set (additional_LIBRARIES
-		CACHE FILEPATH "Additional libraries for linking.")
+		CACHE STRING "Additional libraries for linking.")
 
 
 find_program (bash_EXEC bash
