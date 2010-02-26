@@ -24,15 +24,16 @@ fname = tempfile.mktemp()
 for key_type in ("rsa","dsa","rsa1"):
 	fd = open(fname,'w')
 	p1 = Popen(["ssh-keyscan", "-t", key_type, "-p", port, dns_name ],
-		stdout=fd, stdin=None, stderr=None)
+		stdin=file("/dev/null", "r"), stdout=fd, stderr=None)
 	p1.wait()
 	if p1.returncode != 0:
 		print "error fetching ssh '%s' key for %s" % (key_type,dns_and_port)
 		continue
 
 	p2 = Popen(["ssh-keygen","-l","-f", fname],
-		stdin=None, stdout=PIPE, stderr=None)
+		stdin=file("/dev/null", "r"), stdout=PIPE, stderr=None)
 	output = p2.communicate()[0].strip()
+	p2.wait()
 
 	if p2.returncode != 0:
 		print "error converting ssh %s key for '%s'" % (key_type,dns_and_port)
@@ -44,7 +45,7 @@ for key_type in ("rsa","dsa","rsa1"):
 		print "invalid fingerprint '%s'" % output
 		continue
 
-	p3 = Popen([sys.argv[2],dns_name, port, "1", "ssh-" + key_type, fp, sys.argv[3]])
+	p3 = Popen([sys.argv[2],dns_name, port, "1", "ssh-" + key_type, fp, sys.argv[3]], stdin=file("/dev/null", "r"), stdout=file("/dev/null", "w"), stderr=None)
 	p3.wait()
 
 	if p3.returncode != 0:
