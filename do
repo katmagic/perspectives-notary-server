@@ -109,7 +109,13 @@ case "${1}" in
 		shift
 		test "${#}" -eq 0 || { echo "wrong arguments! try help!" >&2 ; exit 1 ; }
 		deployment="/tmp/notary.${USER}"
-		./do configure -Dnotary_PATH="${deployment}" -Dnotary_PATH_MANGLING= -Dnotary_static_ENABLED=off
+		./do configure \
+				-Dnotary_PATH="${deployment}" \
+				-Dnotary_PATH_MANGLING= \
+				-Dnotary_bin_PREFIX=notary_ \
+				-Dnotary_libexec_PREFIX=notary_ \
+				-Dnotary_static_ENABLED=off \
+				-Dnotary_USER="${USER}"
 		./do make
 		./do make install
 		cd "${deployment}"

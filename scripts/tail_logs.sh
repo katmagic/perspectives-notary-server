@@ -9,6 +9,8 @@ if [ "$#" != 0 ] ; then
   exit 1
 fi
 
+. '@notary_libexec_PATH@/@notary_libexec_PREFIX@'check_user
+
 exec tail -f '@notary_log_PATH@'/*.log
 
 exit 0

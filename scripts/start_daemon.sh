@@ -9,6 +9,8 @@ if [ "$#" != 2 ] ; then
 	exit 1
 fi
 
+. '@notary_libexec_PATH@/@notary_libexec_PREFIX@'check_user
+
 name="$1"
 conf="$2"
 exe='@notary_bin_PATH@/@notary_bin_PREFIX@'"$name"

@@ -15,6 +15,7 @@ set (notary_bin_script_SOURCES
 		tail_logs.sh)
 
 set (notary_libexec_script_SOURCES
+		check_user.sh
 		check_daemon.sh
 		init_db_from_text.sh
 		init_key_pair.sh

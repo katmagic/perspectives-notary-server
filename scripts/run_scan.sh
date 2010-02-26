@@ -12,6 +12,8 @@ if [ "$#" != 4 ] ; then
   usage
 fi
 
+. '@notary_libexec_PATH@/@notary_libexec_PREFIX@'check_user
+
 echo
 echo "INFO: scanning"
 

@@ -308,6 +308,10 @@ set (notary_finished_request_socket_PATH
 		"${notary_run_PATH}/finished_request"
 		CACHE PATH "Unix domain socket path for finished requests.")
 
+set (notary_USER
+		$ENV{USER}
+		CACHE STRING "User to run all notary scripts / agents.")
+
 
 if (notary_common_ENABLED)
 	add_subdirectory (common)

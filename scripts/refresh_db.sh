@@ -9,6 +9,8 @@ if [ "$#" != 0 ] ; then
   exit 1
 fi
 
+. '@notary_libexec_PATH@/@notary_libexec_PREFIX@'check_user
+
 exec '@notary_libexec_PATH@/@notary_libexec_PREFIX@'run_scan db '@notary_etc_PATH@'/scanner_config.txt 6 6
 
 exit 1
