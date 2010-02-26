@@ -190,7 +190,7 @@ case "${1}" in
 		popd >/dev/null
 		echo >&2
 		echo >&2
-		echo "OpenSSL installation succeeded!" >&2
+		echo "BerkeleyDB installation succeeded!" >&2
 		echo "Now in the shell:" >&2
 		echo ">> export bdb_PREFIX='${destination}'" >&2
 		rm -R -f "${temporary}"
