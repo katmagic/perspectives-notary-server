@@ -74,6 +74,11 @@
  >> ./do configure -Dnotary_static_ENABLED=on
  * prepare to receive warnings and maybe even a fail; (libcrypt and glibc have issues with this?)
 
+ 1d. Configure all the scripts to use a certain user (usefull when running the scripts as root):
+ >> ./do configure -Dnotary_USER=notary
+ * all the start / stop, control and maintenance scripts will check for this user,
+ * and in case they were started with root, they automatically `su` into this user;
+
 2. Build:
 >> ./do make
 
@@ -150,3 +155,4 @@
 * notary_http_listen_IP: Listening IP of the notary http server.
 * notary_http_listen_PORT: Listening port of the notary http server.
 * notary_scripts_ENABLED: Enable building scripts.
+* notary_USER: User to run all notary scripts / agents.
