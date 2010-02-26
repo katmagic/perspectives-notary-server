@@ -1,8 +1,8 @@
 #!/bin/sh
 
-set -e -u || exit 1
-
 test -n "${INSIDE_BASH:-}" || exec env INSIDE_BASH=x bash "${0}" "${@}" || exit 1
+
+set -e -u || exit 1
 
 # if no arguments are given, assume it is the 'help' command
 test "${#}" -ge 1 || exec "${0}" help
