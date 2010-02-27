@@ -7,7 +7,7 @@ import tempfile
 import os
 
 if len(sys.argv) != 4:
-	print "usage: <service-id> <report-obs-binary> <report-sock-name>"
+	print >> sys.stderr, "usage: <service-id> <report-obs-binary> <report-sock-name>"
 	exit(1)
 
 dns_and_port = sys.argv[1].split(",")[0]
@@ -27,7 +27,7 @@ for key_type in ("rsa","dsa","rsa1"):
 		stdin=file("/dev/null", "r"), stdout=fd, stderr=None)
 	p1.wait()
 	if p1.returncode != 0:
-		print "error fetching ssh '%s' key for %s" % (key_type,dns_and_port)
+		print >> sys.stderr, "error fetching ssh '%s' key for %s" % (key_type,dns_and_port)
 		continue
 
 	p2 = Popen(["ssh-keygen","-l","-f", fname],
@@ -36,20 +36,20 @@ for key_type in ("rsa","dsa","rsa1"):
 	p2.wait()
 
 	if p2.returncode != 0:
-		print "error converting ssh %s key for '%s'" % (key_type,dns_and_port)
+		print >> sys.stderr, "error converting ssh %s key for '%s'" % (key_type,dns_and_port)
 		continue
 
 	fp = output.split()[1]
 	fp_regex = re.compile("^[a-f0-9]{2}(:([a-f0-9]){2}){15}$")
 	if not fp_regex.match(fp):
-		print "invalid fingerprint '%s'" % output
+		print >> sys.stderr, "invalid fingerprint '%s'" % output
 		continue
 
 	p3 = Popen([sys.argv[2],dns_name, port, "1", "ssh-" + key_type, fp, sys.argv[3]], stdin=file("/dev/null", "r"), stdout=file("/dev/null", "w"), stderr=None)
 	p3.wait()
 
 	if p3.returncode != 0:
-		print "Error reporting result to notary-scanner socket for '%s'" \
+		print >> sys.stderr, "Error reporting result to notary-scanner socket for '%s'" \
 		% dns_and_port
 		exit(1)
 	break

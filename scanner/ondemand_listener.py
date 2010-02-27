@@ -11,7 +11,7 @@ SERVICE_TYPE_SSH = 1
 MAX_SIMULTANEOUS = 100
 
 if len(sys.argv) != 2:
-	print "usage: <scanner-conf>"
+	print >> sys.stderr, "ERROR: usage: <scanner-conf>"
 	exit(1)
 
 config = {}
@@ -41,7 +41,7 @@ try:
 except OSError:
     pass
 s.bind(config['new_request_sock'])
-print "listening on '%s'" % config['new_request_sock']
+print >> sys.stderr, "INFO: listening on '%s'" % config['new_request_sock']
 s.listen(MAX_SIMULTANEOUS)
 s.settimeout(1)
 
@@ -63,14 +63,14 @@ while True:
 			elif service_type == SERVICE_TYPE_SSH:
 				cmd = config['ssh_scan_binary']
 			else:
-				print "invalid service-type: %s" % service_type
+				print >> sys.stderr, "ERROR: invalid service-type: %s" % service_type
 				continue
 			p = Popen([cmd, service_id, config['request_finished_sock']])
 			active.append(p)
 		except socket.timeout, e:
 			pass
 		except Exception, e:
-			print "ondemand listener error: %s" % e
+			print >> sys.stderr, "ERROR: ondemand listener error: %s" % e
 	finally:
 		if conn:
 			conn.close()

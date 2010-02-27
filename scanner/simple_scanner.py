@@ -21,13 +21,13 @@ def start_probe(sid):
   elif service_type == "1": 
     first_arg = config['ssh_scan_binary'] 
   else: 
-    print "invalid service_type for '%s'" % sid
+    print >> sys.stderr, "ERROR: invalid service_type for '%s'" % sid
     return  
   return Popen([first_arg,sid, config['request_finished_sock']] , 
 			stdout=PIPE, stderr=STDOUT, shell=False)
    
 if len(sys.argv) != 5: 
-  print "usage: <service_id_file> <max simultaneous> <timeout sec> " \
+  print >> sys.stderr, "ERROR: usage: <service_id_file> <max simultaneous> <timeout sec> " \
 		" <scanner-config> "
   sys.exit(1)
 
@@ -51,9 +51,9 @@ max_sim = int(sys.argv[2])
 timeout_sec = int(sys.argv[3]) 
 failure_count = 0
 start_time = time.time()
-print "*** Starting scan of %s services at %s" % \
+print >> sys.stderr, "INFO: *** Starting scan of %s services at %s" % \
     (total_count,time.ctime())
-print "*** Timeout = %s sec  Max-Simultaneous = %s" % \
+print >> sys.stderr, "INFO: *** Timeout = %s sec  Max-Simultaneous = %s" % \
     (timeout_sec, max_sim) 
 
 while True:
@@ -62,7 +62,7 @@ while True:
     if (l == 0):
       break
     if (l % 1000 == 0): 
-      print "%s probes remaining" % l
+      print >> sys.stderr, "INFO: %s probes remaining" % l
     sid = to_probe.pop()
     active_sids[sid] = (start_probe(sid), time.time()) 
 
@@ -74,7 +74,7 @@ while True:
     code = p.poll()
     if code != None:
       if code != 0: 
-        print "failed: %s %s" % (sid,code)
+        print >> sys.stderr, "WARNING: failed: %s %s" % (sid,code)
         failure_count += 1
       p.wait() # apparently this is needed on FreeBSD?
       del active_sids[sid]
@@ -87,5 +87,5 @@ while True:
   time.sleep(1)
 
 duration = time.time() - start_time
-print "*** Finished scan at %s. Scan took %s seconds" % (time.ctime(), duration) 
-print "*** %s of %s probes failed" % (failure_count, total_count)
+print >> sys.stderr, "INFO: *** Finished scan at %s. Scan took %s seconds" % (time.ctime(), duration) 
+print >> sys.stderr, "INFO: *** %s of %s probes failed" % (failure_count, total_count)

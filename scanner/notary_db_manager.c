@@ -71,7 +71,7 @@ void handle_finished_client(int cur_time) {
 int main(int argc, char** argv) {
 
   if(argc != 2) {
-      printf("usage: <conf-file> \n");
+      fprintf(stderr, "ERROR: usage: <conf-file> \n");
       exit(1);
   }
 
@@ -124,7 +124,7 @@ void parse_config_file(scanner_config *conf, char* fname){
 	f = fopen(fname, "r");
 	if(f == NULL) {
 		fprintf(stderr,
-		"Notary Error: Invalid conf file %s \n", fname);
+		"ERROR: Invalid conf file %s \n", fname);
 		return;
 	}
 
