@@ -19,7 +19,7 @@ for target in \
 
   echo
   echo "----- $target --------------------"
-  '@notary_bin_PATH@/@notary_bin_PREFIX@'http_fetch '@notary_http_listen_IP@' '@notary_http_listen_PORT@' "$target"
+  '@notary_bin_PATH@/@notary_bin_PREFIX@'http_fetch 'http://@notary_http_listen_IP@:@notary_http_listen_PORT@/' "$target"
   echo
 
 done

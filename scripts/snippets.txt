@@ -1,0 +1,9 @@
+
+# backup service-ids extraction
+bzcat ./var/backups/notary_*txt.bzip2 | grep -E -e '^Start Host: ' | grep -o -E -e "[^']+:[^']+,[^']+" | tee /dev/stderr | sort -u >./notary-services.txt
+
+# batch service-ids query
+sort -R <./notary-services.txt | while read service ; do notary_http_fetch http://127.0.0.1:8080/ "$service" ; done
+
+# batch (stress) service-ids query
+sort -R <./notary-services.txt | while read service ; do notary_http_fetch http://127.0.0.1:8080/ "$service" >/dev/null & sleep 0.01s ; done

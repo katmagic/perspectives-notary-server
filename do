@@ -116,7 +116,6 @@ case "${1}" in
 				-Dnotary_libexec_PREFIX=notary_ \
 				-Dnotary_static_ENABLED=off \
 				-Dnotary_USER="${USER}"
-		./do make
 		./do make install
 		cd "${deployment}"
 		export PATH="${deployment}/bin:${deployment}/libexec:${PATH}"
