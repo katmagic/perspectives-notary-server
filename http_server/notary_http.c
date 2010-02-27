@@ -240,8 +240,8 @@ char* db_get_xml(char *service_id){
     char *sig_ptr = db_data + db_data_len - SIGNATURE_LEN;
     char * sig64 = base64((unsigned char*)sig_ptr, SIGNATURE_LEN); 
     snprintf(tmp_buf, sizeof(tmp_buf), 
-	"<notary_reply version=\"1\" sig_type=\"rsa-md5\" "
-	"sig=\"%s\">\n",sig64);
+	"<notary_reply version=\"1\" sig_type=\"rsa-md5\"\n"
+	"sig=\"%s\">\n\n",sig64);
     str_buffer_append(b,tmp_buf); 
 
     info_list = list_from_data(db_data, db_data_len, SIGNATURE_LEN);
@@ -251,7 +251,7 @@ char* db_get_xml(char *service_id){
         str_buffer_append(b,key_info_xml);
         free(key_info_xml);  
     }
-    str_buffer_append(b,"</notary_reply>\n"); 
+    str_buffer_append(b,"\n</notary_reply>\n"); 
     char *str = str_buffer_get(b); 
     str_buffer_free(b); 
     free_key_info_list(info_list); 

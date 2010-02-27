@@ -42,7 +42,7 @@ for key_type in rsa dsa rsa1 ; do
 	test -f "$key_file_1" && ssh-keyscan -v -t "$key_type" -p "${port}" -T "$scan_timeout" "$host" < /dev/null > "$key_file_1" 2> "$debug_log" || rm -f "$key_file_1"
 	test -f "$key_file_1" && ssh-keygen -v -l -f "$key_file_1" < /dev/null > "$key_file_2" 2> "$debug_log" || rm -f "$key_file_2"
 	test -f "$key_file_2" && break
-	sleep 1
+	sleep 0.25
 done
 
 if ! [ -f "$key_file_1" -a -f "$key_file_2" ] ; then
