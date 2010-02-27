@@ -1,6 +1,5 @@
 #!@python_EXEC@
 
-# Echo server program
 import socket,os
 import time
 import sys
@@ -26,12 +25,11 @@ for line in f:
 
 
 def limitSimultaneousQueries(active):
-	if len(active) >= MAX_SIMULTANEOUS:
-		# remove any processes that are no
-		# longer active
-		for p in active:
-			if p.poll():
-				active.remove(p)
+	# remove any processes that are no
+	# longer active
+	for p in active:
+		if p.poll() is not None:
+			active.remove(p)
 	return len(active) >= MAX_SIMULTANEOUS
 
 active = []
@@ -44,12 +42,19 @@ except OSError:
     pass
 s.bind(config['new_request_sock'])
 print "listening on '%s'" % config['new_request_sock']
-s.listen(1000)
-conn = None
+s.listen(MAX_SIMULTANEOUS)
+s.settimeout(1)
+
 while True:
+	
+	while limitSimultaneousQueries(active):
+		time.sleep(1)
+	conn = None
+	
 	try :
 		try :
 			conn, addr = s.accept()
+			conn.settimeout(1)
 			service_id = conn.recv(MAX_NAME_LEN + 1)[0:-1] # remove null byte
 			service_type_str = service_id.split(",")[1]
 			service_type = int(service_id.split(",")[1])
@@ -60,12 +65,13 @@ while True:
 			else:
 				print "invalid service-type: %s" % service_type
 				continue
-			while limitSimultaneousQueries(active):
-				time.sleep(1)
 			p = Popen([cmd, service_id, config['request_finished_sock']])
 			active.append(p)
+		except socket.timeout, e:
+			pass
 		except Exception, e:
 			print "ondemand listener error: %s" % e
 	finally:
 		if conn:
 			conn.close()
+			conn = None
