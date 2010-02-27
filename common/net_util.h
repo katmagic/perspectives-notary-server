@@ -6,8 +6,10 @@
 #include <string.h>
 
 // from NetBSD, apparently this is how you size a unix sock
+#ifndef SUN_LEN
 #define SUN_LEN(su) \
       (sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
+#endif
 
 #define TIMEVAL_TO_MILLIS(t) \
   ((((float)t->tv_sec) * 1000) + (((float)t->tv_usec) / 1000))   

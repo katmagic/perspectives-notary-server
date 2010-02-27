@@ -10,7 +10,8 @@
 #include "parse.h"
 #include "bdb_storage.h"
 #include "server_common.h"
-#include "str_buffer.h" 
+#include "str_buffer.h"
+#include "notary_crypto.h"
 #include "pthread.h"
 
 #define LISTENQ 1024
