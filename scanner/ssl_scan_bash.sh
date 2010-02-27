@@ -1,34 +1,61 @@
 #!@bash_EXEC@
 
-if [ $# != 3 ] ; then
-	echo "usage: <service-id> <record-obs-binary> <report-sock-name>"
+exec < /dev/null > /dev/null
+
+if ! [ "$#" == 3 ] ; then
+	echo "ERROR: usage <service-id> <record-obs-binary> <report-sock-name>" >&2
 	exit 1
 fi
 
-if ! [ -x $2 ]; then
-	echo "$2 is not a valid binary"
+service_id="$1"
+record_bin="$2"
+report_sock="$3"
+scan_timeout=4
+debug_log="/dev/null"
+
+
+if ! [[ "$service_id" =~ ^[a-z0-9._-]+:[0-9]+,[0-9]+$ ]] ; then
+	echo "ERROR: service-id '$service_id' is invalid" >&2
 	exit 1
 fi
 
-dns_and_port=`echo $1 | cut -d"," -f1`
-
-out=`openssl s_client -connect $dns_and_port </dev/null | openssl x509 -fingerprint -md5 -noout`
-
-if [ $? -ne 0 ] ; then
-	echo "Error fetching SSL cert"
+if ! [ -x "$record_bin" ] ; then
+	echo "ERROR: '$record_bin' is not a valid binary" >&2
 	exit 1
 fi
 
-fp=`echo $out | cut -d"=" -f2 | tr '[A-F]' '[a-f]'`
 
-echo $fp
+host_and_port="${service_id/,*}"
+service_type="${service_id/*,}"
+host="${host_and_port/:*}"
+port="${host_and_port/*:}"
 
-dns_name=`echo $dns_and_port | cut -d":" -f1`
-port=`echo $dns_and_port | cut -d":" -f2`
+if ! [ "$service_type" == 2 ] ; then
+	echo "WARNING: service type expected to be 2 (for SSL), got '$service_type'" >&2
+fi
 
-$2 $dns_name $port 2 ssl $fp $3
 
-if [ $? -ne 0 ] ; then
-	echo "Error reporting result to notary-scanner socket"
+key_file_1="$( mktemp )"
+key_file_2="$( mktemp )"
+
+test -f "$key_file_1" && openssl s_client -connect "$host:$port" < /dev/null > "$key_file_1" 2> "$debug_log" || rm -f "$key_file_1"
+test -f "$key_file_1" && openssl x509 -fingerprint -md5 -noout < "$key_file_1" > "$key_file_2" 2> "$debug_log" || rm -f "$key_file_2"
+
+if ! [ -f "$key_file_1" -a -f "$key_file_2" ] ; then
+	echo "ERROR: error fetching SSL cert" >&2
 	exit 1
 fi
+
+
+fp="$( grep -o -E -e "[0-9a-fA-F]{2}(:[0-9a-fA-F]{2})+" "$key_file_2" | tr '[A-F]' '[a-f]' )"
+rm -f "$key_file_1" "$key_file_2"
+echo "fp=$fp" > "$debug_log"
+
+if ! [ -n "$fp" ] ; then
+	echo "ERROR: fingerprint '$fp' is invalid" >&2
+	exit 1
+fi
+
+
+exec "$record_bin" "$host" "$port" "$service_type" ssl "$fp" "$report_sock"
+exit 1
