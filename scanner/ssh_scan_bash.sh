@@ -46,7 +46,7 @@ for key_type in rsa dsa rsa1 ; do
 done
 
 if ! [ -f "$key_file_1" -a -f "$key_file_2" ] ; then
-	echo "ERROR: error fetching SSH cert" >&2
+	echo "ERROR: error fetching SSH cert for '$service_id'" >&2
 	rm -f "$key_file_1" "$key_file_2"
 	exit 1
 fi
@@ -57,7 +57,7 @@ rm -f "$key_file_1" "$key_file_2"
 echo "fp=$fp" > "$debug_log"
 
 if ! [ -n "$fp" ] ; then
-	echo "ERROR: fingerprint '$fp' is invalid" >&2
+	echo "ERROR: fingerprint '$fp' is invalid for '$service_id'" >&2
 	exit 1
 fi
 

@@ -42,7 +42,7 @@ test -f "$key_file_1" && openssl s_client -connect "$host:$port" < /dev/null > "
 test -f "$key_file_1" && openssl x509 -fingerprint -md5 -noout < "$key_file_1" > "$key_file_2" 2> "$debug_log" || rm -f "$key_file_2"
 
 if ! [ -f "$key_file_1" -a -f "$key_file_2" ] ; then
-	echo "ERROR: error fetching SSL cert" >&2
+	echo "ERROR: error fetching SSL cert for '$service_id'" >&2
 	exit 1
 fi
 
@@ -52,7 +52,7 @@ rm -f "$key_file_1" "$key_file_2"
 echo "fp=$fp" > "$debug_log"
 
 if ! [ -n "$fp" ] ; then
-	echo "ERROR: fingerprint '$fp' is invalid" >&2
+	echo "ERROR: fingerprint '$fp' is invalid for '$service_id'" >&2
 	exit 1
 fi
 
