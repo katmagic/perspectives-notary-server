@@ -17,7 +17,7 @@ unsigned int notary_debug = DEBUG_ERROR;
 DB *db = NULL; 
 
 void close_db(int signal) {
-  printf("Caught signal, closing BDB database environment\n");
+  fprintf(stderr, "WARNING: Caught signal, closing BDB database environment\n");
   if(db != NULL)
      bdb_close_env(db);
   exit(1);
@@ -26,7 +26,7 @@ void close_db(int signal) {
 int main(int argc, char** argv) {
                  
       if(argc != 4) {
-        printf("usage: <db-env> <db-name> <servic_id> \n");
+        fprintf(stderr, "ERROR: usage: <db-env> <db-name> <servic_id> \n");
         exit(1);
       }
 
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
       db = bdb_open_env(argv[1], g_db_env_flags, argv[2], 
 				DB_RDONLY);
       if(db == NULL) {
-          printf("bdb_open failed \n");
+          fprintf(stderr, "ERROR: bdb_open failed \n");
           exit(1);
       }
       register_for_signals(close_db); 
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
       int data_len = get_data(db,argv[3],buf, 2004,0);
       ssh_key_info_list* list = list_from_data(buf, data_len, SIGNATURE_LEN);
       if(list == NULL) {
-        printf("Failed to parse message and create list of keys \n");
+        fprintf(stderr, "ERROR: Failed to parse message and create list of keys \n");
         exit(1);
       }
       print_key_info_list(stdout, list);

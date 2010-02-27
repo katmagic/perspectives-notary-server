@@ -14,8 +14,8 @@ char ** get_random_serviceids(int num, DB* db, int *actual) {
     int count = 0;
     ret = db->cursor(db, NULL, &cursorp,0);
     if(ret) {
-        printf("error opening cursor\n");
-        db->err(db, ret, "Cursor open: ");
+        fprintf(stderr, "ERROR: error opening cursor\n");
+        db->err(db, ret, "ERROR: Cursor open");
         exit(1);
     }
     memset(&key, 0, sizeof(key));
@@ -25,9 +25,9 @@ char ** get_random_serviceids(int num, DB* db, int *actual) {
     }
 
     if(ret != DB_NOTFOUND) {
-        printf("some error warming the cache: %s \n",
+        fprintf(stderr, "ERROR: some error warming the cache: %s \n",
             db_strerror(ret));
-        db->err(db, ret, "DB warming ");
+        db->err(db, ret, "ERROR: DB warming");
     }
 
     if(cursorp != NULL)
@@ -39,8 +39,8 @@ char ** get_random_serviceids(int num, DB* db, int *actual) {
     
     ret = db->cursor(db, NULL, &cursorp,0);
     if(ret) {
-        printf("error opening cursor\n");
-        db->err(db, ret, "Cursor open: ");
+        fprintf(stderr, "ERROR: error opening cursor\n");
+        db->err(db, ret, "ERROR: Cursor open");
         exit(1);
     }
     memset(&key, 0, sizeof(key));
@@ -56,9 +56,9 @@ char ** get_random_serviceids(int num, DB* db, int *actual) {
     }
 
     if(ret != DB_NOTFOUND) {
-        printf("some error warming the cache: %s \n",
+        fprintf(stderr, "ERROR: some error warming the cache: %s \n",
             db_strerror(ret));
-        db->err(db, ret, "DB warming ");
+        db->err(db, ret, "ERROR: DB warming");
     }
 
     if(cursorp != NULL)

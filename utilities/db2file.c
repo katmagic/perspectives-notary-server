@@ -18,26 +18,29 @@ void loop_over(){
 
     ret = db->cursor(db, NULL, &cursorp,0);
     if(ret) {
-        printf("error opening cursor\n");
-        db->err(db, ret, "Cursor open: ");
+        fprintf(stderr, "ERROR: error opening cursor\n");
+        db->err(db, ret, "ERROR: Cursor open");
         exit(1);
     }
 
     memset(&key, 0, sizeof(key));
     memset(&data, 0, sizeof(data));
     while((ret = cursorp->get(cursorp,&key,&data, DB_NEXT)) == 0) {
+      fprintf(f, "\n");
       fprintf(f, "Start Host: '%s' \n", (char*)key.data);
+      fprintf(f, "\n");
       ssh_key_info_list *list = list_from_data(data.data, data.size,
                                                       SIGNATURE_LEN);
       print_key_info_list(f, list);
       fprintf(f, "End Host\n");
+      fprintf(f, "\n");
       free_key_info_list(list);
     }
 
     if(ret != DB_NOTFOUND) {
-        printf("some error iterating through db: %s \n",
+        fprintf(stderr, "ERROR: some error iterating through db: %s \n",
             db_strerror(ret));
-        db->err(db, ret, "DB cursor");
+        db->err(db, ret, "ERROR: DB cursor");
     }
 
     if(cursorp != NULL)
@@ -47,7 +50,7 @@ void loop_over(){
 
 
 void close_db(int signal) {
-  printf("Caught signal, closing BDB database environment\n");
+  fprintf(stderr, "WARNING: Caught signal, closing BDB database environment\n");
   if(db != NULL)
      bdb_close_env(db);
   if(f != NULL)
@@ -59,7 +62,7 @@ void close_db(int signal) {
 int main(int argc, char** argv) {
                  
       if(argc !=3 && argc != 4) {
-        printf("usage: <db-env> <db-name> [file-out] \n");
+        fprintf(stderr, "ERROR: usage: <db-env> <db-name> [file-out] \n");
         exit(1);
       }
 
@@ -67,7 +70,7 @@ int main(int argc, char** argv) {
 
       db = bdb_open_env(argv[1], g_db_env_flags, argv[2], g_db_flags | DB_RDONLY);
       if(db == NULL) {
-          printf("bdb_open failed \n");
+          fprintf(stderr, "ERROR: bdb_open failed \n");
           exit(1);
       }
 

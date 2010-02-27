@@ -20,7 +20,7 @@ int  get_a_public_key(DB* db, char* service_id,
         char buf[MAX_PACKET_LEN];
         int data_size = get_data(db, service_id, buf, MAX_PACKET_LEN);
         if(data_size < 0) {
-            printf("Error retrieving data for: %s\n", service_id);
+            fprintf(stderr, "ERROR: Error retrieving data for: %s\n", service_id);
             return -1;
         }
         ssh_key_info_list *info_list = 
@@ -56,7 +56,7 @@ int make_timespan_change(DB* db, RSA *priv_key,
       /*
       key_len = get_a_public_key(db, service_id,key_buf,&key_type);
       if(key_len <= 0) {
-          printf("invalid key len = %d \n", key_len);
+          fprintf(stderr, "ERROR: invalid key len = %d \n", key_len);
           return 1;
       }
       */
@@ -85,7 +85,7 @@ int make_timespan_change(DB* db, RSA *priv_key,
 DB *db = NULL; 
 
 void close_db(int signal) {
-  printf("Caught signal, closing BDB database environment\n");
+  fprintf(stderr, "WARNING: Caught signal, closing BDB database environment\n");
   if(db != NULL)
      bdb_close_env(db);
   exit(1);
@@ -96,7 +96,7 @@ main(int argc, char** argv)
 {
 
       if(argc != 4) {
-        printf("usage: <db-env-directory> <db-filename> <priv-key-fname>\n");
+        fprintf(stderr, "ERROR: usage: <db-env-directory> <db-filename> <priv-key-fname>\n");
         exit(1);
       }
       struct timeval now;
@@ -116,7 +116,7 @@ main(int argc, char** argv)
 
       int failures = 0;
       //warm_db(db);
-      printf("TODO: warm db cache!\n");
+      fprintf(stderr, "TODO: warm db cache!\n");
 
         struct timeval start, end;
         gettimeofday(&start,NULL);
@@ -130,10 +130,10 @@ main(int argc, char** argv)
         int usec_diff = end.tv_usec - start.tv_usec;
         float usec_fraction = ((float)(usec_diff))/(1000000.0);
         float time_result = sec_diff + usec_fraction;
-        printf("For %d lookups, %f seconds \n",
+        fprintf(stderr, "INFO: For %d lookups, %f seconds \n",
             actual - failures, time_result);
 
-        printf("failures: %d \n", failures);
+        fprintf(stderr, "INFO: failures: %d \n", failures);
       bdb_close_env(db);
       return 0;
 }

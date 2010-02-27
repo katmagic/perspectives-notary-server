@@ -10,7 +10,7 @@ int main (
 		char const * const * const arguments)
 {
 	if (argument_count != 2) {
-		fprintf (stderr, "usage: <db-path>\n");
+		fprintf (stderr, "ERROR: usage: <db-path>\n");
 		exit (1);
 	}
 	

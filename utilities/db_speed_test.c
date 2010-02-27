@@ -26,17 +26,17 @@ void read_speed_test(DB *db, int count) {
         int usec_diff = end.tv_usec - start.tv_usec;
         float usec_fraction = ((float)(usec_diff))/(1000000.0);
         float time_result = sec_diff + usec_fraction;
-        printf("For %d lookups, %f seconds \n",
+        fprintf(stderr, "INFO: For %d lookups, %f seconds \n",
             actual, time_result);
 
-        printf("%d failures \n", failures);
+        fprintf(stderr, "INFO: %d failures \n", failures);
 }
 
 unsigned int notary_debug = DEBUG_ERROR;
 DB *db = NULL; 
 
 void close_db(int signal) {
-  printf("Caught signal, closing BDB database environment\n");
+  fprintf(stderr, "WARNING: Caught signal, closing BDB database environment\n");
   if(db != NULL)
      bdb_close_env(db);
   exit(1);
@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 {
 
       if(argc != 4) {
-        printf("usage: <db-env-name> <db-filename> <count> \n");
+        fprintf(stderr, "ERROR: usage: <db-env-name> <db-filename> <count> \n");
         exit(1);
       }
       register_for_signals(close_db); 

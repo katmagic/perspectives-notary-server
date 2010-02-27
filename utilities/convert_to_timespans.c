@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
         char *query_buf = "SELECT sid,kid,time from observations order by time";
 
 	if(mysql_real_query(conn1, query_buf, strlen(query_buf)) != 0) {
-		fprintf(stderr, "Error on query '%s' accessing observations: %s \n",
+		fprintf(stderr, "ERROR: Error on query '%s' accessing observations: %s \n",
 			query_buf, mysql_error(conn1));
 		return 0;
         }
@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
 	
 	MYSQL_RES *result = mysql_store_result(conn1);
 	if(!result) {
-		fprintf(stderr, "no observations found: %s \n",
+		fprintf(stderr, "ERROR: no observations found: %s \n",
 			mysql_error(conn1));
 		return 0;
         }

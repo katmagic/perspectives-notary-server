@@ -9,7 +9,7 @@ int main(int argc, char**argv) {
 
   int max_per_sec = 0; 
   if(argc < 3) {
-    printf("usage: <file-of-serviceids> <request-sock-name>\n");
+    fprintf(stderr, "ERROR: usage: <file-of-serviceids> <request-sock-name>\n");
     exit(1); 
   }
   if(argc == 3) { 

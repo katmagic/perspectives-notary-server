@@ -23,7 +23,7 @@ void loop_over(DB *db, RSA* crypto_key, BOOL create_sig, char* sig_type){
     int count = 0;
     ret = db->cursor(db, NULL, &cursorp,0);
     if(ret) {
-        printf("error opening cursor\n");
+        fprintf(stderr, "ERROR: error opening cursor\n");
         db->err(db, ret, "Cursor open: ");
         exit(1);
     }
@@ -90,12 +90,12 @@ void loop_over(DB *db, RSA* crypto_key, BOOL create_sig, char* sig_type){
         
         ++count;
     }
-    printf("done examining %d entries \n", count);
+    fprintf(stderr, "INFO: done examining %d entries \n", count);
 
     if(ret != DB_NOTFOUND) {
-        printf("some error iterating through db: %s \n",
+        fprintf(stderr, "ERROR: some error iterating through db: %s \n",
             db_strerror(ret));
-        db->err(db, ret, "DB cursor");
+        db->err(db, ret, "ERROR: DB cursor");
     }
 
     if(cursorp != NULL)
@@ -106,7 +106,7 @@ void loop_over(DB *db, RSA* crypto_key, BOOL create_sig, char* sig_type){
 DB *db; // global so signal handler can close db.
 
 void close_db(int signal) {
-  printf("Caught signal, closing BDB database environment\n");
+  fprintf(stderr, "WARNING: Caught signal, closing BDB database environment\n");
   if(db != NULL)
      bdb_close_env(db);
   exit(1);
@@ -118,7 +118,7 @@ main(int argc, char** argv)
 {
 
       if(argc != 6) {
-        printf("usage: <c|v> <db-env> <db-file> <key> <md5|sha256>\n");
+        fprintf(stderr, "ERROR: usage: <c|v> <db-env> <db-file> <key> <md5|sha256>\n");
         exit(1);
       }
 
@@ -135,7 +135,7 @@ main(int argc, char** argv)
       db = bdb_open_env(argv[2], g_db_env_flags,
                     argv[3], DB_CREATE);
       if(db == NULL) {
-          printf("bdb_open failed \n");
+          fprintf(stderr, "ERROR: bdb_open failed \n");
           exit(1);
       }
 

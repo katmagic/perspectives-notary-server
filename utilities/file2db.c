@@ -28,11 +28,11 @@ void parse_file(RSA* priv_key, char* sig_type){
 
     int ret = sscanf(buf, "Start Host: '%s' ", hostname);
     if(ret == EOF) {
-      printf("error \n");
+      fprintf(stderr, "ERROR: ???\n");
       continue;
     }
     if(ret != 1) {
-      printf("error, ret = %d \n", ret);
+      fprintf(stderr, "ERROR: ???, ret = %d \n", ret);
       continue;
     }
     int hostname_len = strlen(hostname);
@@ -54,7 +54,7 @@ void parse_file(RSA* priv_key, char* sig_type){
       DPRINTF(DEBUG_INFO, 
           "key-type = '%s'  key = '%s' \n", key_type, key);
       if(strlen(key) > (3 * KEY_DATA_SIZE)) {
-        printf("warning, key data is bigger than expected! \n");
+        fprintf(stderr, "WARNING: key data is bigger than expected! \n");
       }
 
       ssh_key_info *k_info = (ssh_key_info*) (data + offset);
@@ -62,12 +62,12 @@ void parse_file(RSA* priv_key, char* sig_type){
       k_info->key_len_bytes = htons(KEY_DATA_SIZE);
       k_info->key_type = str_2_keytype(key_type);
       if(k_info->key_type == 255) {
-        printf("error, bad key-type (%s) for %s \n", 
+        fprintf(stderr, "ERROR: bad key-type (%s) for %s \n", 
             key_type, hostname);
       }
       int num_bytes = hexstr_2_buf(key, data + offset, KEY_DATA_SIZE);
       if(num_bytes != KEY_DATA_SIZE) {
-        printf("Error, wrong KEY_DATA_SIZE (expected %d got %d from "
+        fprintf(stderr, "ERROR: wrong KEY_DATA_SIZE (expected %d got %d from "
             " key = '%s' \n", KEY_DATA_SIZE, num_bytes, key);
         exit(1); 
       }
@@ -113,7 +113,7 @@ void parse_file(RSA* priv_key, char* sig_type){
 	sig_ret = get_signature(data, offset, priv_key,sig_buf, &sig_len); 
       } 
       if(sig_ret || sig_len != SIGNATURE_LEN) {
-        printf("Error calculating signature \n");
+        fprintf(stderr, "ERROR: error calculating signature \n");
         continue; 
       }
 
@@ -127,7 +127,7 @@ void parse_file(RSA* priv_key, char* sig_type){
     store_data(db, hostname, data_start, data_len);
 
     if(offset > MAX_DATA_SIZE) {
-      printf("ran out of buffer space converting file to DB \n");
+      fprintf(stderr, "ERROR: ran out of buffer space converting file to DB \n");
       exit(1); 
     } 
 
@@ -136,7 +136,7 @@ void parse_file(RSA* priv_key, char* sig_type){
 
 
 void close_db(int signal) {
-  printf("Closing BDB database \n");
+  fprintf(stderr, "WARNING: Closing BDB database \n");
   if(db != NULL)
      bdb_close_env(db);
   if(f != NULL)
@@ -149,9 +149,9 @@ int main(int argc, char** argv) {
                  
 //      if(argc != 6 && argc != 4) {
       if(argc != 5 && argc != 4) {
-        //printf("usage:<file-in>  <db-env> <db-filename> <priv-key> <md5|sha256>\n");
-        printf("usage:<file-in>  <db-env> <db-filename> <priv-key>\n");
-        printf("if no private key is given, DB signatures will be invalid\n");
+        //fprintf(stderr, "ERROR: usage: <file-in> <db-env> <db-filename> <priv-key> <md5|sha256>\n");
+        fprintf(stderr, "ERROR: usage: <file-in> <db-env> <db-filename> <priv-key>\n");
+        fprintf(stderr, "ERROR: usage: if no private key is given, DB signatures will be invalid\n");
         exit(1);
       }
 
