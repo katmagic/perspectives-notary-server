@@ -3,7 +3,7 @@
 exec >&2
 
 if [ "$#" != 0 ] ; then
-  echo "usage: no arguments"
+  echo "ERROR: usage: no arguments" >&2
   exit 1
 fi
 

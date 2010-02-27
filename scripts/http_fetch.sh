@@ -1,8 +1,8 @@
 #!@bash_EXEC@
 
 if [ "$#" != 5 -a "$#" != 3 ] ; then
-  echo "usage: <notary-address> <notary-port> <service-address> <port> <service-type>"
-  echo "usage: <notary-address> <notary-port> <service-id>"
+  echo "ERROR: usage: <notary-address> <notary-port> <service-address> <port> <service-type>" >&2
+  echo "ERROR: usage: <notary-address> <notary-port> <service-id>" >&2
   exit 1
 fi
 
@@ -15,7 +15,7 @@ elif [ "$#" == 3 ] ; then
 
   service_id="$3"
   if ! [[ "$service_id" =~ ^[a-z0-9._-]+:[0-9]+,[0-9]+$ ]] ; then
-    echo "service-id '$service_id' is invalid"
+    echo "ERROR: service-id '$service_id' is invalid" >&2
     exit 1
   fi
 

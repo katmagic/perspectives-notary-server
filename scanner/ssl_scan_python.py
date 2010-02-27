@@ -5,7 +5,7 @@ import re
 import sys
 
 if len(sys.argv) != 4:
-	print >> sys.stderr, "usage: <service-id> <report-obs-binary> <report-sock-name>"
+	print >> sys.stderr, "ERROR: usage: <service-id> <report-obs-binary> <report-sock-name>"
 	exit(1)
 
 dns_and_port = sys.argv[1].split(",")[0]
@@ -19,12 +19,12 @@ p1.wait()
 p2.wait()
 
 if p2.returncode != 0:
-	print >> sys.stderr, "Could not fetch/decode certificate for '%s'" % dns_and_port
+	print >> sys.stderr, "ERROR: Could not fetch/decode certificate for '%s'" % dns_and_port
 	exit(1)
 
 fp_regex = re.compile("^MD5 Fingerprint=[A-F0-9]{2}(:([A-F0-9]){2}){15}$")
 if not fp_regex.match(output):
-	print >> sys.stderr, "invalid fingerprint '%s'" % output
+	print >> sys.stderr, "ERROR: invalid fingerprint '%s'" % output
 	exit(1)
 
 fp = output.split("=")[1].lower()
@@ -34,6 +34,6 @@ p3 = Popen([sys.argv[2],dns_name, port, "2", "ssl", fp, sys.argv[3]], stdin=file
 p3.wait()
 
 if p3.returncode != 0:
-	print >> sys.stderr, "Error reporting result to notary-scanner socket for '%s'" \
+	print >> sys.stderr, "ERROR: Error reporting result to notary-scanner socket for '%s'" \
 		% dns_and_port
 	exit(1)

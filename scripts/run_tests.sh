@@ -1,14 +1,12 @@
 #!@bash_EXEC@
 
-exec >&2
-
 if [ "$#" != 0 ] ; then
-  echo "usage: (no arguments)"
+  echo "ERROR: usage: no arguments" >&2
   exit 1
 fi
 
-echo
-echo "INFO: testing some certificates"
+echo >&2
+echo "INFO: testing some certificates" >&2
 
 for target in \
 		mail.google.com:443,2 \

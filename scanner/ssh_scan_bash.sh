@@ -3,7 +3,7 @@
 exec < /dev/null > /dev/null
 
 if ! [ "$#" == 3 ] ; then
-	echo "ERROR: usage <service-id> <record-obs-binary> <report-sock-name>" >&2
+	echo "ERROR: usage: <service-id> <record-obs-binary> <report-sock-name>" >&2
 	exit 1
 fi
 

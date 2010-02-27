@@ -5,7 +5,7 @@ exec >&2
 set -e -u || exit 1
 
 usage () {
-	echo "usage: start | stop | restart | check | maintenance"
+	echo "ERROR: usage: start | stop | restart | check | maintenance" >&2
 	exit 1
 }
 

@@ -3,7 +3,7 @@
 exec >&2
 
 if [ "$#" != 2 ] ; then
-  echo "usage: <priv-key-out> <pub-key-out>"
+  echo "ERROR: usage: <priv-key-out> <pub-key-out>" >&2
   exit 1
 fi
 
@@ -11,13 +11,13 @@ fi
 
 len=1369
 
-echo
-echo "INFO: initializing key pair"
+echo >&2
+echo "INFO: initializing key pair" >&2
 
-echo "INFO: generating private key"
+echo "INFO: generating private key" >&2
 openssl genrsa -out "$1" "$len"
 
-echo "INFO: generating public key"
+echo "INFO: generating public key" >&2
 openssl rsa -in "$1" -out "$2" -outform PEM -pubout
 
 exit 0

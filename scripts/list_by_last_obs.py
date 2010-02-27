@@ -29,7 +29,7 @@ def print_if_valid():
 
 
 if len(sys.argv) != 5:
-  print "usage: <db_env> <db_name> <older|newer> <days>"
+  print >> sys.stderr, "ERROR: usage: <db_env> <db_name> <older|newer> <days>"
   exit(1)
 
 threshold_date = time.time() - 3600 * 24 * int(sys.argv[4])
