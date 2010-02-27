@@ -11,7 +11,7 @@
 #include "notary_util.h"
 #include "bdb_storage.h"
 
-unsigned int notary_debug = DEBUG_ERROR;
+unsigned int notary_debug = DEBUG_DEFAULT;
 // if 'create' is true, then 'key' is a private key
 // and we will regenerate all DB entries.  
 // otherwise, 'key' is a public key and we just verify all entries

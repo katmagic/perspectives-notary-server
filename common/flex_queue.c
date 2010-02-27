@@ -41,7 +41,7 @@ void queue_peek(flex_queue *q, int index, void *data_out) {
   
   int size = queue_size(q); 
   if(index < 0 || index >= size) { 
-    printf("error: invalid index '%d' for queue of length '%d'\n", 
+    fprintf(stderr, "ERROR: invalid index '%d' for queue of length '%d'\n", 
         index, size);
     return;
   }
@@ -54,7 +54,7 @@ void queue_peek(flex_queue *q, int index, void *data_out) {
 void queue_popfront(flex_queue *q, void *data_out) {
   
   if(queue_size(q) <= 0) { 
-    printf("error: queue size is %d in 'get_front' \n", queue_size(q));
+    fprintf(stderr, "ERROR: queue size is %d in 'get_front' \n", queue_size(q));
     return;
   }
 
@@ -94,18 +94,18 @@ int main(int argc, char** argv) {
   int i,j, result;
   for(i = 0; i < 100; i++) {
     queue_pushback(q, (char*)&i);
-    printf("push: %d (size = %d) \n", i, queue_size(q));
+    fprintf(stderr, "DEBUG: push: %d (size = %d) \n", i, queue_size(q));
     if(i % 10 == 0 && i != 0) {
       for(j = 0; j < 5; j++) {
         queue_popfront(q, (char*)&result);
-        printf("pop: %d (size = %d )\n", result, queue_size(q));
+        fprintf(stderr, "DEBUG: pop: %d (size = %d )\n", result, queue_size(q));
       }
     }
   }
   
   while(queue_size(q) > 0) { 
         queue_popfront(q, (char*)&result);
-        printf("pop: %d (size = %d )\n", result, queue_size(q));
+        fprintf(stderr, "DEBUG: pop: %d (size = %d )\n", result, queue_size(q));
   }
   queue_free(q);
 

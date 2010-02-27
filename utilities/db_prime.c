@@ -19,4 +19,4 @@ int main (
 	exit (0);
 }
 
-unsigned int notary_debug = DEBUG_ERROR;
+unsigned int notary_debug = DEBUG_DEFAULT;

@@ -32,7 +32,7 @@ void read_speed_test(DB *db, int count) {
         fprintf(stderr, "INFO: %d failures \n", failures);
 }
 
-unsigned int notary_debug = DEBUG_ERROR;
+unsigned int notary_debug = DEBUG_DEFAULT;
 DB *db = NULL; 
 
 void close_db(int signal) {

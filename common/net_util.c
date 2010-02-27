@@ -171,18 +171,18 @@ int getIPFromDNS(char *dns_name, uint32_t* addr_out) {
   struct hostent *h;
 
   if( (h = gethostbyname2(dns_name,AF_INET)) == NULL) {
-    printf("gethostbyname error for %s : %s \n",
+    fprintf(stderr, "ERROR: gethostbyname error for %s : %s \n",
             dns_name, hstrerror(h_errno));
     return h_errno;
   }
-//  printf("canonical: %s \n", h->h_name);
+//  fprintf(stderr, "DEBUG: canonical: %s \n", h->h_name);
 
 //  char** pptr;
 //  for(pptr = h->h_aliases; *pptr != NULL; pptr++)
-//    printf("\talias: %s \n", *pptr);
+//    fprintf(stderr, "DEBUG: \talias: %s \n", *pptr);
   
   *addr_out = *(uint32_t*)*(h->h_addr_list);
-//  printf("IP: %s \n", ip_2_str(*addr_out));
+//  fprintf(stderr, "DEBUG: IP: %s \n", ip_2_str(*addr_out));
  
   return 0;
 }
@@ -208,8 +208,8 @@ char *getConfirmedDNSFromIP(uint32_t ip_addr) {
 int main(int argc, char** argv) {
 
   if(argc == 2)
-    printf("confirmed: %s \n", getConfirmedDNSFromIP(str_2_ip(argv[1])));
-   // printf("%s \n", getDNSFromIPstr(argv[1]));
+    fprintf(stderr, "DEBUG: confirmed: %s \n", getConfirmedDNSFromIP(str_2_ip(argv[1])));
+   // fprintf(stderr, "DEBUG: %s \n", getDNSFromIPstr(argv[1]));
   return 0;
 }
 */

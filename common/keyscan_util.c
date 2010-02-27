@@ -43,8 +43,8 @@ int record_key(char *dns_name, uint32_t ip_addr, uint16_t port,
     free(buf);
   
     if(res < 0) {
-        printf("Failed to report probe to recording socket for: \n"); 
-        printf("'%s' = '%s' \n", full_name,
+        fprintf(stderr, "ERROR: Failed to report probe to recording socket for: \n"); 
+        fprintf(stderr, "ERROR: '%s' = '%s' \n", full_name,
             buf_2_hexstr((char*)digest, digest_len));
 	return 1;  
     }

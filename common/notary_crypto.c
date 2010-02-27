@@ -70,7 +70,7 @@ RSA* key_from_bio(BIO *key_bio, BOOL is_private) {
                                         NULL, NULL);
   }
   if(!pkey) {
-      printf("key read from BIO is null\n");
+      fprintf(stderr, "ERROR: key read from BIO is null\n");
       exit(1);
   }
   BIO_free(key_bio);
@@ -203,8 +203,8 @@ int main(int argc, char** argv) {
   if(priv_key == NULL || pub_key == NULL)
     return 1;
 
-  printf("loaded a priv-key of size = %d \n", RSA_size(priv_key));
-  printf("loaded a pub-key of size = %d \n", RSA_size(pub_key));
+  fprintf(stderr, "DEBUG: loaded a priv-key of size = %d \n", RSA_size(priv_key));
+  fprintf(stderr, "DEBUG: loaded a pub-key of size = %d \n", RSA_size(pub_key));
 
   unsigned char *string = (unsigned char*)"your mom ate my lunch!";
   
@@ -219,7 +219,7 @@ int main(int argc, char** argv) {
   verify_signature((notary_header*)string, data_len, pub_key,
                                      sig_buf, sig_len);
 
-  printf("string: %s \n", string);
+  fprintf(stderr, "DEBUG: string: %s \n", string);
   return 0;
 
 }

@@ -41,11 +41,11 @@ BOOL read_key_data_from_file(FILE *f, char *buf_out, int *data_len) {
 
     int ret = sscanf(buf, "Start Host: '%s' ", hostname);
     if(ret == EOF) {
-      printf("error \n");
+      fprintf(stderr, "ERROR: ??? \n");
       continue;
     }
     if(ret != 1) {
-      printf("error, ret = %d \n", ret);
+      fprintf(stderr, "ERROR: ???, ret = %d \n", ret);
       continue;
     }
     int hostname_len = strlen(hostname);
@@ -67,7 +67,7 @@ BOOL read_key_data_from_file(FILE *f, char *buf_out, int *data_len) {
       DPRINTF(DEBUG_CONVERT, 
           "key-type = '%s'  key = '%s' \n", key_type, key);
       if(strlen(key) > (3 * KEY_DATA_SIZE)) {
-        printf("warning, key data is bigger than expected! \n");
+        fprintf(stderr, "WARNING: key data is bigger than expected! \n");
       }
 
       ssh_key_info *k_info = (ssh_key_info*) (data + offset);
@@ -75,12 +75,12 @@ BOOL read_key_data_from_file(FILE *f, char *buf_out, int *data_len) {
       k_info->key_len_bytes = htons(KEY_DATA_SIZE);
       k_info->key_type = str_2_keytype(key_type);
       if(k_info->key_type == 255) {
-        printf("error, bad key-type '%s' for %s \n", 
+        fprintf(stderr, "ERROR: bad key-type '%s' for %s \n", 
             key_type, hostname);
       }
       int num_bytes = hexstr_2_buf(key, data + offset, KEY_DATA_SIZE);
       if(num_bytes != KEY_DATA_SIZE) {
-        printf("Error, wrong KEY_DATA_SIZE (expected %d got %d from "
+        fprintf(stderr, "ERROR: wrong KEY_DATA_SIZE (expected %d got %d from "
             " key = '%s' \n", KEY_DATA_SIZE, num_bytes, key);
         exit(1); 
       }

@@ -11,15 +11,15 @@ DB * bdb_open(char *filename, uint32_t open_flags) {
       int ret;
       
       if ((ret = db_create(&dbp, NULL, 0)) != 0) {
-            fprintf(stderr, "db_create: %s\n", db_strerror(ret));
-            printf("error on create() \n");
+            fprintf(stderr, "ERROR: db_create: %s\n", db_strerror(ret));
+            fprintf(stderr, "ERROR: error on create() \n");
             exit (1);
       }
       if ((ret = dbp->open(dbp,NULL, filename, NULL, 
                     DB_HASH, open_flags, 0664)) != 0) {
             dbp->err(dbp, ret, "%s", filename);
-            fprintf(stderr, "open: %s\n", db_strerror(ret));
-            printf("error on open() \n");
+            fprintf(stderr, "ERROR: open: %s\n", db_strerror(ret));
+            fprintf(stderr, "ERROR: error on open() \n");
             exit(1);
       }
       return dbp;
@@ -32,20 +32,20 @@ DB * bdb_open_env(char *env_file, uint32_t env_flags,
       int ret;
       ret = db_env_create(&dbenv, 0);
       if(ret) {
-        printf("db_evn_create failed: %s \n", db_strerror(ret));
+        fprintf(stderr, "ERROR: db_evn_create failed: %s \n", db_strerror(ret));
         exit(1);
       }
 
       ret = dbenv->open(dbenv, env_file, env_flags, 0);
       if(ret) {
-        printf("dbenv->open failed: %s \n", db_strerror(ret));
+        fprintf(stderr, "ERROR: dbenv->open failed: %s \n", db_strerror(ret));
         exit(1);
       }
 
       DB *dbp;
       
       if ((ret = db_create(&dbp, dbenv, 0)) != 0) {
-            fprintf(stderr, "db_create: %s\n", db_strerror(ret));
+            fprintf(stderr, "ERROR: db_create: %s\n", db_strerror(ret));
             exit (1);
       }
       if ((ret = dbp->open(dbp,NULL, db_name, NULL, 
@@ -142,11 +142,11 @@ void warm_db(DB* db) {
     int ret; 
 
 
-    printf("begin warming \n");
+    fprintf(stderr, "INFO: begin warming \n");
     int count = 0;
     ret = db->cursor(db, NULL, &cursorp,0);
     if(ret) {
-        printf("error opening cursor\n");
+        fprintf(stderr, "ERROR: error opening cursor\n");
         db->err(db, ret, "Cursor open: ");
         exit(1);
     }
@@ -157,13 +157,13 @@ void warm_db(DB* db) {
         char b = ((char*)data.data)[0];
         b = a; // just shut the compiler up
         a = b;
-     //   printf("key: %s \n", (char*)key.data);
+     //   fprintf(stderr, "DEBUG: key: %s \n", (char*)key.data);
         ++count;
     }
-    printf("done warming %d entries \n", count);
+    fprintf(stderr, "INFO: done warming %d entries \n", count);
 
     if(ret != DB_NOTFOUND) {
-        printf("some error warming the cache: %s \n",
+        fprintf(stderr, "ERROR: some error warming the cache: %s \n",
             db_strerror(ret));
         db->err(db, ret, "DB warming ");
     }
@@ -293,6 +293,6 @@ void bdb_fatal_failure (
 		int const outcome)
 {
 	char const * reason = db_strerror (outcome);
-	fprintf (stderr, "bdb failure :: %s :: %s\n", context, reason);
+	fprintf (stderr, "ERROR: bdb failure :: %s :: %s\n", context, reason);
 	exit (1);
 }

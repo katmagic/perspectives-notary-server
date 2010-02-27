@@ -6,7 +6,7 @@
 
 extern unsigned int notary_debug;
 #define DPRINTF(level, fmt, args...) \
-        do { if (notary_debug & (level)) fprintf(stderr, fmt , ##args ); } while(0);
+        do { if (notary_debug & (level)) fprintf(stderr, "DEBUG: " fmt , ##args ); } while(0);
 #define DEBUG_PERROR(errmsg) \
         do { if (notary_debug & DEBUG_ERRS) perror(errmsg); } while(0);
 #define IF_DEBUG(level) \
@@ -23,6 +23,8 @@ extern unsigned int notary_debug;
 #define DEBUG_POLICY     0x80 // client key-trust policies
 #define DEBUG_CONVERT    0xf0 // conversions from key_info to/from file
 #define DEBUG_ALL  0xffffffff
+
+#define DEBUG_DEFAULT DEBUG_ERROR
 
 #ifdef __cplusplus
 extern "C" {

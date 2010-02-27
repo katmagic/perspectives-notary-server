@@ -11,7 +11,7 @@
 #include "notary_util.h"
 #include "bdb_storage.h"
 
-unsigned int notary_debug = DEBUG_ERROR;
+unsigned int notary_debug = DEBUG_DEFAULT;
 
 void loop_over(DB *db, char *regex, int limit){
     DBC *cursorp;

@@ -15,8 +15,7 @@
 void parse_config_file(scanner_config *conf, char* fname);
 
 scanner_config config; // global config
-//unsigned int notary_debug = DEBUG_ERROR;
-unsigned int notary_debug = DEBUG_INFO | DEBUG_ERROR;
+unsigned int notary_debug = DEBUG_DEFAULT;
 
 
 #define DO_SIGNATURE TRUE

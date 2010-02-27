@@ -3,7 +3,7 @@
 #include "notary_util.h"
 #include "keyscan_util.h" 
 
-unsigned int notary_debug = DEBUG_ERROR;
+unsigned int notary_debug = DEBUG_DEFAULT;
 
 int main(int argc, char** argv) {
                  

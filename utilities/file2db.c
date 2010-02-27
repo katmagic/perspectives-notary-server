@@ -8,7 +8,7 @@
 #include "flex_queue.h"
 #include "notary_crypto.h"
 
-unsigned int notary_debug = DEBUG_ERROR;
+unsigned int notary_debug = DEBUG_DEFAULT;
 
 // global so signal handler can close db and file.
 DB *db; 

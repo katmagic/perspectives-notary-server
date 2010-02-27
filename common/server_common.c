@@ -21,7 +21,7 @@ void parse_config_file(server_config *conf, char* fname){
 
   f = fopen(fname, "r");
   if(f == NULL) {
-    fprintf(stderr,"Notary Error: Invalid conf file %s \n", fname);
+    fprintf(stderr,"ERROR: Invalid conf file %s \n", fname);
     return;
   }
 

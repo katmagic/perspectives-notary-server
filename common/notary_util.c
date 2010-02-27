@@ -380,7 +380,7 @@ int get_key_info_list(char *response, int *response_len, int max_len, ssh_key_in
               return -1;
           }
 	  if(*response_len >= max_len) {
-		printf("bailing from get_key_info_list1 \n"); 
+		fprintf(stderr, "WARNING: bailing from get_key_info_list1 \n"); 
 		return 0; 
  	  } 
           char *key_buf = (char*)(cur->info + 1);
@@ -394,7 +394,7 @@ int get_key_info_list(char *response, int *response_len, int max_len, ssh_key_in
           free(str);
           get_key_info_timespans(response, response_len, max_len, cur->info);
 	  if(*response_len >= max_len) {
-		printf("bailing from get_key_info_list 2 \n"); 
+		fprintf(stderr, "WARNING: bailing from get_key_info_list 2 \n"); 
 		return 0; 
  	  } 
           n = snprintf(response + *response_len, max_len - *response_len, "\n");

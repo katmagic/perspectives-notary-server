@@ -12,7 +12,7 @@
 #include "bdb_storage.h"
 #include "notary_util.h"
 
-unsigned int notary_debug = DEBUG_ERROR;
+unsigned int notary_debug = DEBUG_DEFAULT;
 
 DB *db = NULL; 
 

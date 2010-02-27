@@ -37,9 +37,9 @@ char* db_get_xml(char *service_id);
 char* xml_from_key_info(ssh_key_info *info); 
 
 
-unsigned int notary_debug = 
-//DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO | DEBUG_CRYPTO;
-DEBUG_ERROR | DEBUG_INFO; 
+unsigned int notary_debug = DEBUG_DEFAULT;
+//unsigned int notary_debug = DEBUG_ERROR | DEBUG_SOCKET | DEBUG_INFO | DEBUG_CRYPTO;
+
 
 int main_sock; 
 DB *db;

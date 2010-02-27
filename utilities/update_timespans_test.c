@@ -11,7 +11,7 @@
 #include "bdb_storage.h"
 #include "benchmark_util.h"
 
-unsigned int notary_debug = DEBUG_ERROR;
+unsigned int notary_debug = DEBUG_DEFAULT;
 
 /*
 int  get_a_public_key(DB* db, char* service_id,

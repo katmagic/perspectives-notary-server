@@ -23,9 +23,9 @@ set (notary_libexec_script_SOURCES
 		run_backup.sh
 		run_prime.sh
 		run_scan.sh
-		run_tests.sh
 		start_daemon.sh
-		stop_daemon.sh)
+		stop_daemon.sh
+		test_http_fetch.sh)
 
 foreach (notary_script_SOURCE ${notary_bin_script_SOURCES})
 	
