@@ -8,10 +8,7 @@
 extern unsigned int notary_debug;
 
 #define DPRINTF(level, fmt, args...) \
-        do { if (notary_debug & (level)) fprintf(stderr, "DEBUG: " fmt, ##args ); } while(0)
-
-#define DEBUG_PERROR(errmsg) \
-        do { if (notary_debug & DEBUG_ERRS) fprintf(stderr, "ERROR: " errmsg ": %s\n", strerror(errno));  } while(0)
+        do { if (notary_debug & (level)) fprintf(stderr, "DEBUG: " fmt , ##args ); } while(0);
 
 #define IF_DEBUG(level) \
         if(notary_debug & (level))
@@ -22,14 +19,14 @@ extern unsigned int notary_debug;
 #define DEBUG_SOCKET    0x04    // Socket Errors + Info
 #define DEBUG_SSL       0x08    // SSL Errors + Info
 #define DEBUG_DATABASE  0x10    // Database errors + info
-#define DEBUG_MESSAGE   0x20  // Information about Packet Contents
-#define DEBUG_CRYPTO    0x40  // signature create or verify
-#define DEBUG_POLICY    0x80 // client key-trust policies
-#define DEBUG_CONVERT   0xf0 // conversions from key_info to/from file
+#define DEBUG_MESSAGE   0x20    // Information about Packet Contents
+#define DEBUG_CRYPTO    0x40    // signature create or verify
+#define DEBUG_POLICY    0x80    // client key-trust policies
+#define DEBUG_CONVERT   0xf0    // conversions from key_info to/from file
 #define DEBUG_ALL       0xffffffff
 
-//#define DEBUG_DEFAULT DEBUG_ERROR
-#define DEBUG_DEFAULT DEBUG_ALL
+#define DEBUG_DEFAULT DEBUG_ERROR
+//#define DEBUG_DEFAULT DEBUG_ALL
 
 #ifdef __cplusplus
 extern "C" {

@@ -127,7 +127,6 @@ int readUnixClientData(int s, char *buf, int buf_len) {
           }
           so_far += n;
         }
-        buf[so_far] = '\0';
       
       close(s2);
       

@@ -109,7 +109,7 @@ else ()
 		CACHE INTERNAL "" FORCE)
 	
 	set (CMAKE_EXE_LINKER_FLAGS
-		-shared
+		""
 		CACHE INTERNAL "" FORCE)
 	
 endif ()
