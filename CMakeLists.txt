@@ -31,13 +31,15 @@ file (STRINGS VERSION notary_VERSION)
 
 
 set (bdb_PREFIX
-		$ENV{bdb_PREFIX})
+		$ENV{bdb_PREFIX}
+		CACHE STRING "BerkeleyDB installation prefix")
 
 set (openssl_PREFIX
-		$ENV{openssl_PREFIX})
+		$ENV{openssl_PREFIX}
+		CACHE STRING "OpenSSL installation prefix")
+
 
 if (bdb_PREFIX)
-	message ("bdb_PREFIX specified as ${bdb_PREFIX}")
 	set (bdb_INCLUDE_DIR_SEARCH
 			${bdb_PREFIX}/include)
 	set (bdb_LIBRARIES_SEARCH
@@ -53,7 +55,6 @@ else ()
 endif ()
 
 if (openssl_PREFIX)
-	message ("openssl_PREFIX specified as ${openssl_PREFIX}")
 	set (openssl_INCLUDE_DIR_SEARCH
 			${openssl_PREFIX}/include)
 	set (openssl_LIBRARIES_SEARCH
@@ -73,6 +74,15 @@ set (notary_static_ENABLED
 		OFF
 		CACHE BOOL "Enable static linking.")
 
+set (bdb_static_ENABLED
+		${notary_static_ENABLED}
+		CACHE BOOL "Enable static linking of BerkeleyDB.")
+
+set (openssl_static_ENABLED
+		${notary_static_ENABLED}
+		CACHE BOOL "Enable static linking of BerkeleyDB.")
+
+
 if (notary_static_ENABLED)
 	
 	message ("Static build enabled... Note that there are some issues related to missing libraries...")
@@ -89,12 +99,8 @@ if (notary_static_ENABLED)
 		CACHE INTERNAL "" FORCE)
 	
 	set (CMAKE_EXE_LINKER_FLAGS
-		-static
+		-all-static
 		CACHE INTERNAL "" FORCE)
-	
-	set (bdb_LIB libdb.a)
-	set (openssl_LIB libssl.a)
-	set (crypto_LIB libcrypto.a)
 	
 else ()
 	
@@ -103,13 +109,24 @@ else ()
 		CACHE INTERNAL "" FORCE)
 	
 	set (CMAKE_EXE_LINKER_FLAGS
-		""
+		-shared
 		CACHE INTERNAL "" FORCE)
 	
+endif ()
+
+
+if (bdb_static_ENABLED)
+	set (bdb_LIB libdb.a)
+else ()
 	set (bdb_LIB libdb.so)
+endif ()
+
+if (openssl_static_ENABLED)
+	set (openssl_LIB libssl.a)
+	set (crypto_LIB libcrypto.a)
+else ()
 	set (openssl_LIB libssl.so)
 	set (crypto_LIB libcrypto.so)
-	
 endif ()
 
 
@@ -186,7 +203,7 @@ set (notary_configurations_ENABLED
 
 
 set (notary_PATH
-		"/tmp/notary_${notary_VERSION}"
+		"/tmp/notary_${notary_VERSION}_$ENV{USER}"
 		CACHE PATH "Prefix for the installation folders.")
 
 set (notary_PATH_MANGLING

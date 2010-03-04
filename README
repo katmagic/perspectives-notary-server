@@ -135,24 +135,30 @@
 
 
 -----------------------------------
-== Environment variables ==
------------------------------------
-
-* cmake_PREFIX: Prefix for a custom CMake installation.
-* bdb_PREFIX: Prefix for a custom BerkeleyDB installation.
-* openssl_PREFIX: Prefix for a custom BerkeleyDB installation.
-
-
------------------------------------
 == CMake configuration variables ==
 -----------------------------------
 
 * notary_PATH: Prefix for the installation folders.
 * notary_PATH_MANGLING: Extra-prefix for some installation folders (resulting in /etc/notary, /var/lib/notary, /var/run/notary, etc.)
-* notary_static_ENABLED: Enables static linking of executables.
 * notary_bin_PREFIX: Prefix of the executable files (those in bin).
 * notary_libexec_PREFIX: Prefix of the (internal) executable files (those in libexec).
+
+* notary_static_ENABLED: Enables static linking of executables.
+* bdb_static_ENABLED: Enables static linking of only the BerkeleyDB library.
+* openssl_static_ENABLED: Enables static linking of only the OpenSSL library.
+
+* notary_USER: User to run all notary scripts / agents.
 * notary_http_listen_IP: Listening IP of the notary http server.
 * notary_http_listen_PORT: Listening port of the notary http server.
-* notary_scripts_ENABLED: Enable building scripts.
-* notary_USER: User to run all notary scripts / agents.
+
+* bdb_PREFIX: Prefix for a custom BerkeleyDB installation. (Defaults to bdb_PREFIX environment variable.)
+* openssl_PREFIX: Prefix for a custom OpenSSL installation. (Defaults to openssl_PREFIX environment variable.)
+
+
+-----------------------------------
+== Environment variables ==
+-----------------------------------
+
+* cmake_PREFIX: Prefix for a custom CMake installation.
+* bdb_PREFIX: Prefix for a custom BerkeleyDB installation.
+* openssl_PREFIX: Prefix for a custom OpenSSL installation.
