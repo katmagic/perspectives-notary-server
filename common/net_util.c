@@ -12,68 +12,67 @@
 
 // see if  client entered an RFC 1918 address at the command
 // line.  If so, probing is useless so just print a warning
-// and continue.  
-int is_rfc1918(char *hostname) { 
-	
+// and continue.
+int is_rfc1918(char *hostname) {
+
 
 	struct in_addr test_net, net1, net2,net3;
 
 	// if hostname is DNS name, return false
-	if(! inet_aton(hostname, &test_net) ) 
-		return 0; 
+	if(! inet_aton(hostname, &test_net) )
+		return 0;
 
-	uint32_t test_ip = ntohl(test_net.s_addr); 
+	uint32_t test_ip = ntohl(test_net.s_addr);
 
-	int ret = inet_aton("10.0.0.0", &net1); 
-	assert(ret); 
+	int ret = inet_aton("10.0.0.0", &net1);
+	assert(ret);
 	uint32_t mask = 0xff000000; // slash 8
-	if( (test_ip & mask) == (ntohl(net1.s_addr))) 
-		return 1; 
+	if( (test_ip & mask) == (ntohl(net1.s_addr)))
+		return 1;
 
         ret = inet_aton("192.168.0.0", &net2);
-	assert(ret); 
+	assert(ret);
 	mask = 0xffff0000; // slash 16
-	if( (test_ip & mask) == (ntohl(net2.s_addr))) 
-		return 1; 
+	if( (test_ip & mask) == (ntohl(net2.s_addr)))
+		return 1;
 
- 
-        ret = inet_aton("172.16.0.0", &net3); 
-	assert(ret); 
+        ret = inet_aton("172.16.0.0", &net3);
+	assert(ret);
 	mask = 0xfff00000; // slash 12
-	if( (test_ip & mask) == (ntohl(net3.s_addr))) 
-		return 1; 
+	if( (test_ip & mask) == (ntohl(net3.s_addr)))
+		return 1;
 
-	return 0; 
-} 
+	return 0;
+}
 
 
 // send data to a local unix socket, identified by 'name'
-int sendToUnixSock(char *name, char *buf, int buf_len){ 
+int sendToUnixSock(char *name, char *buf, int buf_len){
     
     int s, len;
     struct sockaddr_un remote;
 
     if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-        perror("socket");
+        fprintf(stderr, "ERROR: socket: %s\n", strerror(errno));
         return -1;
     }
-   
+    
     remote.sun_family = AF_UNIX;
     strcpy(remote.sun_path, name);
-//    len = SUN_LEN((&remote));
+    //len = SUN_LEN((&remote));
     len = strlen(remote.sun_path) + sizeof(remote.sun_family) + 1;
     if (connect(s, (struct sockaddr *)&remote, len) == -1) {
-        perror("connect");
+        fprintf(stderr, "ERROR: connect: %s\n", strerror(errno));
         return -1;
     }
     
     int n = send(s, buf, buf_len , 0);
     if(n == -1) {
-       perror("send");
+       fprintf(stderr, "ERROR: send: %s\n", strerror(errno));
        return -1;
     }
     close(s);
-    return n; 
+    return n;
 }
 
 int openUnixServerSock(char *name, int max_queue) {
@@ -81,7 +80,7 @@ int openUnixServerSock(char *name, int max_queue) {
     struct sockaddr_un local;
 
     if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-        perror("unix socket");
+        fprintf(stderr, "ERROR: socket: %s\n", strerror(errno));
         exit(1);
     }
 
@@ -92,46 +91,47 @@ int openUnixServerSock(char *name, int max_queue) {
     //len = SUN_LEN((&local));
     len = strlen(local.sun_path) + sizeof(local.sun_family) + 1;
     if (bind(s, (struct sockaddr *)&local, len) == -1) {
-        perror("unix bind");
+        fprintf(stderr, "ERROR: bind: %s\n", strerror(errno));
         exit(1);
     }
 
     if (listen(s,max_queue) == -1) {
-        perror("unix listen");
+        fprintf(stderr, "ERROR: listen: %s\n", strerror(errno));
         exit(1);
     }
-    DPRINTF(DEBUG_INFO, "Opened unix sock '%s', sock = %d \n",
-		name, s);
+    DPRINTF(DEBUG_INFO, "Opened unix sock '%s', sock = %d \n", name, s);
     return s;
 }
 
-// given a client server socket, accept a single client 
-// connection and return all data from that connection 
-// (up to buf_len bytes) in the caller-allocated 'buf' 
+// given a client server socket, accept a single client
+// connection and return all data from that connection
+// (up to buf_len bytes) in the caller-allocated 'buf'
 int readUnixClientData(int s, char *buf, int buf_len) {
         int n = -1, s2;
-        socklen_t t; 
+        socklen_t t;
         struct sockaddr_un remote;
 
         t = sizeof(remote);
-        if ((s2 = accept(s, (struct sockaddr *)&remote, 
+        if ((s2 = accept(s, (struct sockaddr *)&remote,
                 (socklen_t *)&t)) == -1) {
-            perror("accept");
+            fprintf(stderr, "ERROR: accept: %s\n", strerror(errno));
             return -1;
         }
 
         int so_far = 0;
-        while(n != 0 && (so_far < buf_len)) { 
+        while(n != 0 && (so_far < buf_len)) {
           n = recv(s2, buf + so_far, buf_len - so_far, 0);
-          if (n < 0){ 
-            perror("recv");
+          if (n < 0){
+            fprintf(stderr, "ERROR: recv: %s\n", strerror(errno));
             break;
           }
           so_far += n;
-        } 
-            
+        }
+        buf[so_far] = '\0';
+      
       close(s2);
-      return so_far; 
+      
+      return so_far;
 }
 
 
@@ -183,7 +183,7 @@ int getIPFromDNS(char *dns_name, uint32_t* addr_out) {
   
   *addr_out = *(uint32_t*)*(h->h_addr_list);
 //  fprintf(stderr, "DEBUG: IP: %s \n", ip_2_str(*addr_out));
- 
+  
   return 0;
 }
 
@@ -191,13 +191,13 @@ char *getConfirmedDNSFromIP(uint32_t ip_addr) {
   char *dns_name;
   int error = getDNSFromIP(ip_addr, &dns_name);
   if(error) goto failed;
-    
+  
   uint32_t ip_again;
   error = getIPFromDNS(dns_name, &ip_again);
   if(error || ip_addr != ip_again) goto failed;
 
   return dns_name;
-      
+  
   failed:
       free(dns_name);
       return strdup(ip_2_str(ip_addr));

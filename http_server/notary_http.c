@@ -94,24 +94,36 @@ void http_server_loop(uint32_t ip_addr, uint16_t port){
     server.sin_addr.s_addr = ip_addr;
     server.sin_port        = htons(port);
 
-    if(setsockopt(main_sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) { 
-        fatal_error("socket option"); 
-    } 
+    if(setsockopt(main_sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on))) {
+        fatal_error("socket option");
+    }
 
     if (bind(main_sock, (struct sockaddr *)&server, sizeof(server)) < 0){
         fatal_error("binding");
     }
 
-    if (listen(main_sock, LISTENQ) < 0) fatal_error("listen"); 
+    if (listen(main_sock, LISTENQ) < 0) fatal_error("listen");
 
     while (1){
         clientlen = sizeof(client);
         connfd = accept(main_sock, (struct sockaddr *) &client, &clientlen);
-        if (connfd < 0) 
-		continue;
+        if (connfd < 0)
+            continue;
 
-        pthread_create(&tid, NULL, thread_start, (void *)connfd);
+        if (pthread_create(&tid, NULL, thread_start, (void *)connfd)) {
+            DPRINTF(DEBUG_ERROR, "Error spawning thread\n");
+            close(connfd);
+            continue;
+        }
         pthread_detach(tid);
+
+        /*
+        if (fork() == 0) {
+            thread_start((void *)connfd);
+            exit(0);
+        } else
+            close(connfd);
+        */
     }
 }
 
@@ -132,6 +144,7 @@ void process(int sockfd){
     char *param, *value, *host, *port, *styp;
 
     if ((len = read_request(sockfd, req_buf, sizeof(req_buf))) < 0){
+        DPRINTF(DEBUG_INFO, "Client request read error\n");
         return;
     }
     // for debugging, store a copy of the pre-parsed request
@@ -140,7 +153,7 @@ void process(int sockfd){
     req_buf_copy[sizeof(req_buf_copy) - 1] = 0; 
 
     if (parse_begin(&state, req_buf) < 0){
-    	DPRINTF(DEBUG_INFO,"No args, sending 404: '%s'\n",req_buf_copy); 
+        DPRINTF(DEBUG_INFO,"No args, sending 404: '%s'\n",req_buf_copy); 
         send404(sockfd); 
         return; 
     }
@@ -161,7 +174,7 @@ void process(int sockfd){
     }
 
     if (!(host && port && styp)){
-    	DPRINTF(DEBUG_INFO,"Bad args, sending 404: '%s'\n",req_buf_copy); 
+        DPRINTF(DEBUG_INFO,"Bad args, sending 404: '%s'\n",req_buf_copy); 
         send404(sockfd);
         return;
     }
@@ -172,36 +185,34 @@ void process(int sockfd){
     // for the result of an on-demand probe
     int num_tries = 0; 
     while(!xml_buf) { 
-    	xml_buf = db_get_xml(service_id);
-	if(xml_buf) 
-	  break; 
-	
-	++num_tries;
-	if(num_tries == 1) { 
- 	  request_ondemand_probe(service_id,new_request_sock);
-	}
+        xml_buf = db_get_xml(service_id);
+        if(xml_buf) 
+            break; 
+    
+        ++num_tries;
+        if(num_tries == 1) { 
+            request_ondemand_probe(service_id,new_request_sock);
+        }
  
-    	if (num_tries >= ONDEMAND_MAX_TRIES){
-    	   DPRINTF(DEBUG_INFO,"Timeout of on-demand probe for '%s'\n",
-							service_id); 
-           send404(sockfd);
-           goto done;
-    	}
-	sleep(1); 
-    } 
-    xml_buf_len = strlen(xml_buf); 
-    DPRINTF(DEBUG_INFO,"Reply for '%s' of %zu bytes:\n",
-			service_id, strlen(xml_buf)); 
-    //DPRINTF(DEBUG_INFO,"'%s'\n", xml_buf); 
+        if (num_tries >= ONDEMAND_MAX_TRIES){
+            DPRINTF(DEBUG_INFO,"Timeout of on-demand probe for '%s'\n", service_id); 
+               send404(sockfd);
+               goto done;
+        }
+        sleep(1);
+    }
+    xml_buf_len = strlen(xml_buf);
+    DPRINTF(DEBUG_INFO,"Reply for '%s' of %zu bytes:\n", service_id, strlen(xml_buf));
+    //DPRINTF(DEBUG_INFO,"'%s'\n", xml_buf);
 
-    len = snprintf(req_buf, sizeof(req_buf), 
+    len = snprintf(req_buf, sizeof(req_buf),
             "HTTP/1.0 200 OK\r\n"
             "Server: Perspectves Http Server\r\n"
             "Content-length: %d\r\n"
             "Content-type: text/xml\r\n\r\n", xml_buf_len);
 
     if (send(sockfd, req_buf, len, 0) < 0) 
-	goto done; 
+        goto done; 
 
     if (send(sockfd, xml_buf, xml_buf_len, 0) < 0) 
     goto done;
@@ -271,23 +282,25 @@ int read_request(int sockfd, char *buf, int buflen){
 
     fd_set readfds; 
     struct timeval timeout; 
+	
     while (buflen > 0){
         FD_ZERO(&readfds);
 	FD_SET(sockfd,&readfds);
 	timeout.tv_sec = 5; 
-	timeout.tv_usec = 0;  
+	timeout.tv_usec = 0;
 	int ret = select(sockfd + 1, &readfds, NULL, NULL, &timeout);  
 	if(ret == 0) { 
-    		DPRINTF(DEBUG_ERROR, "client timeout\n"); 
+   		DPRINTF(DEBUG_ERROR, "client timeout\n"); 
 		return -1; 
-	}  
+	}
+	
 	int recv_len = read(sockfd, buf + bytes_read, buflen - bytes_read);
 	
-        if (recv_len < 0) { 
-		perror("Error reading client socket"); 
+    if (recv_len < 0) { 
+		fprintf(stderr, "ERROR: Error reading client socket"); 
 		return -1; 
-	} 
-        if (recv_len == 0) { 
+	}
+    if (recv_len == 0) { 
 		DPRINTF(DEBUG_ERROR, "Truncated client request, "
 		"no newline found\n"); 
 		return  -1; 
@@ -310,7 +323,7 @@ int read_request(int sockfd, char *buf, int buflen){
 }
 
 void fatal_error(char *msg){
-    perror(msg);
+    fprintf(stderr, "ERROR: %s\n", msg);
     exit(1);
 }
 

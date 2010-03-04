@@ -103,10 +103,10 @@ int main(int argc, char** argv) {
           handle_finished_client(now.tv_sec);
         }
       }else if(result < 0) {
-        perror("select error: ");
+          fprintf(stderr, "ERROR: select: %s\n", strerror(errno));
       } 
   }
- 
+
   close(child_finished_sock);
   bdb_close_env(db);
   return 0;
