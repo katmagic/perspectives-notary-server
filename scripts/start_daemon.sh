@@ -59,7 +59,7 @@ echo >>"$log"
 "$exe" "$conf" </dev/null >>"$log" 2>&1 &
 id="$!"
 
-sleep 0.1s
+sleep 1
 
 if ! [ -d "/proc/$id" ] ; then
 	echo "ERROR: process seems to have failed" >&2

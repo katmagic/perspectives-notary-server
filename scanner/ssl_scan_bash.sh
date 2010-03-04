@@ -35,8 +35,9 @@ if ! [ "$service_type" == 2 ] ; then
 fi
 
 
-key_file_1="$( mktemp )"
-key_file_2="$( mktemp )"
+key_file_1="/tmp/notary.$USER.$RANDOM"
+key_file_2="/tmp/notary.$USER.$RANDOM"
+touch "$key_file_1" "$key_file_2"
 
 test -f "$key_file_1" && openssl s_client -connect "$host:$port" < /dev/null > "$key_file_1" 2> "$debug_log" || rm -f "$key_file_1"
 test -f "$key_file_1" && openssl x509 -fingerprint -md5 -noout < "$key_file_1" > "$key_file_2" 2> "$debug_log" || rm -f "$key_file_2"

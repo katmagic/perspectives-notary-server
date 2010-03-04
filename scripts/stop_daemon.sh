@@ -51,7 +51,7 @@ echo "INFO: killing process" >&2
 
 kill "$id" || true
 
-sleep 1s
+sleep 1
 
 if [ -d "/proc/$id" ] ; then
 	echo "WARNING: process seems still alive" >&2
