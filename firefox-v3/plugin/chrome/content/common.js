@@ -84,4 +84,21 @@ function readLocalFile(path){
     return text;
 }
 
+function getdns() {
+	var cls = Components.classes['@mozilla.org/network/dns-service;1'];
+        var iface = Components.interfaces.nsIDNSService;
+        return cls.getService(iface);
+}
 
+var dns = getdns();
+
+function get_ips(hostname) {
+    var ips = Array();
+    var nsrecord = dns.resolve(hostname, true);
+
+    while (nsrecord && nsrecord.hasMore()) {
+        ips[ips.length] = nsrecord.getNextAddrAsString();
+    }
+
+    return ips;
+}

@@ -11,7 +11,7 @@
 
   <script type="application/x-javascript" src="notary_list.js" />
   <script type="application/x-javascript" src="whitelist.js"/>
-  <script type="application/x-javascript" src="notaries.js" />
+  <script type="application/x-javascript" src="report.js"/>
 
   <script type="application/x-javascript" src="base64.js" />
   <script type="application/x-javascript" src="client_policy.js" />
